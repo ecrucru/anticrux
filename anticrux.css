@@ -1,0 +1,125 @@
+/*
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	Copyright (C) 2016-2017, ecrucru
+
+		https://github.com/ecrucru/anticrux/
+		http://ecrucru.free.fr/?page=anticrux
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*===== General styles =====*/
+
+.AntiCrux-hSizer {
+	overflow:hidden;
+}
+
+.AntiCrux-hSizer DIV.AntiCrux-vSizer {
+	float:left;
+	padding:5px;
+}
+
+.AntiCrux-leftMargin {
+	margin-left:15px;
+}
+
+.AntiCrux-big {
+	font-size:20pt;
+}
+
+
+/*===== Particular styles =====*/
+
+.AntiCrux-table TH {
+    border-bottom:1px solid #D6D6D6;
+}
+
+.AntiCrux-table TR:nth-child(even) {
+    background:#E9E9E9;
+}
+
+
+/*===== Board =====*/
+
+.AntiCrux-board-promotion {
+	font-size:24pt;
+}
+
+.AntiCrux-board {
+	display:block;
+}
+
+.AntiCrux-board-coordinates-vertical {
+	float:left;
+	height:50px;
+	width:15px;
+	font-weight:bold;
+}
+.AntiCrux-board-coordinates-horizontal {
+	float:left;
+	height:15px;
+	width:50px;
+	font-weight:bold;
+	text-align:center;
+}
+.AntiCrux-board-coordinates-corner {
+	float:left;
+	height:15px;
+	width:15px;
+}
+
+.AntiCrux-board-line {
+	overflow:hidden;
+}
+
+.AntiCrux-board-cell-0 {
+	float:left;
+	background-color:#A6ABD6;
+	width:50px;
+	height:50px;
+	text-align:center;
+	font-weight:bold;
+	color:yellow;
+}
+.AntiCrux-board-cell-1 {
+	float:left;
+	background-color:#F0F0F0;
+	width:50px;
+	height:50px;
+	text-align:center;
+	vertical-align:middle;
+	font-weight:bold;
+	color:red;
+}
+.AntiCrux-board-cell-hl {
+	float:left;
+	background-color:#00FF00;
+	width:50px;
+	height:50px;
+	text-align:center;
+	vertical-align:middle;
+}
+
+.AntiCrux-board-piece-11	{	background-image:url(images/piece_11.png);	}
+.AntiCrux-board-piece-12	{	background-image:url(images/piece_12.png);	}
+.AntiCrux-board-piece-13	{	background-image:url(images/piece_13.png);	}
+.AntiCrux-board-piece-14	{	background-image:url(images/piece_14.png);	}
+.AntiCrux-board-piece-15	{	background-image:url(images/piece_15.png);	}
+.AntiCrux-board-piece-16	{	background-image:url(images/piece_16.png);	}
+.AntiCrux-board-piece--11	{	background-image:url(images/piece_-11.png);	}
+.AntiCrux-board-piece--12	{	background-image:url(images/piece_-12.png);	}
+.AntiCrux-board-piece--13	{	background-image:url(images/piece_-13.png);	}
+.AntiCrux-board-piece--14	{	background-image:url(images/piece_-14.png);	}
+.AntiCrux-board-piece--15	{	background-image:url(images/piece_-15.png);	}
+.AntiCrux-board-piece--16	{	background-image:url(images/piece_-16.png);	}

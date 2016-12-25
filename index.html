@@ -1,0 +1,676 @@
+<!--
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	Copyright (C) 2016-2017, ecrucru
+
+		https://github.com/ecrucru/anticrux/
+		http://ecrucru.free.fr/?page=anticrux
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program. If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!-- Header -->
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="msapplication-tap-highlight" content="no" />
+	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>AntiCrux - AI for AntiChess</title>
+
+	<!-- Styles -->
+	<link rel="stylesheet" type="text/css" href="jquery-1.5.0.mobile.min.css" />
+	<link rel="stylesheet" type="text/css" href="anticrux.css" />
+
+	<!-- Scripts -->
+	<script type="text/javascript" src="jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="jquery-1.5.0.mobile.min.js"></script>
+	<script type="text/javascript" src="anticrux.js"></script>
+</head>
+<body>
+	<!-- Content -->
+	<div data-role="page">
+		<div data-role="header">
+			<h1>AntiCrux - AI for AntiChess</h1>
+		</div>
+
+		<div data-role="content">
+
+			<div data-role="tabs">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#acui_tab_action" class="ui-btn-active">Actions</a></li>
+						<li><a href="#acui_tab_board" id="acui_tab_board_header">Board</a></li>
+						<li><a href="#acui_tab_options">Options</a></li>
+						<li><a href="#acui_tab_tree">Tree</a></li>
+						<li><a href="#acui_tab_about">About</a></li>
+					</ul>
+				</div>
+
+				<div id="acui_tab_action" class="ui-body-d ui-content">
+					<div data-role="controlgroup" data-type="horizontal">
+						<h2>Board</h2>
+						<div data-role="controlgroup" data-type="horizontal">
+							<a id="acui_clear" href="#" data-role="button">Clear</a>
+							<a id="acui_default" href="#" data-role="button">Classic</a>
+							<a id="acui_fisher" href="#" data-role="button">Fisher 960</a>
+						</div>
+
+						<h2>Load from input</h2>
+						<div data-role="controlgroup" data-type="horizontal">
+							<a id="acui_fen_load" href="#" data-role="button">Load FEN</a>
+							<a id="acui_fen_gen" href="#" data-role="button">Generate FEN</a>
+							<a id="acui_lichess_load" href="#" data-role="button">Load from Lichess.org</a>
+							<a id="acui_text_gen" href="#" data-role="button">Generate chess text</a>
+						</div>
+						<div>
+							<input id="acui_input" type="text" value="" size="80" />
+						</div>
+
+						<h2>Miscellaneous</h2>
+						<div data-role="controlgroup" data-type="horizontal">
+							<a id="acui_free" href="#" data-role="button">Free memory</a>
+						</div>
+					</div>
+				</div>
+
+				<div id="acui_tab_board" class="ui-body-d ui-content">
+					<div data-role="controlgroup" data-type="horizontal">
+						<select id="acui_player"><!-- Filled by jQuery --></select>
+						<a id="acui_play_ai" href="#" data-role="button">AI plays</a>
+						<a id="acui_play_human" href="#" data-role="button">Human plays</a>
+						<a href="#acui_play_hint_popup" data-role="button" data-rel="popup" data-transition="slideup">Hint</a>
+						<a id="acui_play_undo" href="#" data-role="button">Undo</a>
+					</div>
+
+					<div>
+						<input id="acui_valuation" type="range" value="0" min="-100" max="100" data-highlight="true" title="Black on the left, White on the right : don't pull the cursor to you !" />
+					</div>
+					<div class="AntiCrux-hSizer">
+						<div class="AntiCrux-vSizer" style="min-width:450px">
+							<div id="acui_board"></div>
+						</div>
+						<div class="AntiCrux-vSizer">
+
+							<div data-role="tabs" id="tabs">
+								<div><label for="acui_option_autoplay">Autoplay for AI</label> <input id="acui_option_autoplay" type="checkbox" checked /></div>
+								<div><label for="acui_option_pro">Professional mode</label> <input id="acui_option_pro" type="checkbox" /></div>
+
+								<div data-role="navbar">
+									<ul>
+										<li><a href="#acui_tab_board_evaluation" class="ui-btn-active">Evaluation</a></li>
+										<li><a href="#acui_tab_board_history">History</a></li>
+									</ul>
+								</div>
+
+								<div id="acui_tab_board_evaluation" class="ui-body-d ui-content" style="width:100%">
+									<p id="acui_lastmove"></p>
+									<p id="acui_nodes"></p>
+									<p id="acui_depth"></p>
+									<p id="acui_moves"></p>
+								</div>
+
+								<div id="acui_tab_board_history" class="ui-body-d ui-content" style="width:100%">
+									<p id="acui_history"></p>
+									<p><a id="acui_pgn" class="ui-disabled" href="#" data-role="button">Download PGN</a></p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Menu item for hift -->
+					<div data-role="popup" id="acui_play_hint_popup">
+						<ul data-role="listview">
+							<li id="acui_play_hint_soft"><a href="#" data-rel="back">Possible target positions</a></li>
+							<li id="acui_play_hint_hard"><a href="#" data-rel="back">Evaluation of the moves</a></li>
+							<li><a href="#" data-rel="back">Exit</a></li>
+						</ul>
+					</div>
+				</div>
+
+				<div id="acui_tab_options" class="ui-body-d ui-content">
+					<div class="AntiCrux-hSizer">
+						<div class="AntiCrux-vSizer">
+							<h2>Artificial intelligence</h2>
+							<p>
+								<label for="acui_option_predef">Predefined levels :</label>
+								<select id="acui_option_predef">
+									<option value="-1"></option>
+									<option value="0">Champion 2 GB</option>
+									<option value="1">Champion 1 GB</option>
+									<option value="2">Champion 512 MB</option>
+									<option value="3">Tactical player</option>
+									<option value="4">Advanced classical player</option>
+									<option value="5">Classical player</option>
+									<option value="6">Handicaped player</option>
+									<option value="7">Oyster</option>
+								</select>
+							</p>
+							<p><label for="acui_option_maxdepth">Maximal depth :</label> <input class="AntiCrux-ui-option" id="acui_option_maxdepth" type="number" min="3"/></p>
+							<p><label for="acui_option_maxnodes">Maximal nodes :</label> <input class="AntiCrux-ui-option" id="acui_option_maxnodes" type="number" min="0" step="100"/></p>
+							<p><label for="acui_option_wholenodes">Maximize the nodes</label> <input class="AntiCrux-ui-option" id="acui_option_wholenodes" type="checkbox" /></p>
+							<p><label for="acui_option_minimizeliberty">Minimize the liberty</label> <input class="AntiCrux-ui-option" id="acui_option_minimizeliberty" type="checkbox" /></p>
+							<p><label for="acui_option_nostatonforcedmove">No statistic on forced moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonforcedmove" type="checkbox" /></p>
+							<p><label for="acui_option_randomizedsearch">Randomized search</label> <input class="AntiCrux-ui-option" id="acui_option_randomizedsearch" type="checkbox" /></p>
+							<p><label for="acui_option_pessimisticscenario">Pessimistic scenario</label> <input class="AntiCrux-ui-option" id="acui_option_pessimisticscenario" type="checkbox" /></p>
+							<p><label for="acui_option_beststaticscore">Best static score</label> <input class="AntiCrux-ui-option" id="acui_option_beststaticscore" type="checkbox" /></p>
+							<p><label for="acui_option_opportunistic">Opportunistic</label> <input class="AntiCrux-ui-option" id="acui_option_opportunistic" type="checkbox" /></p>
+							<p><label for="acui_option_handicap">Handicap :</label> <input class="AntiCrux-ui-option" id="acui_option_handicap" type="range" value="0" min="0" max="100" /></p>
+							<p><label for="acui_option_acceleratedendgame">Accelerated end of game</label> <input class="AntiCrux-ui-option" id="acui_option_acceleratedendgame" type="checkbox" /></p>
+							<p><label for="acui_option_oyster">Oyster</label> <input class="AntiCrux-ui-option" id="acui_option_oyster" type="checkbox" /></p>
+						</div>
+
+						<div class="AntiCrux-vSizer AntiCrux-leftMargin">
+							<h2>Board</h2>
+							<p><label for="acui_option_fisher">Fisher :</label> <input class="AntiCrux-ui-option" id="acui_option_fisher" type="number" min="1" max="960" value="519" title="519 is classical. Double-click to generate a new number" /></p>
+							<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
+							<p><label for="acui_option_symbol">Symbols for the pieces</label> <input class="AntiCrux-ui-option" id="acui_option_symbol" type="checkbox" /></p>
+							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option" id="acui_option_coordinates" type="checkbox" /></p>
+							<p><label for="acui_option_nostatonownmove">No statistic on own moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonownmove" type="checkbox" /></p>
+							<p><label for="acui_option_nodtree">No decision tree</label> <input id="acui_option_nodtree" type="checkbox" checked="checked" /></p>
+							<p><label for="acui_option_fulldecisiontree">Full decision tree</label> <input id="acui_option_fulldecisiontree" type="checkbox" checked="checked" /></p>
+							<p><label for="acui_option_debugcellid">Internal identifier</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_debugcellid" type="checkbox" /></p>
+						</div>
+
+						<div class="AntiCrux-vSizer AntiCrux-leftMargin">
+							<h2>Variant</h2>
+							<p><label for="acui_option_promotequeen">Promote pawns as queen</label> <input class="AntiCrux-ui-option" id="acui_option_promotequeen" type="checkbox" /></p>
+							<p><label for="acui_option_activepawns">Active pawns</label> <input class="AntiCrux-ui-option" id="acui_option_activepawns" type="checkbox" /></p>
+							<p><label for="acui_option_whiteboard">White board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_whiteboard" type="checkbox" /></p>
+						</div>
+					</div>
+				</div>
+
+				<div id="acui_tab_tree" class="ui-body-d ui-content">
+					<div id="acui_dtree"></div>
+				</div>
+
+				<div id="acui_tab_about" class="ui-body-d ui-content">
+					<h2>AntiCrux <span id="acui_version"></span></h2>
+					<p>Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile.</p>
+					<p>Copyright &copy; 2016-2017, ecrucru</p>
+					<ul>
+						<li><a href="https://github.com/ecrucru/anticrux/">https://github.com/ecrucru/anticrux/</a></li>
+						<li><a href="http://ecrucru.free.fr/?page=anticrux">http://ecrucru.free.fr/?page=anticrux</a></li>
+					</ul>
+					<p>This application is released under the terms of the GNU Affero General Public License v3 :</p>
+					<ul>
+						<li><img src="images/agplv3.png" alt="" /></li>
+						<li><a href="https://www.gnu.org/licenses/agpl-3.0.html">https://www.gnu.org/licenses/agpl-3.0.html</a></li>
+					</ul>
+				</div>
+			</div>
+
+
+			<!-- Promotions -->
+			<div id="acui_promotion" data-role="popup" data-dismissible="false" data-overlay-theme="a" data-theme="a" class="ui-corner-all">
+				<div data-role="header" data-theme="a" class="ui-corner-top">
+					<h1>Promotion of the pawn</h1>
+				</div>
+				<div role="main" class="ui-corner-bottom ui-content">
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="R" title="Rook"  >&#9814;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="N" title="Knight">&#9816;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="B" title="Bishop">&#9815;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="Q" title="Queen" >&#9813;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="K" title="King"  >&#9812;</a>
+				</div>
+			</div>
+
+
+			<!-- Popup -->
+			<div id="acui_popup" data-role="popup" data-overlay-theme="a" data-theme="a" data-transition="slide" class="ui-corner-all">
+				<div data-role="header" data-theme="a" class="ui-corner-top">
+					<h1>Information</h1>
+				</div>
+				<div role="main" class="ui-corner-bottom ui-content">
+					<p id="acui_popup_text"><!-- Filled by jQuery --></p>
+					<a href="#" id="acui_popup_ok" data-role="button" data-inline="true" data-rel="back" data-theme="a">OK</a>
+				</div>
+			</div>
+
+			<!-- Scripts -->
+			<script type="text/javascript">
+				var	ai = new AntiCrux(),
+					ui_move;
+				ai.defaultBoard();
+
+				function acui_options_load() {
+					//-- AI
+					$('#acui_option_maxdepth').val(ai.options.ai.maxDepth);
+					$('#acui_option_maxnodes').val(ai.options.ai.maxNodes);
+					$('#acui_option_minimizeliberty').prop('checked', ai.options.ai.minimizeLiberty);
+					$('#acui_option_nostatonforcedmove').prop('checked', ai.options.ai.noStatOnForcedMove);
+					$('#acui_option_wholenodes').prop('checked', ai.options.ai.wholeNodes);
+					$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
+					$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
+					$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
+					$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
+					$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
+					$('#acui_option_acceleratedendgame').prop('checked', ai.options.ai.acceleratedEndGame);
+					$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
+
+					//-- Board
+					$('#acui_option_fisher').val(ai.options.board.fisher);
+					$('#acui_option_rotated').prop('checked', ai.options.board.rotated);
+					$('#acui_option_symbol').prop('checked', ai.options.board.symbols);
+					$('#acui_option_coordinates').prop('checked', ai.options.board.coordinates);
+					$('#acui_option_nostatonownmove').prop('checked', ai.options.board.noStatOnOwnMove);
+					$('#acui_option_fulldecisiontree').prop('checked', ai.options.board.fullDecisionTree);
+					$('#acui_option_debugcellid').prop('checked', ai.options.board.debugCellId);
+
+					//-- Variant
+					$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
+					$('#acui_option_activepawns').prop('checked', ai.options.variant.activePawns);
+					$('#acui_option_whiteboard').prop('checked', ai.options.variant.whiteBoard);
+				}
+
+				function acui_reset_ui() {
+					$('#acui_tab_board_header').trigger('click');
+					$('#acui_valuation').val(0).slider('refresh');
+					$('#acui_lastmove, #acui_nodes, #acui_depth, #acui_moves, #acui_history, #acui_dtree').html('');
+					$('#acui_player').val(ai.constants.owner.white).change();
+				}
+
+				function acui_refresh_board() {
+					var player = parseInt($('#acui_player').val());
+
+					//-- Refreshes the board
+					ai.freeMemory();
+					$('#acui_board').html(ai.toHtml());
+
+					//-- Reactivates the cells of the board
+					$('.AntiCrux-board-cell-0, .AntiCrux-board-cell-1, .AntiCrux-board-cell-hl').click(function() {
+						var	move = this.dataset.xy;
+
+						//- Checks the format of the value
+						if (!move.match(/^[a-h][1-8]$/))
+							return false;
+
+						//- Cancels the current move if it is the same position
+						if (move == ui_move)
+							ui_move = '';
+						else
+							ui_move += move;
+
+						//- Makes a human move
+						switch (ui_move.length)
+						{
+							case 4:
+								// Statistics of the current situation
+								if (!ai.options.board.noStatOnOwnMove)
+									ai.getMoveAI(player);
+
+								// Explicit move for the user
+								if (ai.movePiece(ui_move, true, player))
+									acui_promote();
+								else
+								{
+									acui_popup('The move has been denied. Choose another one.');
+									ai.highlight(true, null);
+									acui_refresh_board();
+								}
+								ai.freeMemory();
+								ui_move = '';
+								break;
+
+							case 0:
+							case 2:
+								ai.highlight(true, ui_move);
+								acui_refresh_board();
+								break;
+
+							default:
+								throw 'Internal error - Report any error (#007)';
+						}
+					});
+				}
+
+				function acui_refresh_moves() {
+					var player = parseInt($('#acui_player').val());
+					$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore()).slider('refresh');
+					$('#acui_nodes').html('Nodes : ' + ai.getNumNodes());
+					$('#acui_depth').html('Depth : ' + ai.getReachedDepth());
+					$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistic with the professional mode.</div>' : ai.getMoves(player));
+					if (!$('#acui_option_nodtree').prop('checked'))
+						$('#acui_dtree').html(ai.getDecisionTreeHtml());
+				}
+
+				function acui_refresh_history() {
+					var hist = ai.getHistory();
+					$('#acui_history').html(hist);
+					if (hist.length == 0)
+						$('#acui_pgn').addClass('ui-disabled');
+					else
+						$('#acui_pgn').removeClass('ui-disabled');
+				}
+
+				function acui_promote() {
+					if (ai.hasPendingPromotion())
+						$('#acui_promotion').popup('open', {});
+					else
+						acui_afterHumanMove();
+				}
+
+				function acui_afterHumanMove() {
+					ai.logMove();
+					acui_refresh_history();
+					acui_refresh_board();
+					if (ai.isEndGame())
+						acui_showWinner();
+					else
+					{
+						acui_switch_players();
+						if ($('#acui_option_autoplay').prop('checked'))
+						{
+							if (ai.isDraw())
+								acui_popup('The game is a possible draw.');
+							setTimeout(	function() {		//Refreshes the screen before the AI plays
+											$('#acui_play_ai').click();
+										}, 1000);
+						}
+					}
+				}
+
+				function acui_switch_players() {
+					if (ai.getPlayer() == ai.constants.owner.black)
+						$('#acui_player').val(ai.constants.owner.white).change();
+					else
+						$('#acui_player').val(ai.constants.owner.black).change();
+				}
+
+				function acui_showWinner() {
+					var winner = ai.getWinner();
+					if (winner == ai.constants.owner.none)
+						throw 'Internal error - Report any error (#008)';
+					winner = (winner == ai.constants.owner.white ? 'White' : 'Black');
+					acui_popup('End of the game. '+winner+' has won !');
+				}
+
+				function acui_popup(pMessage) {
+					$('#acui_popup_text').html(pMessage);
+					$('#acui_popup').popup('open', {});
+				}
+
+				$(document).ready(function() {
+					//-- Initialization
+					ui_move = '';
+					acui_refresh_board();
+
+					//-- Updates the list of players
+					$('#acui_player').find('option').remove().end();
+					$('<option/>').val(ai.constants.owner.white).html('Play for White').appendTo('#acui_player');
+					$('<option/>').val(ai.constants.owner.black).html('Play for Black').appendTo('#acui_player');
+					$('#acui_player').val(ai.constants.owner.white).change();
+
+					//-- Events
+					$("input[type='text']").on('click', function () {
+						$(this).select();
+					});
+
+					$('#acui_clear').click(function() {
+						ai.clearBoard();
+						ui_move = '';
+						acui_reset_ui();
+						acui_refresh_board();
+					});
+
+					$('#acui_default').click(function() {
+						ai.defaultBoard();
+						ui_move = '';
+						acui_reset_ui();
+						acui_refresh_board();
+					});
+
+					$('#acui_fisher').click(function() {
+						ai.defaultBoard(ai.options.board.fisher);
+						ui_move = '';
+						acui_reset_ui();
+						acui_refresh_board();
+					});
+
+					$('#acui_option_fisher').dblclick(function() {
+						$('#acui_option_fisher').val(Math.floor(Math.random()*960)+1).change();
+					});
+
+					$('#acui_fen_load').click(function() {
+						var player;
+						if (!ai.loadFen($('#acui_input').val()))
+							acui_popup('The FEN cannot be loaded because it has a wrong format.');
+						else
+						{
+							player = ai.getPlayer();
+							ui_move = '';
+							acui_reset_ui();
+							acui_refresh_board();
+							$('#acui_tab_board_header').trigger('click');
+							$('#acui_player').val(player).change();
+						}
+					});
+
+					$('#acui_fen_gen').click(function() {
+						$('#acui_input').val(ai.toFen()).focus().click();
+					});
+
+					$('#acui_lichess_load').click(function() {
+						if (!ai.loadLichess($('#acui_input').val()))
+							acui_popup('The game cannot be retrieved from Lichess.org. Please never abuse.');
+						else
+						{
+							$('#acui_tab_board_header').trigger('click');
+							$('#acui_board').html('Please wait few seconds while the game is loaded...');
+							setTimeout(	function() {
+											ui_move = '';
+											acui_reset_ui();
+											acui_refresh_board();
+											$('#acui_player').val(ai.getPlayer()).change();
+										}, 5000);				//5 seconds are arbitrary
+						}
+					});
+
+					$('#acui_text_gen').click(function() {
+						$('#acui_input').val(ai.toText()).focus().click();
+					});
+
+					$('#acui_free').click(function() {
+						ai.freeMemory();
+					});
+
+					$('#acui_player').change(function() {
+						ai.setPlayer(parseInt($('#acui_player').val()));
+					});
+
+					$('#acui_play_ai').click(function() {
+						//-- Inputs
+						var	player = parseInt($('#acui_player').val()),
+							move = ai.getMoveAI(player),
+							doSwitch = false;
+
+						//-- Checks
+						if (move === null)
+						{
+							if (ai.isEndGame())
+								acui_showWinner();
+							return;
+						}
+
+						//-- Moves
+						$('#acui_lastmove').html('Last move : ' + ai.moveToString(move));
+						acui_refresh_moves();
+						if (ai.movePiece(move, true, player))
+						{
+							ai.logMove();
+							acui_refresh_history();
+							ai.highlight(true, 8*(Math.floor(move/10)%10)+(move%10));
+							if (ai.isEndGame())
+								acui_showWinner();
+							else
+								doSwitch = true;
+						}
+						else
+							acui_popup('The move has been denied. Choose another one.');
+						acui_refresh_board();
+						if (doSwitch)
+							acui_switch_players();
+					});
+
+					$('#acui_play_human').click(function() {
+						//-- Inputs
+						var	player = parseInt($('#acui_player').val()),
+							move = prompt('Type your move :', '0');
+
+						//-- Checks
+						if (move === null)
+						{
+							acui_popup('No move has been considered.');
+							return;
+						}
+
+						//-- Statistics of the current situation
+						if (!ai.options.board.noStatOnOwnMove)
+						{
+							ai.getMoveAI(player);
+							acui_refresh_moves();
+						}
+
+						//-- Explicit move for the user
+						if (ai.movePiece(move, true, player))
+							acui_promote();
+						else
+							acui_popup('The move has been denied. Choose another one.');
+						ai.freeMemory();
+					});
+
+					$('#acui_play_hint_soft').click(function() {
+						ai.highlightMoves();
+						acui_refresh_board();
+					});
+
+					$('#acui_play_hint_hard').click(function() {
+						ai.getMoveAI(parseInt($('#acui_player').val()));
+						acui_refresh_moves();
+						acui_refresh_board();
+						ai.freeMemory();
+					});
+
+					$('#acui_play_undo').click(function() {
+						if (ai.undoMove())
+						{
+							acui_refresh_moves();
+							acui_refresh_history();
+							acui_refresh_board();
+						}
+						$('#acui_player').val(ai.getPlayer()).change();
+					});
+
+					$('#acui_pgn').click(function() {
+						var dl, pgn;
+
+						//-- Gets the PGN data
+						pgn = ai.toPgn();
+						if (pgn.length === 0)
+							acui_popup('No data to export to PGN.');
+						else
+						{
+							//- Download as file
+							// http://stackoverflow.com/questions/3665115/
+							var dl = document.createElement('a');
+							dl.setAttribute('href', 'data:application/x-chess-pgn;charset=iso-8859-1,' + encodeURIComponent(pgn));
+							dl.setAttribute('download', 'anticrux_'+(new Date().toISOString().slice(0, 10))+'.pgn');
+							dl.style.display = 'none';
+							document.body.appendChild(dl);
+							dl.click();
+							document.body.removeChild(dl);
+						}
+
+					});
+
+					$('#acui_option_predef').change(function() {
+						var i, d;
+
+						//-- Predefined levels
+						var levels = [
+								//Champion
+								{ maxDepth:50,	maxNodes:1000000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:40,	maxNodes: 500000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:30,	maxNodes: 200000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								//Tactical player
+								{ maxDepth:10,	maxNodes:  90000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
+								//Advanced classical player
+								{ maxDepth: 7,	maxNodes:  75000,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
+								//Classical player
+								{ maxDepth: 3,	maxNodes:  15000,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
+								//Handicaped player
+								{ maxDepth: 7,	maxNodes:  50000,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:70,	acceleratedEndGame:true		},
+								//Oyster
+								{ maxDepth: 3,	maxNodes:    100,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:true,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:false	}
+							];
+
+						//-- Applies the configuration
+						i = parseInt($('#acui_option_predef').val());
+						if (levels[i] === undefined)
+							return;
+						for (d in levels[i])
+							ai.options.ai[d] = levels[i][d];
+						acui_options_load();
+						$("input[type='checkbox']").checkboxradio('refresh');
+					});
+
+					$('.AntiCrux-ui-option').change(function() {
+						//-- AI
+						ai.options.ai.maxDepth				= parseInt($('#acui_option_maxdepth').val());
+						ai.options.ai.maxNodes				= parseInt($('#acui_option_maxnodes').val());
+						ai.options.ai.minimizeLiberty		= $('#acui_option_minimizeliberty').prop('checked');
+						ai.options.ai.noStatOnForcedMove	= $('#acui_option_nostatonforcedmove').prop('checked');
+						ai.options.ai.wholeNodes			= $('#acui_option_wholenodes').prop('checked');
+						ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
+						ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
+						ai.options.ai.bestStaticScore		= $('#acui_option_beststaticscore').prop('checked');
+						ai.options.ai.opportunistic			= $('#acui_option_opportunistic').prop('checked');
+						ai.options.ai.handicap				= $('#acui_option_handicap').val();
+						ai.options.ai.acceleratedEndGame	= $('#acui_option_acceleratedendgame').prop('checked');
+						ai.options.ai.oyster				= $('#acui_option_oyster').prop('checked');
+
+						//-- Board
+						ai.options.board.fisher				= parseInt($('#acui_option_fisher').val());
+						ai.options.board.rotated			= $('#acui_option_rotated').prop('checked');
+						ai.options.board.symbols			= $('#acui_option_symbol').prop('checked');
+						ai.options.board.coordinates		= $('#acui_option_coordinates').prop('checked');
+						ai.options.board.noStatOnOwnMove	= $('#acui_option_nostatonownmove').prop('checked');
+						ai.options.board.fullDecisionTree	= $('#acui_option_fulldecisiontree').prop('checked');
+						ai.options.board.debugCellId		= $('#acui_option_debugcellid').prop('checked');
+
+						//-- Variant
+						ai.options.variant.promoteQueen		= $('#acui_option_promotequeen').prop('checked');
+						ai.options.variant.activePawns		= $('#acui_option_activepawns').prop('checked');
+						ai.options.variant.whiteBoard		= $('#acui_option_whiteboard').prop('checked');
+					});
+
+					$('.AntiCrux-ui-option-refresh').change(function() {
+						acui_refresh_board();
+					});
+
+					$('.AntiCrux-board-promotion').click(function() {
+						ai.promote(this.dataset.promotion);
+						acui_afterHumanMove();
+					});
+
+					//-- Default elements
+					$('#acui_option_predef').val(5).change();
+					$('#acui_version').html(ai.options.ai.version);
+					$(document).on('selectstart', false);				//No text selection to avoid moving the pieces on the screen (not supported)
+				});
+			</script>
+		</div>
+	</div>
+</body>
+</html>
