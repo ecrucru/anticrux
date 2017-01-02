@@ -46,6 +46,8 @@
 
 		<div data-role="content">
 
+			<div id="acui_js" class="AntiCrux-notice">&#x26a0; JavaScript must be enabled to allow the website to be loaded correctly.</div>
+
 			<div data-role="tabs">
 				<div data-role="navbar">
 					<ul>
@@ -278,6 +280,7 @@
 					$('#acui_tab_board_header').trigger('click');
 					$('#acui_valuation').val(0).slider('refresh');
 					$('#acui_lastmove, #acui_nodes, #acui_depth, #acui_moves, #acui_history, #acui_dtree').html('');
+					$('#acui_pgn').addClass('ui-disabled');
 					$('#acui_player').val(ai.constants.owner.white).change();
 				}
 
@@ -340,7 +343,7 @@
 					$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore()).slider('refresh');
 					$('#acui_nodes').html('Nodes : ' + ai.getNumNodes());
 					$('#acui_depth').html('Depth : ' + ai.getReachedDepth());
-					$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistic with the professional mode.</div>' : ai.getMoves(player));
+					$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistic with the professional mode.</div>' : ai.getMovesHtml(player));
 					if (!$('#acui_option_nodtree').prop('checked'))
 						$('#acui_dtree').html(ai.getDecisionTreeHtml());
 				}
@@ -551,12 +554,14 @@
 					});
 
 					$('#acui_play_hint_soft').click(function() {
-						ai.highlightMoves();
+						ai.highlightMoves(true);
 						acui_refresh_board();
 					});
 
 					$('#acui_play_hint_hard').click(function() {
 						ai.getMoveAI(parseInt($('#acui_player').val()));
+						ui_move = '';
+						ai.highlightMoves(false);
 						acui_refresh_moves();
 						acui_refresh_board();
 						ai.freeMemory();
@@ -565,6 +570,7 @@
 					$('#acui_play_undo').click(function() {
 						if (ai.undoMove())
 						{
+							ui_move = '';
 							acui_refresh_moves();
 							acui_refresh_history();
 							acui_refresh_board();
@@ -665,6 +671,7 @@
 					});
 
 					//-- Default elements
+					$('#acui_js').hide();
 					$('#acui_option_predef').val(5).change();
 					$('#acui_version').html(ai.options.ai.version);
 					$(document).on('selectstart', false);				//No text selection to avoid moving the pieces on the screen (not supported)

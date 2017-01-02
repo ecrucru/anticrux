@@ -304,7 +304,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.getDecisionTreeHtml(pNode)
 - AntiCrux.getHistory(pNode)
 - AntiCrux.getMoveAI(pPlayer, pNode)
-- AntiCrux.getMoves(pPlayer, pNode)
+- AntiCrux.getMovesHtml(pPlayer, pNode)
 - AntiCrux.getNumNodes()
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbol)
 - AntiCrux.getPlayer(pNode)
@@ -314,7 +314,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.hasPendingPromotion(pNode)
 - AntiCrux.hasSetUp(pNode)
 - AntiCrux.highlight(pReset, pPosition)
-- AntiCrux.highlightMoves()
+- AntiCrux.highlightMoves(pRefresh)
 - AntiCrux.isDraw(pNode)
 - AntiCrux.isEndGame(pNode)
 - AntiCrux.loadFen(pFen, pNode)
@@ -350,7 +350,15 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 ### Change log
 
 - November 11th 2016 - Creation of the project
-- December 25th 2016 - Completion of the first version (v0.1)
+- December 25th 2016 - Version 0.1
+- In progress - Version 0.1.1
+	- Library: AntiCrux.prototype.getMoves renamed as AntiCrux.prototype.getMovesHtml
+	- Library: New mandatory parameter for AntiCrux.prototype.highlightMoves
+	- UI: highlighted target cells when requesting a detailed hint
+	- Library: no more 'v' in AntiCrux.options.ai.version
+	- Library: AntiCrux.prototype._has can compare to string
+	- UI: notification when JavaScript is disabled
+	- UI: fix of incorrect error messages
 
 
 ### License

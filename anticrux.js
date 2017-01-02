@@ -19,7 +19,7 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
- "use strict";
+"use strict";
 
 
 // Interesting positions for playing with AntiCrux :
@@ -42,6 +42,7 @@
 //		8/2p5/8/3P4/8/8/8/8 w - -									En passant is a forced move
 //		7r/7p/8/8/8/5R2/8/8 b - -									En passant if no impact on the other pieces
 //		2Rn1b1r/1ppppppq/1k3n1p/8/1P6/6P1/2PPPPNP/1KBN1BQR w - -	Minimization of the liberty (Rxc7=no minimization, Rxd8=minimization)
+//		1rbqk2r/Rppppp2/8/5n2/4P3/2P5/2P2PPP/1N2K1NR w - -			Highlight the evaluated moves only (see highlightMoves)
 //		3R4/8/8/8/8/8/2p5/8 w - -									Effect of the option "No statistic on forced moves"
 //		6R1/8/8/8/8/2k5/8/8 w - -									Hard to finish (maximal number of nodes, no game strategy)
 //		8/6p1/4K3/8/7r/8/8/8 b - -									Hard to finish (maximal number of nodes)
@@ -1075,17 +1076,30 @@ AntiCrux.prototype.highlight = function(pReset, pPosition) {
 	return true;
 };
 
-AntiCrux.prototype.highlightMoves = function() {
+AntiCrux.prototype.highlightMoves = function(pRefresh) {
 	var node, i, position;
 
 	//-- Resets the current board
 	this._highlight = [];
 
 	//-- Gets the possible moves
-	node = this._ai_nodeCopy(this._root_node, false);
-	this._ai_nodeMoves(node);
+	if (pRefresh)
+	{
+		node = this._ai_nodeCopy(this._root_node, false);
+		this._ai_nodeMoves(node);
+	}
+	else
+		node = this._root_node;
 	for (i=0 ; i<node.moves.length ; i++)
 	{
+		//- Disabled move
+		if (node.moves[i] === 0)
+			continue;
+		//- Rejected move
+		if (this._has(node, 'nodes', true))
+			if (node.nodes[i] === null)
+				continue;
+		//- Considered move
 		position = node.moves[i] % 100;
 		this._highlight.push(8*Math.floor(position/10) + (position%10));
 	}
@@ -1149,7 +1163,7 @@ AntiCrux.prototype.getDecisionTreeHtml = function(pNode) {
 			'</table>';
 };
 
-AntiCrux.prototype.getMoves = function(pPlayer, pNode) {
+AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 	var i, node, maxVal, output;
 
 	//-- Fetches the result of the last calculation of the AI
@@ -1518,7 +1532,7 @@ AntiCrux.prototype._init = function() {
 	//-- Options
 	this.options = {
 		ai : {
-			version : 'v0.1',							//Version of AntiCrux
+			version : '0.1.1',							//Version of AntiCrux
 			valuation : [],								//Valuation of each piece
 			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 100000,							//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
@@ -1558,15 +1572,21 @@ AntiCrux.prototype._init = function() {
 	this.options.ai.valuation[ this.constants.piece.king  ] = 250;
 };
 
-AntiCrux.prototype._has = function(pNode, pField, pLengthCheck) {
+AntiCrux.prototype._has = function(pNode, pField, pLengthCheckOrString) {
 	var b = ((pNode !== undefined) && (pNode !== null));
 	if (b)
 	{
 		b = pNode.hasOwnProperty(pField);
 		if (b && (pNode[pField] === null))
 			return false;
-		if (b && pLengthCheck)
-			b = (pNode[pField].length > 0);
+		if (typeof pLengthCheckOrString === 'string')
+		{
+			if (b)
+				b = (pNode[pField] == pLengthCheckOrString);
+		}
+		else
+			if (b && pLengthCheckOrString)
+				b = (pNode[pField].length > 0);
 	}
 	return b;
 };

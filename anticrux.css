@@ -38,6 +38,12 @@
 	font-size:20pt;
 }
 
+.AntiCrux-notice {
+	padding:5px;
+	border:1px solid black;
+	background-color:#FFFFC0;
+}
+
 
 /*===== Particular styles =====*/
 
