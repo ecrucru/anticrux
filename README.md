@@ -359,6 +359,7 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 	- Library: AntiCrux.prototype._has can compare to string
 	- UI: notification when JavaScript is disabled
 	- UI: fix of incorrect error messages
+	- UI: reordered tabs
 
 
 ### License

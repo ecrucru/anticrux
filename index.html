@@ -51,41 +51,15 @@
 			<div data-role="tabs">
 				<div data-role="navbar">
 					<ul>
-						<li><a href="#acui_tab_action" class="ui-btn-active">Actions</a></li>
-						<li><a href="#acui_tab_board" id="acui_tab_board_header">Board</a></li>
+						<li><a href="#acui_tab_board" id="acui_tab_board_header" class="ui-btn-active">Board</a></li>
+						<li><a href="#acui_tab_action">Actions</a></li>
 						<li><a href="#acui_tab_options">Options</a></li>
 						<li><a href="#acui_tab_tree">Tree</a></li>
 						<li><a href="#acui_tab_about">About</a></li>
 					</ul>
 				</div>
 
-				<div id="acui_tab_action" class="ui-body-d ui-content">
-					<div data-role="controlgroup" data-type="horizontal">
-						<h2>Board</h2>
-						<div data-role="controlgroup" data-type="horizontal">
-							<a id="acui_clear" href="#" data-role="button">Clear</a>
-							<a id="acui_default" href="#" data-role="button">Classic</a>
-							<a id="acui_fisher" href="#" data-role="button">Fisher 960</a>
-						</div>
-
-						<h2>Load from input</h2>
-						<div data-role="controlgroup" data-type="horizontal">
-							<a id="acui_fen_load" href="#" data-role="button">Load FEN</a>
-							<a id="acui_fen_gen" href="#" data-role="button">Generate FEN</a>
-							<a id="acui_lichess_load" href="#" data-role="button">Load from Lichess.org</a>
-							<a id="acui_text_gen" href="#" data-role="button">Generate chess text</a>
-						</div>
-						<div>
-							<input id="acui_input" type="text" value="" size="80" />
-						</div>
-
-						<h2>Miscellaneous</h2>
-						<div data-role="controlgroup" data-type="horizontal">
-							<a id="acui_free" href="#" data-role="button">Free memory</a>
-						</div>
-					</div>
-				</div>
-
+				<!-- Tab - Board -->
 				<div id="acui_tab_board" class="ui-body-d ui-content">
 					<div data-role="controlgroup" data-type="horizontal">
 						<select id="acui_player"><!-- Filled by jQuery --></select>
@@ -130,7 +104,7 @@
 						</div>
 					</div>
 
-					<!-- Menu item for hift -->
+					<!-- Menu item for hint -->
 					<div data-role="popup" id="acui_play_hint_popup">
 						<ul data-role="listview">
 							<li id="acui_play_hint_soft"><a href="#" data-rel="back">Possible target positions</a></li>
@@ -140,6 +114,35 @@
 					</div>
 				</div>
 
+				<!-- Tab - Action -->
+				<div id="acui_tab_action" class="ui-body-d ui-content">
+					<div data-role="controlgroup" data-type="horizontal">
+						<h2>Board</h2>
+						<div data-role="controlgroup" data-type="horizontal">
+							<a id="acui_clear" href="#" data-role="button">Clear</a>
+							<a id="acui_default" href="#" data-role="button">New classic game</a>
+							<a id="acui_fisher" href="#" data-role="button">New game 960</a>
+						</div>
+
+						<h2>Import / Export</h2>
+						<div data-role="controlgroup" data-type="horizontal">
+							<a id="acui_fen_load" href="#" data-role="button">Load FEN</a>
+							<a id="acui_fen_gen" href="#" data-role="button">Generate FEN</a>
+							<a id="acui_lichess_load" href="#" data-role="button">Load from Lichess.org</a>
+							<a id="acui_text_gen" href="#" data-role="button">Generate chess text</a>
+						</div>
+						<div>
+							<input id="acui_input" type="text" value="" size="80" />
+						</div>
+
+						<h2>Miscellaneous</h2>
+						<div data-role="controlgroup" data-type="horizontal">
+							<a id="acui_free" href="#" data-role="button">Free the memory</a>
+						</div>
+					</div>
+				</div>
+
+				<!-- Tab - Options -->
 				<div id="acui_tab_options" class="ui-body-d ui-content">
 					<div class="AntiCrux-hSizer">
 						<div class="AntiCrux-vSizer">
@@ -193,10 +196,12 @@
 					</div>
 				</div>
 
+				<!-- Tab - Tree -->
 				<div id="acui_tab_tree" class="ui-body-d ui-content">
 					<div id="acui_dtree"></div>
 				</div>
 
+				<!-- Tab - About -->
 				<div id="acui_tab_about" class="ui-body-d ui-content">
 					<h2>AntiCrux <span id="acui_version"></span></h2>
 					<p>Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile.</p>
@@ -239,6 +244,7 @@
 					<a href="#" id="acui_popup_ok" data-role="button" data-inline="true" data-rel="back" data-theme="a">OK</a>
 				</div>
 			</div>
+
 
 			<!-- Scripts -->
 			<script type="text/javascript">
@@ -411,83 +417,16 @@
 
 					//-- Updates the list of players
 					$('#acui_player').find('option').remove().end();
-					$('<option/>').val(ai.constants.owner.white).html('Play for White').appendTo('#acui_player');
-					$('<option/>').val(ai.constants.owner.black).html('Play for Black').appendTo('#acui_player');
+					$('<option/>').val(ai.constants.owner.white).html('White to play').appendTo('#acui_player');
+					$('<option/>').val(ai.constants.owner.black).html('Black to play').appendTo('#acui_player');
 					$('#acui_player').val(ai.constants.owner.white).change();
 
-					//-- Events
+					//-- Events (General)
 					$("input[type='text']").on('click', function () {
 						$(this).select();
 					});
 
-					$('#acui_clear').click(function() {
-						ai.clearBoard();
-						ui_move = '';
-						acui_reset_ui();
-						acui_refresh_board();
-					});
-
-					$('#acui_default').click(function() {
-						ai.defaultBoard();
-						ui_move = '';
-						acui_reset_ui();
-						acui_refresh_board();
-					});
-
-					$('#acui_fisher').click(function() {
-						ai.defaultBoard(ai.options.board.fisher);
-						ui_move = '';
-						acui_reset_ui();
-						acui_refresh_board();
-					});
-
-					$('#acui_option_fisher').dblclick(function() {
-						$('#acui_option_fisher').val(Math.floor(Math.random()*960)+1).change();
-					});
-
-					$('#acui_fen_load').click(function() {
-						var player;
-						if (!ai.loadFen($('#acui_input').val()))
-							acui_popup('The FEN cannot be loaded because it has a wrong format.');
-						else
-						{
-							player = ai.getPlayer();
-							ui_move = '';
-							acui_reset_ui();
-							acui_refresh_board();
-							$('#acui_tab_board_header').trigger('click');
-							$('#acui_player').val(player).change();
-						}
-					});
-
-					$('#acui_fen_gen').click(function() {
-						$('#acui_input').val(ai.toFen()).focus().click();
-					});
-
-					$('#acui_lichess_load').click(function() {
-						if (!ai.loadLichess($('#acui_input').val()))
-							acui_popup('The game cannot be retrieved from Lichess.org. Please never abuse.');
-						else
-						{
-							$('#acui_tab_board_header').trigger('click');
-							$('#acui_board').html('Please wait few seconds while the game is loaded...');
-							setTimeout(	function() {
-											ui_move = '';
-											acui_reset_ui();
-											acui_refresh_board();
-											$('#acui_player').val(ai.getPlayer()).change();
-										}, 5000);				//5 seconds are arbitrary
-						}
-					});
-
-					$('#acui_text_gen').click(function() {
-						$('#acui_input').val(ai.toText()).focus().click();
-					});
-
-					$('#acui_free').click(function() {
-						ai.freeMemory();
-					});
-
+					//-- Events (Board)
 					$('#acui_player').change(function() {
 						ai.setPlayer(parseInt($('#acui_player').val()));
 					});
@@ -600,6 +539,81 @@
 
 					});
 
+					$('.AntiCrux-board-promotion').click(function() {
+						ai.promote(this.dataset.promotion);
+						acui_afterHumanMove();
+					});
+
+					//-- Events (Actions)
+					$('#acui_clear').click(function() {
+						ai.clearBoard();
+						ui_move = '';
+						acui_reset_ui();
+						acui_refresh_board();
+					});
+
+					$('#acui_default').click(function() {
+						ai.defaultBoard();
+						ui_move = '';
+						acui_reset_ui();
+						acui_refresh_board();
+					});
+
+					$('#acui_fisher').click(function() {
+						ai.defaultBoard(ai.options.board.fisher);
+						ui_move = '';
+						acui_reset_ui();
+						acui_refresh_board();
+					});
+
+					$('#acui_option_fisher').dblclick(function() {
+						$('#acui_option_fisher').val(Math.floor(Math.random()*960)+1).change();
+					});
+
+					$('#acui_fen_load').click(function() {
+						var player;
+						if (!ai.loadFen($('#acui_input').val()))
+							acui_popup('The FEN cannot be loaded because it has a wrong format.');
+						else
+						{
+							player = ai.getPlayer();
+							ui_move = '';
+							acui_reset_ui();
+							acui_refresh_board();
+							$('#acui_tab_board_header').trigger('click');
+							$('#acui_player').val(player).change();
+						}
+					});
+
+					$('#acui_fen_gen').click(function() {
+						$('#acui_input').val(ai.toFen()).focus().click();
+					});
+
+					$('#acui_lichess_load').click(function() {
+						if (!ai.loadLichess($('#acui_input').val()))
+							acui_popup('The game cannot be retrieved from Lichess.org. Please never abuse.');
+						else
+						{
+							$('#acui_tab_board_header').trigger('click');
+							$('#acui_board').html('Please wait few seconds while the game is loaded...');
+							setTimeout(	function() {
+											ui_move = '';
+											acui_reset_ui();
+											acui_refresh_board();
+											$('#acui_player').val(ai.getPlayer()).change();
+										}, 5000);				//5 seconds are arbitrary
+						}
+					});
+
+					$('#acui_text_gen').click(function() {
+						$('#acui_input').val(ai.toText()).focus().click();
+					});
+
+					$('#acui_free').click(function() {
+						ai.freeMemory();
+					});
+
+					//-- Events (Options)
 					$('#acui_option_predef').change(function() {
 						var i, d;
 
@@ -663,11 +677,6 @@
 
 					$('.AntiCrux-ui-option-refresh').change(function() {
 						acui_refresh_board();
-					});
-
-					$('.AntiCrux-board-promotion').click(function() {
-						ai.promote(this.dataset.promotion);
-						acui_afterHumanMove();
 					});
 
 					//-- Default elements
