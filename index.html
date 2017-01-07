@@ -85,7 +85,7 @@
 								<div data-role="navbar">
 									<ul>
 										<li><a href="#acui_tab_board_evaluation" class="ui-btn-active">Evaluation</a></li>
-										<li><a href="#acui_tab_board_history">History</a></li>
+										<li><a href="#acui_tab_board_history" id="acui_tab_board_history_header">History</a></li>
 									</ul>
 								</div>
 
@@ -97,6 +97,7 @@
 								</div>
 
 								<div id="acui_tab_board_history" class="ui-body-d ui-content" style="width:100%">
+									<p id="acui_sect_rewind"><a id="acui_rewind" href="#" data-role="button">Leave the review</a></p>
 									<p id="acui_history"></p>
 									<p><a id="acui_pgn" class="ui-disabled" href="#" data-role="button">Download PGN</a></p>
 								</div>
@@ -251,7 +252,7 @@
 				"use strict";
 
 				var	ai = new AntiCrux(),
-					ui_move;
+					ui_move, ui_rewind;
 				ai.defaultBoard();
 
 				function acui_options_load() {
@@ -285,23 +286,28 @@
 				}
 
 				function acui_reset_ui() {
+					ui_rewind = false;
 					$('#acui_tab_board_header').trigger('click');
 					$('#acui_valuation').val(0).slider('refresh');
 					$('#acui_lastmove, #acui_nodes, #acui_depth, #acui_moves, #acui_history, #acui_dtree').html('');
+					$('#acui_sect_rewind').hide();
 					$('#acui_pgn').addClass('ui-disabled');
 					$('#acui_player').val(ai.constants.owner.white).change();
 				}
 
 				function acui_refresh_board() {
-					var player = parseInt($('#acui_player').val());
+					//-- Checks the current mode
+					if (ui_rewind)
+						return false;
 
 					//-- Refreshes the board
+					var player = parseInt($('#acui_player').val());
 					ai.freeMemory();
 					$('#acui_board').html(ai.toHtml());
 
 					//-- Reactivates the cells of the board
 					$('.AntiCrux-board-cell-0, .AntiCrux-board-cell-1, .AntiCrux-board-cell-hl').click(function() {
-						var	move = this.dataset.xy;
+						var move = this.dataset.xy;
 
 						//- Checks the format of the value
 						if (!move.match(/^[a-h][1-8]$/))
@@ -311,7 +317,19 @@
 						if (move == ui_move)
 							ui_move = '';
 						else
-							ui_move += move;
+						{
+							//- Overrides the existing selection if it is the same player
+							if (ui_move.length == 2)
+							{
+								if (ai.getPieceByCoordinate(ui_move).owner == ai.getPieceByCoordinate(move).owner)
+									ui_move = move;
+								else
+									ui_move += move;
+							}
+							else
+							//- Appends the coordinate
+								ui_move += move;
+						}
 
 						//- Makes a human move
 						switch (ui_move.length)
@@ -357,13 +375,56 @@
 				}
 
 				function acui_refresh_history() {
+					//-- Main table
 					var hist = ai.getHistoryHtml();
 					$('#acui_history').html(hist);
 					if (hist.length == 0)
 						$('#acui_pgn').addClass('ui-disabled');
 					else
 						$('#acui_pgn').removeClass('ui-disabled');
+					if (ui_rewind)
+						$('#acui_sect_rewind').show();
+					else
+						$('#acui_sect_rewind').hide();
+
+					//-- Events
+					$('.AntiCrux-history-item').click(function() {
+						var	index = parseInt(this.dataset.index),
+							hist = ai.getHistory(),
+							rewind, i;
+
+						//-- Checks
+						if (hist.length === 0)
+							return false;
+						if ((index < 0) || (index >= hist.length))
+							return false;
+
+						//-- Determines the position for the provided index
+						rewind = new AntiCrux();
+						if (!rewind.loadFen(ai.getInitialPosition()))
+							return false;
+						for (i=0 ; i<=index ; i++)
+							if (!rewind.movePiece(hist[i], false, rewind.constants.owner.none))
+								return false;
+							else
+								rewind.highlightMove(hist[i]);
+
+						//-- Sets the mode
+						acui_reset_ui();
+						ui_rewind = true;
+						acui_refresh_history();
+						$('#acui_board').html(rewind.toHtml());		//No event is attached to the cells
+					});
 				}
+
+				function acui_isRewind() {
+					if (ui_rewind)
+					{
+						$('#acui_tab_board_history_header').trigger('click');	//Switches the tab to locate the button
+						acui_popup('Leave the review of the game to continue with it.');
+					}
+					return ui_rewind;
+				};
 
 				function acui_promote() {
 					if (ai.hasPendingPromotion())
@@ -415,6 +476,7 @@
 				$(document).ready(function() {
 					//-- Initialization
 					ui_move = '';
+					ui_rewind = false;
 					acui_refresh_board();
 
 					//-- Updates the list of players
@@ -434,6 +496,10 @@
 					});
 
 					$('#acui_play_ai').click(function() {
+						//-- Checks the current mode
+						if (acui_isRewind())
+							return false;
+
 						//-- Inputs
 						var	player = parseInt($('#acui_player').val()),
 							move = ai.getMoveAI(player),
@@ -454,7 +520,7 @@
 						{
 							ai.logMove();
 							acui_refresh_history();
-							ai.highlight(true, 8*(Math.floor(move/10)%10)+(move%10));
+							ai.highlightMove(move);
 							if (ai.isEndGame())
 								acui_showWinner();
 							else
@@ -468,6 +534,10 @@
 					});
 
 					$('#acui_play_human').click(function() {
+						//-- Checks the current mode
+						if (acui_isRewind())
+							return false;
+
 						//-- Inputs
 						var	player = parseInt($('#acui_player').val()),
 							move = prompt('Type your move :', '0');
@@ -495,11 +565,21 @@
 					});
 
 					$('#acui_play_hint_soft').click(function() {
+						//-- Checks the current mode
+						if (ui_rewind)
+							return false;
+
+						//-- Simple hints
 						ai.highlightMoves(true);
 						acui_refresh_board();
 					});
 
 					$('#acui_play_hint_hard').click(function() {
+						//-- Checks the current mode
+						if (ui_rewind)
+							return false;
+
+						//-- Detailed hints
 						ai.getMoveAI(parseInt($('#acui_player').val()));
 						ui_move = '';
 						ai.highlightMoves(false);
@@ -509,6 +589,11 @@
 					});
 
 					$('#acui_play_undo').click(function() {
+						//-- Checks the current mode
+						if (acui_isRewind())
+							return false;
+
+						//-- Undo
 						var hist;
 						if (ai.undoMove())
 						{
@@ -525,6 +610,17 @@
 						$('#acui_player').val(ai.getPlayer()).change();
 					});
 
+					$('#acui_rewind').click(function() {
+						//-- Checks
+						if (!ui_rewind)
+							return;
+
+						//-- Resets the mode
+						acui_reset_ui();
+						acui_refresh_board();
+						acui_refresh_history();
+					});
+
 					$('#acui_pgn').click(function() {
 						var dl, pgn;
 
@@ -534,7 +630,7 @@
 							acui_popup('No data to export to PGN.');
 						else
 						{
-							//- Download as file
+							//- Downloads as a file
 							// http://stackoverflow.com/questions/3665115/
 							dl = document.createElement('a');
 							dl.setAttribute('href', 'data:application/x-chess-pgn;charset=iso-8859-1,' + encodeURIComponent(pgn));

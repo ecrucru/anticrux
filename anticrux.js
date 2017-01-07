@@ -31,6 +31,7 @@
 //		1n1qk1n1/r1pp1p1r/1p6/8/8/1P4P1/2PK1P1P/1N3BNR w - -		Mate in 10 to be found
 //		rnb4r/p1pk3p/5P2/8/1p6/1P3P2/P1PNP1P1/R3KBN1 b - -			Mate in 10 to be found
 //		rn2k2r/ppp2p1p/5p2/8/8/N6P/PPPKPP1P/R1B2BNR b - -			Mate in 11 to be found
+//		rnb4K/pppp1k1p/5p2/2b5/4n3/8/8/8 b - -						Mate in 13 to be found
 //		rnb1kb1r/p1pp1ppp/7n/4P3/1p5R/1P6/P1P1PPP1/RNBQKBN1 w - -	Mate in 15 to be found
 
 // Interesting positions which illustrate the implemented features :
@@ -322,6 +323,15 @@ AntiCrux.prototype.hasSetUp = function(pNode) {
 	return (pNode._history_fen0.substring(0,43) != 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
 };
 
+AntiCrux.prototype.getInitialPosition = function(pNode) {
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Result
+	return (!this._has(pNode, '_history_fen0', true) ? '' : pNode._history_fen0);
+};
+
 AntiCrux.prototype.getPlayer = function(pNode) {
 	//-- Self
 	if (pNode === undefined)
@@ -341,6 +351,24 @@ AntiCrux.prototype.setPlayer = function(pPlayer, pNode) {
 
 	//-- Sets the player
 	pNode.player = pPlayer;
+};
+
+AntiCrux.prototype.getPieceByCoordinate = function(pCoordinate, pNode) {
+	var index;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Checks
+	if (!pCoordinate.match(/^[a-h][1-8]$/))
+		return false;
+	index = (8-parseInt(pCoordinate.charAt(1)))*8 + 'abcdefgh'.indexOf(pCoordinate.charAt(0));
+
+	//-- Information
+	return { owner: pNode.owner[index],
+			 piece: pNode.piece[index]
+		};
 };
 
 AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, pNode) {
@@ -1065,13 +1093,22 @@ AntiCrux.prototype.highlight = function(pReset, pPosition) {
 };
 
 AntiCrux.prototype.highlightMove = function(pMove) {
-	//-- Checks
-	if (pMove === 0)
-		return false;
+	var move_fromY, move_fromX, move_toY, move_toX;
 
-	//-- Highlight the move
-	this._highlight = [8*Math.floor((pMove%100)/10) + (pMove%10)];
-	return true;
+	//-- No move resets the highlight
+	if (pMove === 0)
+		this._highlight = [];
+	else
+	{
+		//-- Decodes the move
+		move_fromY = Math.floor(pMove/1000) % 10;
+		move_fromX = Math.floor(pMove/100 ) % 10;
+		move_toY   = Math.floor(pMove/10  ) % 10;
+		move_toX   =            pMove       % 10;
+
+		//-- Highlight the move
+		this._highlight = [8*move_fromY + move_fromX, 8*move_toY + move_toX];
+	}
 };
 
 AntiCrux.prototype.highlightMoves = function(pRefresh) {
@@ -1133,15 +1170,15 @@ AntiCrux.prototype.getHistoryHtml = function(pNode) {
 	output = '<table class="ui-table AntiCrux-table" data-role="table">';
 	for (i=0 ; i<pNode._history.length ; i++)
 	{
-		if (i%2 === 0)
+		if (i % 2 === 0)
 			output += '<tr><th>' + Math.floor((i+2)/2) + '</th>';
-		output += '<td>' + this.moveToString(pNode._history[i], node) + '</td>';
+		output += '<td class="AntiCrux-history-item" data-index="'+i+'" title="Click to review this past move">' + this.moveToString(pNode._history[i], node) + '</td>';
 		if (!this.movePiece(pNode._history[i], true, this.constants.owner.none, node))
 			throw 'Internal error - Report any error (#010)';
-		if (i%2 == 1)
+		if (i % 2 == 1)
 			output += '</tr>';
 	}
-	if (i%2 == 1)
+	if (i % 2 == 1)
 		output += '</tr>';
 	return output + '</table>';
 };

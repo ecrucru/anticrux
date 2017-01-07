@@ -129,3 +129,10 @@
 .AntiCrux-board-piece--14	{	background-image:url(images/piece_-14.png);	}
 .AntiCrux-board-piece--15	{	background-image:url(images/piece_-15.png);	}
 .AntiCrux-board-piece--16	{	background-image:url(images/piece_-16.png);	}
+
+
+/*===== History =====*/
+
+.AntiCrux-history-item {
+	cursor:pointer;
+}

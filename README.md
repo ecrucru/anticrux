@@ -304,9 +304,11 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.getDecisionTreeHtml(pNode)
 - AntiCrux.getHistory(pNode)
 - AntiCrux.getHistoryHtml(pNode)
+- AntiCrux.getInitialPosition(pNode)
 - AntiCrux.getMoveAI(pPlayer, pNode)
 - AntiCrux.getMovesHtml(pPlayer, pNode)
 - AntiCrux.getNumNodes()
+- AntiCrux.getPieceByCoordinate(pCoordinate, pNode)
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbol)
 - AntiCrux.getPlayer(pNode)
 - AntiCrux.getReachedDepth()
@@ -366,9 +368,12 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 	- Library: improved load from LiChess (example: 8efxLAuw)
 	- Library: AntiCrux.prototype.getHistory renamed as AntiCrux.prototype.getHistoryHtml
 	- Library: new method AntiCrux.prototype.getHistory
-	- UI: last move is highlighted after an undo
+	- UI: enriched highlighted moves
 	- Library: corrected spelling mistake for AntiCrux.options.board.fischer
 	- Library: optimization of the AI (gameplay for weak levels and technical)
+	- UI: review the game based on the history
+	- Library: new method AntiCrux.prototype.getPieceByCoordinate
+	- UI: easier selection of the moves
 
 
 ### License
