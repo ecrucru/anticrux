@@ -248,6 +248,8 @@
 
 			<!-- Scripts -->
 			<script type="text/javascript">
+				"use strict";
+
 				var	ai = new AntiCrux(),
 					ui_move;
 				ai.defaultBoard();
@@ -534,7 +536,7 @@
 						{
 							//- Download as file
 							// http://stackoverflow.com/questions/3665115/
-							var dl = document.createElement('a');
+							dl = document.createElement('a');
 							dl.setAttribute('href', 'data:application/x-chess-pgn;charset=iso-8859-1,' + encodeURIComponent(pgn));
 							dl.setAttribute('download', 'anticrux_'+(new Date().toISOString().slice(0, 10))+'.pgn');
 							dl.style.display = 'none';
