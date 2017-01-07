@@ -96,21 +96,21 @@ AntiCrux.prototype.clearBoard = function(pNode) {
 	};
 };
 
-AntiCrux.prototype.defaultBoard = function(pFisher, pNode) {
-	var fisher, i, z, p, krn, pieces;
+AntiCrux.prototype.defaultBoard = function(pFischer, pNode) {
+	var fischer, i, z, p, krn, pieces;
 
 	//-- Self
-	if (pFisher === undefined)
-		pFisher = 519;
+	if (pFischer === undefined)
+		pFischer = 519;
 	if (pNode === undefined)
 		pNode = this._root_node;
 
 	//-- Clears the board
 	this.clearBoard(pNode);
-	if ((pFisher < 1) || (pFisher > 960))
+	if ((pFischer < 1) || (pFischer > 960))
 		return false;
-	this.fisher = pFisher;
-	fisher = pFisher-1;
+	this.fischer = pFischer;
+	fischer = pFischer-1;
 
 	//-- Defines the main line of pieces with the help of Chess960
 	// https://en.wikipedia.org/wiki/Chess960
@@ -124,11 +124,11 @@ AntiCrux.prototype.defaultBoard = function(pFisher, pNode) {
 				this.constants.piece.none
 			];
 	//Bishop on a white cell
-	pieces[Math.floor(0.08*(Math.floor(25*fisher) % 100)+1.5)] = this.constants.piece.bishop;
+	pieces[Math.floor(0.08*(Math.floor(25*fischer) % 100)+1.5)] = this.constants.piece.bishop;
 	//Bishop on a black cell
-	pieces[Math.floor(0.08*(Math.floor(25*Math.floor(fisher/4)) % 100) + 0.5)] = this.constants.piece.bishop;
+	pieces[Math.floor(0.08*(Math.floor(25*Math.floor(fischer/4)) % 100) + 0.5)] = this.constants.piece.bishop;
 	//Queen
-	z = Math.floor(Math.floor(fisher/4)/4)/6;
+	z = Math.floor(Math.floor(fischer/4)/4)/6;
 	p = Math.floor(6*(z-Math.floor(z)) + 0.5);
 	for (i=0 ; i<8 ; i++)
 	{
@@ -234,7 +234,7 @@ AntiCrux.prototype.loadFen = function(pFen, pNode) {
 
 	//-- Final
 	this._ai_nodeValuate();
-	this.fisher = null;
+	this.fischer = null;
 	pNode._history_fen0 = this.toFen();
 	return true;
 };
@@ -1565,7 +1565,7 @@ AntiCrux.prototype._init = function() {
 		board : {
 			rotated : false,							//TRUE rotates the board at 180°
 			symbols : true,								//Symbols in Unicode for the display
-			fisher : Math.floor(Math.random()*960)+1,	//Default layout (519=classical)
+			fischer : Math.floor(Math.random()*960)+1,	//Default layout (519=classical)
 			coordinates : true,							//TRUE displays the coordinates around the board
 			noStatOnOwnMove : true,						//TRUE plays faster but the player won't be able to know if he played the right wove
 			fullDecisionTree : false,					//TRUE displays the full decision tree in the user interface and this may represent too much data. The option is essentially used for debugging purposes
@@ -2153,6 +2153,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pNode) {
 		else
 			condition = false;					//The valuation will follow the other rule
 	}
+
 	//-- Evaluates the current node by using the worst valuation
 	if (!condition)
 	{

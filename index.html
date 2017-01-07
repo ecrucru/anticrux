@@ -121,7 +121,7 @@
 						<div data-role="controlgroup" data-type="horizontal">
 							<a id="acui_clear" href="#" data-role="button">Clear</a>
 							<a id="acui_default" href="#" data-role="button">New classic game</a>
-							<a id="acui_fisher" href="#" data-role="button">New game 960</a>
+							<a id="acui_fischer" href="#" data-role="button">New game 960</a>
 						</div>
 
 						<h2>Import / Export</h2>
@@ -177,7 +177,7 @@
 
 						<div class="AntiCrux-vSizer AntiCrux-leftMargin">
 							<h2>Board</h2>
-							<p><label for="acui_option_fisher">Fisher :</label> <input class="AntiCrux-ui-option" id="acui_option_fisher" type="number" min="1" max="960" value="519" title="519 is classical. Double-click to generate a new number" /></p>
+							<p><label for="acui_option_fischer">Fischer :</label> <input class="AntiCrux-ui-option" id="acui_option_fischer" type="number" min="1" max="960" value="519" title="519 is classical. Double-click to generate a new number" /></p>
 							<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
 							<p><label for="acui_option_symbol">Symbols for the pieces</label> <input class="AntiCrux-ui-option" id="acui_option_symbol" type="checkbox" /></p>
 							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option" id="acui_option_coordinates" type="checkbox" /></p>
@@ -270,7 +270,7 @@
 					$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
 
 					//-- Board
-					$('#acui_option_fisher').val(ai.options.board.fisher);
+					$('#acui_option_fischer').val(ai.options.board.fischer);
 					$('#acui_option_rotated').prop('checked', ai.options.board.rotated);
 					$('#acui_option_symbol').prop('checked', ai.options.board.symbols);
 					$('#acui_option_coordinates').prop('checked', ai.options.board.coordinates);
@@ -567,15 +567,15 @@
 						acui_refresh_board();
 					});
 
-					$('#acui_fisher').click(function() {
-						ai.defaultBoard(ai.options.board.fisher);
+					$('#acui_fischer').click(function() {
+						ai.defaultBoard(ai.options.board.fischer);
 						ui_move = '';
 						acui_reset_ui();
 						acui_refresh_board();
 					});
 
-					$('#acui_option_fisher').dblclick(function() {
-						$('#acui_option_fisher').val(Math.floor(Math.random()*960)+1).change();
+					$('#acui_option_fischer').dblclick(function() {
+						$('#acui_option_fischer').val(Math.floor(Math.random()*960)+1).change();
 					});
 
 					$('#acui_fen_load').click(function() {
@@ -672,7 +672,7 @@
 						ai.options.ai.oyster				= $('#acui_option_oyster').prop('checked');
 
 						//-- Board
-						ai.options.board.fisher				= parseInt($('#acui_option_fisher').val());
+						ai.options.board.fischer			= parseInt($('#acui_option_fischer').val());
 						ai.options.board.rotated			= $('#acui_option_rotated').prop('checked');
 						ai.options.board.symbols			= $('#acui_option_symbol').prop('checked');
 						ai.options.board.coordinates		= $('#acui_option_coordinates').prop('checked');

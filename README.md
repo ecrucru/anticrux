@@ -207,7 +207,7 @@ When the symbols are activated, some nice Unicode characters will replace the st
 
 If the unicode characters are not displayed (example: &#9819; and &#9813;), you have to turn off the option.
 
-- **AntiCrux.options.board.fisher**
+- **AntiCrux.options.board.fischer**
 
 The option is a number between 1 and 960. It defines a position where the pieces of the first line are shuffled is a precise order.
 
@@ -299,7 +299,7 @@ node = {
 A node is enriched with attributes when you call the API below. Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application.
 
 - AntiCrux.clearBoard(pNode)
-- AntiCrux.defaultBoard(pFisher, pNode)
+- AntiCrux.defaultBoard(pFischer, pNode)
 - AntiCrux.freeMemory()
 - AntiCrux.getDecisionTreeHtml(pNode)
 - AntiCrux.getHistory(pNode)
@@ -367,6 +367,7 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 	- Library: AntiCrux.prototype.getHistory renamed as AntiCrux.prototype.getHistoryHtml
 	- Library: new method AntiCrux.prototype.getHistory
 	- UI: last move is highlighted after an undo
+	- Library: corrected spelling mistake for AntiCrux.options.board.fischer
 
 
 ### License
