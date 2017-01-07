@@ -368,6 +368,7 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 	- Library: new method AntiCrux.prototype.getHistory
 	- UI: last move is highlighted after an undo
 	- Library: corrected spelling mistake for AntiCrux.options.board.fischer
+	- Library: optimization of the AI (gameplay for weak levels and technical)
 
 
 ### License

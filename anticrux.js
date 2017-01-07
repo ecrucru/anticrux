@@ -35,6 +35,8 @@
 
 // Interesting positions which illustrate the implemented features :
 //		8/7p/8/8/8/b7/1P6/1N6 w - -									Originating piece in movePiece() : xa3, bxa3, b2a3, b2xa3, b1a3, b1xa3, Nxa3 are OK
+//		8/3P4/8/2P5/4P3/8/8/6r1 w - -								Average valuation for weak levels : ignoring the infinite values makes a blunder if promoted to bishop
+//		7K/p1p1p3/7b/7p/8/2k1p3/8/8 b - -							Average valuation for weak levels : ignoring the infinite values makes a blunder when not playing Bg7
 //		8/5k2/8/3P4/8/8/8/8 b - -									Accelerated end of game
 //		8/P7/1p6/8/8/8/8/8 w - -									Accelerated end of game
 //		k7/1p6/1P6/8/8/8/8/8 w - -									Accelerated end of game
@@ -89,10 +91,8 @@ AntiCrux.prototype.clearBoard = function(pNode) {
 		pNode.owner[i] = this.constants.owner.none;
 	}
 	pNode = {
-		piece				: pNode.piece,
-		owner				: pNode.owner,
-		_pendingPromotion	: null,
-		enpassant			: null
+		piece : pNode.piece,
+		owner : pNode.owner
 	};
 };
 
@@ -221,14 +221,10 @@ AntiCrux.prototype.loadFen = function(pFen, pNode) {
 		pNode.player = (list[1] == 'b' ? this.constants.owner.black : this.constants.owner.white);
 
 	//-- En-passant
-	if ((list[3] === undefined) || (list[3] == '-'))
-		pNode.enpassant = null;
-	else
+	if ((list[3] !== undefined) && (list[3] !== '-'))
 	{
 		i = 'abcdefgh'.indexOf(list[3]);
-		if (i == -1)
-			pNode.enpassant = null;
-		else
+		if (i !== -1)
 			pNode.enpassant = 8*(pNode.player == this.constants.owner.white ? 2 : 5) + i;
 	}
 
@@ -499,7 +495,8 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 
 	//-- En passant...
 	//- Executes the move
-	if (	(8*move_toY+move_toX == pNode.enpassant) &&									//Target cell is identified as "en passant"
+	if (	this._has(pNode, 'enpassant', false) &&
+			(8*move_toY+move_toX == pNode.enpassant) &&									//Target cell is identified as "en passant"
 			(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&		//Source piece is a pawn
 			(pNode.piece[8*move_toY+move_toX] == this.constants.piece.none)				//Target piece is blank
 		)
@@ -523,7 +520,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	)
 		pNode.enpassant = 4*(move_toY+move_fromY) + move_toX;
 	//- Removes the cell
-	else
+	else if (this._has(pNode, 'enpassant', false))
 		pNode.enpassant = null;
 
 	//-- Performs the move
@@ -821,7 +818,7 @@ AntiCrux.prototype.hasPendingPromotion = function(pNode) {
 		pNode = this._root_node;
 
 	//-- Result
-	return (this._has(pNode, '_pendingPromotion', false) && (pNode._pendingPromotion !== null));
+	return this._has(pNode, '_pendingPromotion', false);
 };
 
 AntiCrux.prototype.promote = function(pPiece, pNode) {
@@ -1205,7 +1202,7 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 					if (this._has(node.nodes[i], '_win', false) &&
 						(Math.abs(node.nodes[i].valuationSolver) != this.constants.score.infinite)
 					)
-						output += ' *';
+						output += ' <span title="Opportunity of victory">*</span>';
 					output += '</td>';
 				}
 				else
@@ -1324,7 +1321,7 @@ AntiCrux.prototype.toFen = function(pNode) {
 	else
 		output += ' w';
 
-	//-- Castling doesnt exist for AntiChess
+	//-- Castling doesn't exist for AntiChess
 	output += ' -';
 
 	//-- En passant
@@ -1604,13 +1601,14 @@ AntiCrux.prototype._has = function(pNode, pField, pLengthCheckOrString) {
 AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 	//-- Clones the node
 	var	newNode = {
-		player		: pNode.player,
-		piece		: pNode.piece.slice(0),
-		owner		: pNode.owner.slice(0),
-		enpassant	: (pNode.hasOwnProperty('enpassant') ? pNode.enpassant : null)
+		player	: pNode.player,
+		piece	: pNode.piece.slice(0),
+		owner	: pNode.owner.slice(0)
 	};
+	if (this._has(pNode, 'enpassant', false))
+		newNode.enpassant = pNode.enpassant;
 
-	//-- Extended copy
+	//-- Extends the copy
 	if (pFull)
 	{
 		if (this._has(pNode, 'valuation', false))
@@ -2143,15 +2141,23 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pNode) {
 		{
 			if (pNode.nodes[i] === null)
 				continue;
-			if (Math.abs(pNode.nodes[i].valuationSolver) == this.constants.score.infinite)
-				continue;						//Infinite is not part of the average
+			if (Math.abs(pNode.nodes[i].valuationSolver) == this.constants.score.infinite)	//For the weakest levels...
+			{
+				if (pNode.nodes[i].valuationSolver == pPlayer*this.constants.score.infinite)
+				{
+					counter = 0;		//...a loosing position is considered else the end of game is abnormally easy
+					break;
+				}
+				else
+					continue;			//...a winning position is voluntarily ignored. The combinations must be good in average which gives the human player the possibility to react
+			}
 			pNode.valuationSolver += pNode.nodes[i].valuationSolver;
 			counter++;
 		}
 		if (counter !== 0)
 			pNode.valuationSolver = Math.floor(pNode.valuationSolver/counter + 0.5);	//Always integer !
 		else
-			condition = false;					//The valuation will follow the other rule
+			condition = false;			//The valuation will follow the other rule
 	}
 
 	//-- Evaluates the current node by using the worst valuation
