@@ -34,6 +34,7 @@
 //		rnb1kb1r/p1pp1ppp/7n/4P3/1p5R/1P6/P1P1PPP1/RNBQKBN1 w - -	Mate in 15 to be found
 
 // Interesting positions which illustrate the implemented features :
+//		8/7p/8/8/8/b7/1P6/1N6 w - -									Originating piece in movePiece() : xa3, bxa3, b2a3, b2xa3, b1a3, b1xa3, Nxa3 are OK
 //		8/5k2/8/3P4/8/8/8/8 b - -									Accelerated end of game
 //		8/P7/1p6/8/8/8/8/8 w - -									Accelerated end of game
 //		k7/1p6/1P6/8/8/8/8/8 w - -									Accelerated end of game
@@ -260,65 +261,53 @@ AntiCrux.prototype.loadLichess = function(pKey, pNode) {
 		.fail(function(data) {
 			})
 		.done(function(data) {
-			var fen, moves, player, playerIndication, node, i;
-
-			//-- Parses the JSON
-			node = {};
-			that.defaultBoard(519, node);
-			fen = '';
-			moves = '';
-			player = that.constants.owner.none;
+			var fen0, moves, playerIndication, hist, node, i;
 
 			//-- Checks the variant
-			if (data.variant != 'antichess')
+			if (!that._has(data, 'variant', 'antichess'))
 				return false;
 
-			//-- Fetches the FEN in priority
-			if (data.hasOwnProperty('fens'))
-				fen = data.fens[data.fens.length-1];
+			//-- Sets the initial position of the board
+			node = {};
+			if (that._has(data, 'initialFen', true))
+				that.loadFen(data.initialFen, node);
 			else
-				moves = data.moves;
-			if ((moves.length === 0) && (fen.length === 0))
-				return false;
+				that.defaultBoard(519, node);
+			fen0 = that.toFen(node);
 
-			//-- Determines the player about to play
-			if (data.color == 'black')
-				player = that.constants.owner.black;
+			//-- Determines the current player
+			if (that._has(data, 'color', 'black'))
+				playerIndication = that.constants.owner.black;
 			else
-				player = that.constants.owner.white;
+				playerIndication = that.constants.owner.white;
+
+			//-- Determines the first player of the game
+			moves = data.moves.split(' ');
+			if ((playerIndication == that.constants.owner.white) && (moves.length % 2 == 1))
+				playerIndication = that.constants.owner.black;
+			else
+				playerIndication = that.constants.owner.white;
 
 			//-- Processes the moves
-			if (fen.length > 0)
+			hist = [];
+			for (i=0 ; i<moves.length ; i++)
 			{
-				if (!that.loadFen(fen, node))
+				if (!that.movePiece(moves[i], true, playerIndication, node))
 					return false;
-			}
-			else
-			{
-				moves = moves.split(' ');
-				if ((player == that.constants.owner.white) && (moves.length % 2 == 1))	//Who was the first player...
-					playerIndication = that.constants.owner.black;
 				else
-					playerIndication = that.constants.owner.white;
-				for (i=0 ; i<moves.length ; i++)
 				{
-					if (!that.movePiece(moves[i], true, playerIndication, node))
-						return false;
-					else
-					{
-						if (playerIndication == that.constants.owner.white)
-							playerIndication = that.constants.owner.black;
-						else
-							playerIndication = that.constants.owner.white;
-					}
+					hist.push(node.lastMove);
+					that.highlightMove(node.lastMove);
+					playerIndication = (playerIndication == that.constants.owner.white ? that.constants.owner.black : that.constants.owner.white);
 				}
 			}
 
 			//-- Result
 			pNode.owner = node.owner;
 			pNode.piece = node.piece;
-			pNode.player = player;
-			pNode._history_fen0 = this.toFen();
+			pNode.player = playerIndication;
+			pNode._history = hist;
+			pNode._history_fen0 = fen0;
 			return true;
 		});
 	return true;
@@ -429,9 +418,6 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 				// Checks the originating owner
 				if ((pPlayerIndication != this.constants.owner.none) && (node.owner[8*y+x] != pPlayerIndication))
 					continue;
-				// Checks the originating piece
-				if ((regex[1].length == 1) && (this.constants.piece.mapping[regex[1]] != node.piece[8*y+x]))
-					continue;
 				// Checks the originating partial coordinate
 				if ((regex[2].length == 1) && (regex[2] != 'abcdefgh'.charAt(x)))
 					continue;
@@ -441,6 +427,11 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 							(8-parseInt(regex[2][1]) != y)
 						)
 				)
+					continue;
+				// Checks the originating piece
+				if ((regex[1].length == 1) && (this.constants.piece.mapping[regex[1]] != node.piece[8*y+x])) //Is it the described piece ?
+					continue;
+				if ((regex[1].length === 0) && (regex[2].length != 2) && (node.piece[8*y+x] != this.constants.piece.pawn)) //Is it a partially identified pawn ?
 					continue;
 				// Validates the move
 				if (moves.indexOf(node.moves[i]%10000) == -1)
@@ -1073,6 +1064,16 @@ AntiCrux.prototype.highlight = function(pReset, pPosition) {
 							this._highlight.push(parseInt(pPosition));
 						else
 							return false;
+	return true;
+};
+
+AntiCrux.prototype.highlightMove = function(pMove) {
+	//-- Checks
+	if (pMove === 0)
+		return false;
+
+	//-- Highlight the move
+	this._highlight = [8*Math.floor((pMove%100)/10) + (pMove%10)];
 	return true;
 };
 

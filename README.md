@@ -314,6 +314,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.hasPendingPromotion(pNode)
 - AntiCrux.hasSetUp(pNode)
 - AntiCrux.highlight(pReset, pPosition)
+- AntiCrux.highlightMove(pMove)
 - AntiCrux.highlightMoves(pRefresh)
 - AntiCrux.isDraw(pNode)
 - AntiCrux.isEndGame(pNode)
@@ -360,6 +361,7 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 	- UI: notification when JavaScript is disabled
 	- UI: fix of incorrect error messages
 	- UI: reordered tabs
+	- Library: improved load from LiChess (example: 8efxLAuw)
 
 
 ### License

@@ -590,6 +590,7 @@
 					});
 
 					$('#acui_lichess_load').click(function() {
+						var player;
 						if (!ai.loadLichess($('#acui_input').val()))
 							acui_popup('The game cannot be retrieved from Lichess.org. Please never abuse.');
 						else
@@ -597,10 +598,12 @@
 							$('#acui_tab_board_header').trigger('click');
 							$('#acui_board').html('Please wait few seconds while the game is loaded...');
 							setTimeout(	function() {
+											player = ai.getPlayer();
 											ui_move = '';
 											acui_reset_ui();
 											acui_refresh_board();
-											$('#acui_player').val(ai.getPlayer()).change();
+											acui_refresh_history();
+											$('#acui_player').val(player).change();
 										}, 5000);				//5 seconds are arbitrary
 						}
 					});
