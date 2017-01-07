@@ -1107,6 +1107,15 @@ AntiCrux.prototype.highlightMoves = function(pRefresh) {
 };
 
 AntiCrux.prototype.getHistory = function(pNode) {
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Result
+	return (!this._has(pNode, '_history', false) ? [] : pNode._history);
+};
+
+AntiCrux.prototype.getHistoryHtml = function(pNode) {
 	var node, i, output;
 
 	//-- Self

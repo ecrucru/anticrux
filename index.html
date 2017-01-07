@@ -355,7 +355,7 @@
 				}
 
 				function acui_refresh_history() {
-					var hist = ai.getHistory();
+					var hist = ai.getHistoryHtml();
 					$('#acui_history').html(hist);
 					if (hist.length == 0)
 						$('#acui_pgn').addClass('ui-disabled');
@@ -507,13 +507,19 @@
 					});
 
 					$('#acui_play_undo').click(function() {
+						var hist;
 						if (ai.undoMove())
 						{
 							ui_move = '';
 							acui_refresh_moves();
 							acui_refresh_history();
+							hist = ai.getHistory();
+							if (hist.length > 0)
+								ai.highlightMove(hist[hist.length-1]);
 							acui_refresh_board();
 						}
+						else
+							acui_popup('Impossible to undo because there is not enough history.');
 						$('#acui_player').val(ai.getPlayer()).change();
 					});
 
