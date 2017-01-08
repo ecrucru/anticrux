@@ -1,0 +1,35 @@
+{
+	"name": "AntiCrux",
+	"version": "0.1.1",
+	"description": "Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile",
+	"readmeFilename": "README.md",
+	"keywords": [
+		"chess",
+		"antichess",
+		"loosing chess",
+		"suicide chess",
+		"antichess960",
+		"artificial intelligence",
+		"jquery mobile",
+		"html5"
+	],
+	"homepage": "http://ecrucru.free.fr/?page=anticrux",
+	"bugs": "https://github.com/ecrucru/anticrux/issues",
+	"license": "AGPL-3.0",
+	"author": "ecrucru",
+	"files": [
+		"LICENSE",
+		"README.md",
+		"*.css",
+		"*.js",
+		"*.html",
+		"images/*.gif",
+		"images/*.png"
+	],
+	"main": "anticrux.min.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ecrucru/anticrux.git"
+	},
+	"private": false
+}

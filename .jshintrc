@@ -1,0 +1,8 @@
+{
+	"strict": true,
+	"predef": [ "$", "AntiCrux" ],
+	"maxerr": 9999,
+	"nonew": true,
+	"unused": true,
+	"browser": true
+}
