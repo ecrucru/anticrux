@@ -16,6 +16,10 @@
 	- [For the intelligence](#for-the-intelligence)
 	- [For the board](#for-the-board)
 - [Programming interface](#programming-interface)
+	- [Notations](#notations)
+	- [Methods](#methods)
+	- [Valuation](#valuation)
+	- [NodeJS](#nodejs)
 - [Information](#information)
 	- [Change log](#change-log)
 	- [License](#license)
@@ -54,6 +58,7 @@ AntiCrux is neither UCI-compatible, nor working as a Worker (which would allow a
 - Undo
 - Import from FEN, Lichess
 - Export to FEN, PGN, Chess fonts
+- NodeJS
 
 
 
@@ -63,20 +68,21 @@ It mainly depends on the settings you set for the analysis of the decision tree.
 
 - Oyster : random play
 - Handicaped player : restricted classical play
-- Classical player : maximal damage at low depth
-- Advanced classical player : deeper maximal damage
+- Classical player : average damage at low depth
+- Advanced classical player : deeper average damage
 - Tactical player : set of techniques
 - Champion 512 MB : full set of techniques
 - Champion 1 GB : deeper full set of techniques
 - Champion 2 GB : deepest full set of techniques
 
-"Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will crash.
+"Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will probably crash.
 
 The final release of AntiCrux has competed with StockFish Antichess available at [www.lichess.org](https://lichess.org). Following the [calculation rules](http://www.fide.com/component/handbook/?id=172&amp;view=article), the maximal rating of AntiCrux with no time limit is estimated at **1980** (with no guarantee of accuracy).
 
 
 
 ## Options
+
 
 ### Some theory
 
@@ -89,6 +95,7 @@ Basically, playing one piece is an **half-move** and it generates a new position
 The positions are valuated at the lowest level. Then by use of rules of aggregations, the upper levels are weighted with some formulas based on the number of moves, the strength of the remaining pieces, etc... Once the first level is reached, we can pick the move with the best score. This score is a collection of hypothesis which should help the artificial intelligence to win. It is up to you to beat it. Have fun !
 
 The algorithm implements some randomness in order to never play the same games. With the level "Champion", the randomness is rather reduced.
+
 
 ### For the intelligence
 
@@ -256,6 +263,9 @@ The export to FEN and PGN is not impacted.
 
 ## Programming interface
 
+
+### Notations
+
 The board is a mono-dimensional array of 64 cells. Black is at the top. White is at the bottom.
 
 |     |  A |  B |  C | . |  H |
@@ -286,6 +296,9 @@ The moves are identified by 3 notation systems :
 - Algebraic notation : e3, Ra6, Nfxe5, h8=Q... This classical notation is practical for the human players but necessitates a complex processing to convert it into X/Y coordinates. It is used to register the moves and to show their history.
 - Index-based notation : 0=A8 and 63=H1 as seen above. When looping an the mono-dimensional array of the board, the analysis is very simple to mark cells. It is then used internally to highlight the cells.
 - XY notation : massively used internally for the processing of the moves, X and Y are concatenated. The first figure is X from 0 to 7. The second figure is Y from 0 to 7. For example, 56=G3. You can combine up to 5 figures to build a move : the first one is the promotion based on *AntiCrux.constants.piece*, the following 2 figures describe the source position, the following 2 figures describe the target position. For example, 51201=(cxb8=Q).
+
+
+### Methods
 
 A **node** is a position defined by pieces and their owner :
 
@@ -328,6 +341,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.moveToString(pMove, pNode)
 - AntiCrux.promote(pPiece, pNode)
 - AntiCrux.setPlayer(pPlayer, pNode)
+- AntiCrux.toConsole(pNode)
 - AntiCrux.toFen(pNode)
 - AntiCrux.toHtml(pNode)
 - AntiCrux.toPgn(pNode)
@@ -337,6 +351,9 @@ A node is enriched with attributes when you call the API below. Any field or met
 The parameter *pNode* is generally optional. When you omit it, the internal root node is automatically picked.
 
 Your instance is AntiCrux and embeds by default a "root" node representing the current board. The same instance will apply on any node provided in the argument. Consequently : a node is minimalist and an instance of AntiCrux is unique.
+
+
+### Valuation
 
 Once a node is evaluated, you get 2 attributes among others :
 
@@ -348,8 +365,24 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 &#x26a0; The score shows the strength of the player, so its ability to lose AntiChess. Your objective is then to modify the score in favor of your opponent.
 
 
+### NodeJS
+
+AntiCrux is built to be compatible with NodeJS through the package named "anticrux".
+
+```bash
+npm install anticrux
+```
+
+If you meet the prerequisites, you can run the demo with the following command :
+
+```bash
+node nodejs_demo.js
+```
+
+
 
 ## Information
+
 
 ### Change log
 
@@ -374,6 +407,8 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 	- UI: review the game based on the history
 	- Library: new method AntiCrux.prototype.getPieceByCoordinate
 	- UI: easier selection of the moves
+	- Library: new method AntiCrux.prototype.toConsole
+	- Library: support for NodeJS
 
 
 ### License

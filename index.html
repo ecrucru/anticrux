@@ -378,7 +378,7 @@
 					//-- Main table
 					var hist = ai.getHistoryHtml();
 					$('#acui_history').html(hist);
-					if (hist.length == 0)
+					if (hist.length === 0)
 						$('#acui_pgn').addClass('ui-disabled');
 					else
 						$('#acui_pgn').removeClass('ui-disabled');
@@ -424,7 +424,7 @@
 						acui_popup('Leave the review of the game to continue with it.');
 					}
 					return ui_rewind;
-				};
+				}
 
 				function acui_promote() {
 					if (ai.hasPendingPromotion())
@@ -540,7 +540,7 @@
 
 						//-- Inputs
 						var	player = parseInt($('#acui_player').val()),
-							move = prompt('Type your move :', '0');
+							move = window.prompt('Type your move :', '0');
 
 						//-- Checks
 						if (move === null)

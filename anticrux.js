@@ -587,6 +587,8 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
+	if (pPlayer === undefined)
+		pPlayer = this.getPlayer(pNode);
 	if ((pPlayer != this.constants.owner.black) && (pPlayer != this.constants.owner.white))
 		return null;
 	this._buffer = '';
@@ -911,6 +913,8 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
+	if (pMove === null)
+		return '';
 
 	//-- Elements
 	move = parseInt(pMove);
@@ -1520,6 +1524,52 @@ AntiCrux.prototype.toPgn = function(pNode) {
 	return pgn;
 };
 
+AntiCrux.prototype.toConsole = function(pNode) {
+	var x, y, rotated, i, car, buffer;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Builds the board
+	rotated = this.options.board.rotated;		//Shortened syntax
+	buffer = '';
+	for (y=(rotated?7:0) ; (!rotated&&(y<8)) || (rotated&&(y>=0)) ; (rotated?y--:y++))
+	{
+		for (x=(rotated?7:0) ; (!rotated&&(x<8)) || (rotated&&(x>=0)) ; (rotated?x--:x++))
+		{
+			i = 8*y+x;
+
+			//- Left margin
+			if (x === (rotated?7:0))
+			{
+				if (this.options.board.coordinates)
+					buffer += '12345678'[7-y] + '|';
+				else
+					buffer += '|';
+			}
+
+			//- Nature of the position
+			buffer += (pNode.owner[i] == this.constants.owner.white ? 'w' :
+							(pNode.owner[i] == this.constants.owner.black ? 'b' : ' ')
+					);
+			car = this.constants.piece.mapping_rev[pNode.piece[i]];
+			buffer += (car.length === 0 ? ' ' : car) + ' |';
+
+			//- Right margin
+			if (x === (rotated?0:7))
+				buffer += "\n";
+		}
+		buffer += ' +---+---+---+---+---+---+---+---+' + "\n";
+	}
+
+	//-- Result
+	return	' +---+---+---+---+---+---+---+---+' + "\n" +
+			buffer +
+			(rotated ?	'   H   G   F   E   D   C   B   A  ' :
+						'   A   B   C   D   E   F   G   H  ' );
+};
+
 AntiCrux.prototype.freeMemory = function() {
 	this._ai_nodeFreeMemory(this._root_node);
 };
@@ -1581,8 +1631,8 @@ AntiCrux.prototype._init = function() {
 			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 100000,							//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
 			minimizeLiberty : true,						//TRUE allows a deeper inspection by forcing the moves, FALSE does a complete evaluation
-			noStatOnForcedMove : true,					//TRUE plays faster but the player won't be able to check the situation
-			wholeNodes : false,							//TRUE evaluates the depths until the limit is reached and makes the analysis stronger
+			noStatOnForcedMove : false,					//TRUE plays faster but the player won't be able to check the situation
+			wholeNodes : true,							//TRUE evaluates the depths until the limit is reached and makes the analysis stronger
 			randomizedSearch : true,					//TRUE helps the game to not played the same pieces
 			pessimisticScenario : true,					//TRUE makes the algorithm stronger, FALSE is more random
 			bestStaticScore : true,						//TRUE makes the algorithm stronger, FALSE is more random for low determined situations
@@ -1598,7 +1648,7 @@ AntiCrux.prototype._init = function() {
 		},
 		board : {
 			rotated : false,							//TRUE rotates the board at 180°
-			symbols : true,								//Symbols in Unicode for the display
+			symbols : false,							//Symbols in Unicode for the display
 			fischer : Math.floor(Math.random()*960)+1,	//Default layout (519=classical)
 			coordinates : true,							//TRUE displays the coordinates around the board
 			noStatOnOwnMove : true,						//TRUE plays faster but the player won't be able to know if he played the right wove
@@ -2316,3 +2366,9 @@ AntiCrux.prototype._ai_nodeFreeMemory = function(pNode) {
 	pNode.nodes = null;
 	pNode.moves = null;
 };
+
+
+//---- NodeJS
+
+if ((typeof module !== 'undefined') && module.exports)
+	module.exports = AntiCrux;

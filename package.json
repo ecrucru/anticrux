@@ -27,6 +27,9 @@
 		"images/*.png"
 	],
 	"main": "anticrux.min.js",
+	"scripts": {
+		"test": "node nodejs_demo.js"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/ecrucru/anticrux.git"
