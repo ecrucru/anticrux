@@ -1,4 +1,4 @@
-/*
+﻿/*
 	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
 	Copyright (C) 2016-2017, ecrucru
 
@@ -581,10 +581,9 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 
 AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	var	i,
-		maxDepth, curDepth, reg_x, reg_y, reg_mean_x, reg_mean_y, reg_sxx, reg_sxy, reg_a, reg_b, reg_estimate,
-		val, threshold, better, same, flag, moves;
+		maxDepth, curDepth, reg_x, reg_y, reg_mean_x, reg_mean_y, reg_sxx, reg_sxy, reg_a, reg_b, reg_estimate;
 
-	//-- Self
+	//-- Checks
 	if (pNode === undefined)
 		pNode = this._root_node;
 	if (pPlayer === undefined)
@@ -675,114 +674,58 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 
 	//-- Valuates the decision tree entirely
 	this._ai_nodeSolve(pPlayer, pNode);
+	return this._ai_nodePick(pPlayer, pNode);
+};
 
-	//-- Keeps the moves which lead to fast end of game
-	if (this.options.ai.acceleratedEndGame && pNode._forced && (pNode.valuationSolver == pNode.player * -this.constants.score.infinite))
+AntiCrux.prototype.predictMoves = function(pNode) {
+	var subai, move, i, buffer;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+	if (this.hasPendingPromotion(pNode))
+		return 'Error : the position is waiting for a promotion.';
+
+	//-- Duplicates the game
+	this._ai_nodeFreeMemory(pNode);
+	subai = new AntiCrux();
+	subai.options.ai.maxDepth = 3;
+	subai.options.ai.maxNodes = 0;
+	subai.options.ai.wholeNodes = true;
+	subai.options.board.symbols = this.options.board.symbols;
+	if (!subai.loadFen(this.toFen(pNode)))
+		return 'Error : the position cannot be loaded.';
+
+	//-- End of game ?
+	subai._ai_nodeMoves(subai._root_node);
+	if (subai._root_node.moves.length === 0)
+		return 'The game is over.';
+
+	//-- Builds N levels of data
+	buffer = '';
+	for (i=0 ; i<5 ; i++)
 	{
-		threshold = this.constants.score.infinite;
-		for (i=0 ; i<pNode.nodes.length ; i++)
+		//- Gets the move
+		move = subai.getMoveAI();
+		if (move === null)
 		{
-			if (pNode.nodes[i] === null)
-				continue;
-			if (pNode.nodes[i]._forced && (pNode.nodes[i]._sequence > 0) && (pNode.nodes[i]._sequence < threshold))
-				threshold = pNode.nodes[i]._sequence;
+			subai.freeMemory();
+			break;
 		}
-		if (threshold == this.constants.score.infinite)
-			throw 'Internal error - Report any error (#006)';
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			if (pNode.nodes[i] === null)
-				continue;
-			if (pNode.nodes[i]._sequence != threshold)
-				pNode.nodes[i] = null;
-		}
+		if (buffer.length > 0)
+			buffer += ' ';
+		buffer += subai.moveToString(move);
+
+		//- Next position
+		subai.freeMemory();
+		if (!subai.movePiece(move, true))
+			throw 'Internal error - Report any error (#012)';
+		else
+			subai.switchPlayer();
 	}
 
-	//-- Keeps the less risky static moves when we have plenty of moves
-	if (this.options.ai.bestStaticScore && (pNode.nodes.length > 1))
-	{
-		threshold = pPlayer * this.constants.score.infinite;
-
-		//- Finds the corresponding valuation
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			if (pNode.nodes[i] === null)
-				continue;
-
-			// Determines the best valuation
-			if ( ((pPlayer == this.constants.owner.white) && (pNode.nodes[i].valuationSolver < threshold)) ||
-				 ((pPlayer == this.constants.owner.black) && (pNode.nodes[i].valuationSolver > threshold))
-				)
-				threshold = pNode.nodes[i].valuationSolver;
-		}
-
-		//- Removes the weak moves
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			if (pNode.nodes[i] === null)
-				continue;
-			if (pNode.nodes[i].valuationSolver != threshold)
-				pNode.nodes[i] = null;
-		}
-	}
-
-	//-- When there are still plenty of equivalent moves, we keep the ones having an opportunity of win
-	if (this.options.ai.opportunistic && (pNode.nodes.length > 1))
-	{
-		flag = false;
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			if (pNode.nodes[i] === null)
-				continue;
-
-			//- Determines the existence of an oppontunity
-			if (!flag && this._has(pNode.nodes[i], '_win', false))
-			{
-				i = -1;
-				flag = true;
-				continue;
-			}
-
-			//- Keeps the opportunistic moves
-			if (flag && !this._has(pNode.nodes[i], '_win', false))
-				pNode.nodes[i] = null;
-		}
-	}
-
-	//-- Lists the eligible moves
-	// White will minimize the valuation
-	// Black will maximize the valuation
-	moves = [];
-	threshold = pPlayer * this.constants.score.infinite;
-	for (i=0 ; i<pNode.nodes.length ; i++)
-	{
-		if (pNode.nodes[i] === null)
-			continue;
-
-		//- Comparison
-		val = Math.floor(pNode.nodes[i].valuationSolver + 0.5);
-		better = ((pPlayer == this.constants.owner.white) && (val < threshold)) ||
-				 ((pPlayer == this.constants.owner.black) && (val > threshold));
-		same   = ((pPlayer == this.constants.owner.white) && (val == threshold)) ||
-				 ((pPlayer == this.constants.owner.black) && (val == threshold));
-
-		//- Selects the move
-		if (better)
-		{
-			moves = [];
-			threshold = val;
-		}
-		if (same || better)
-			moves.push(pNode.moves[i]);
-	}
-
-	//-- Final move
-	switch (moves.length)
-	{
-		case 0 : throw 'Internal error - Report any error (#002)';
-		case 1 : return moves[0];
-		default: return moves[Math.floor(Math.random() * (moves.length-1) + 0.5)];
-	}
+	//-- Result
+	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + subai.getScore() + '%';
 };
 
 AntiCrux.prototype.logMove = function(pMove, pNode) {
@@ -828,7 +771,7 @@ AntiCrux.prototype.undoMove = function(pNode) {
 		if (!this.movePiece(hist[i], true, this.constants.owner.none, pNode))
 			throw 'Internal error - Report any error (#004)';
 		else
-			this._ai_nodeSwitchPlayer(pNode);
+			this.switchPlayer(pNode);
 	}
 	pNode._history = hist;
 	return true;
@@ -1022,6 +965,18 @@ AntiCrux.prototype.getScore = function(pNode) {
 	}
 };
 
+AntiCrux.prototype.switchPlayer = function(pNode) {
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Switches the players
+	if (pNode.player == this.constants.owner.white)
+		pNode.player = this.constants.owner.black;
+	else
+		pNode.player = this.constants.owner.white;
+};
+
 AntiCrux.prototype.getWinner = function(pNode) {
 	var node = this._ai_nodeCopy((pNode === undefined ? this._root_node : pNode), true);
 
@@ -1061,7 +1016,7 @@ AntiCrux.prototype.isDraw = function(pNode) {
 
 AntiCrux.prototype.isEndGame = function(pNode) {
 	var node = this._ai_nodeCopy(pNode === undefined ? this._root_node : pNode, false);
-	this._ai_nodeSwitchPlayer(node);
+	this.switchPlayer(node);
 	this._ai_nodeMoves(node);
 	return !this._has(node, 'moves', true);
 };
@@ -1500,7 +1455,7 @@ AntiCrux.prototype.toPgn = function(pNode) {
 		else
 		{
 			pgn += ' ' + move;
-			this._ai_nodeSwitchPlayer(pNode);
+			this.switchPlayer(pNode);
 		}
 	}
 
@@ -1710,18 +1665,6 @@ AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 
 	//-- Result
 	return newNode;
-};
-
-AntiCrux.prototype._ai_nodeSwitchPlayer = function(pNode) {
-	//-- Self
-	if (pNode === undefined)
-		pNode = this._root_node;
-
-	//-- Switches the players
-	if (pNode.player == this.constants.owner.white)
-		pNode.player = this.constants.owner.black;
-	else
-		pNode.player = this.constants.owner.white;
 };
 
 AntiCrux.prototype._ai_nodeInventory = function(pPlayer, pPiece, pColumn, pNode) {
@@ -2277,6 +2220,122 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pNode) {
 				val = pNode.nodes[i]._sequence;
 		}
 		pNode._sequence = (pNode._forced && (pNode.valuationSolver==pPlayer*-this.constants.score.infinite) ? val+1 : 0);
+	}
+};
+
+AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
+	var i, threshold, flag, val, better, same, moves;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Keeps the moves which lead to fast end of game
+	if (this.options.ai.acceleratedEndGame && pNode._forced && (pNode.valuationSolver == pNode.player * -this.constants.score.infinite))
+	{
+		threshold = this.constants.score.infinite;
+		for (i=0 ; i<pNode.nodes.length ; i++)
+		{
+			if (pNode.nodes[i] === null)
+				continue;
+			if (pNode.nodes[i]._forced && (pNode.nodes[i]._sequence > 0) && (pNode.nodes[i]._sequence < threshold))
+				threshold = pNode.nodes[i]._sequence;
+		}
+		if (threshold == this.constants.score.infinite)
+			throw 'Internal error - Report any error (#006)';
+		for (i=0 ; i<pNode.nodes.length ; i++)
+		{
+			if (pNode.nodes[i] === null)
+				continue;
+			if (pNode.nodes[i]._sequence != threshold)
+				pNode.nodes[i] = null;
+		}
+	}
+
+	//-- Keeps the less risky static moves when we have plenty of moves
+	if (this.options.ai.bestStaticScore && (pNode.nodes.length > 1))
+	{
+		threshold = pPlayer * this.constants.score.infinite;
+
+		//- Finds the corresponding valuation
+		for (i=0 ; i<pNode.nodes.length ; i++)
+		{
+			if (pNode.nodes[i] === null)
+				continue;
+
+			// Determines the best valuation
+			if ( ((pPlayer == this.constants.owner.white) && (pNode.nodes[i].valuationSolver < threshold)) ||
+				 ((pPlayer == this.constants.owner.black) && (pNode.nodes[i].valuationSolver > threshold))
+				)
+				threshold = pNode.nodes[i].valuationSolver;
+		}
+
+		//- Removes the weak moves
+		for (i=0 ; i<pNode.nodes.length ; i++)
+		{
+			if (pNode.nodes[i] === null)
+				continue;
+			if (pNode.nodes[i].valuationSolver != threshold)
+				pNode.nodes[i] = null;
+		}
+	}
+
+	//-- When there are still plenty of equivalent moves, we keep the ones having an opportunity of win
+	if (this.options.ai.opportunistic && (pNode.nodes.length > 1))
+	{
+		flag = false;
+		for (i=0 ; i<pNode.nodes.length ; i++)
+		{
+			if (pNode.nodes[i] === null)
+				continue;
+
+			//- Determines the existence of an oppontunity
+			if (!flag && this._has(pNode.nodes[i], '_win', false))
+			{
+				i = -1;
+				flag = true;
+				continue;
+			}
+
+			//- Keeps the opportunistic moves
+			if (flag && !this._has(pNode.nodes[i], '_win', false))
+				pNode.nodes[i] = null;
+		}
+	}
+
+	//-- Lists the eligible moves
+	// White will minimize the valuation
+	// Black will maximize the valuation
+	moves = [];
+	threshold = pPlayer * this.constants.score.infinite;
+	for (i=0 ; i<pNode.nodes.length ; i++)
+	{
+		if (pNode.nodes[i] === null)
+			continue;
+
+		//- Comparison
+		val = Math.floor(pNode.nodes[i].valuationSolver + 0.5);
+		better = ((pPlayer == this.constants.owner.white) && (val < threshold)) ||
+				 ((pPlayer == this.constants.owner.black) && (val > threshold));
+		same   = ((pPlayer == this.constants.owner.white) && (val == threshold)) ||
+				 ((pPlayer == this.constants.owner.black) && (val == threshold));
+
+		//- Selects the move
+		if (better)
+		{
+			moves = [];
+			threshold = val;
+		}
+		if (same || better)
+			moves.push(pNode.moves[i]);
+	}
+
+	//-- Final move
+	switch (moves.length)
+	{
+		case 0 : throw 'Internal error - Report any error (#002)';
+		case 1 : return moves[0];
+		default: return moves[Math.floor(Math.random() * (moves.length-1) + 0.5)];
 	}
 };
 

@@ -110,6 +110,7 @@
 						<ul data-role="listview">
 							<li id="acui_play_hint_soft"><a href="#" data-rel="back">Possible target positions</a></li>
 							<li id="acui_play_hint_hard"><a href="#" data-rel="back">Evaluation of the moves</a></li>
+							<li id="acui_play_hint_irma"><a href="#" data-rel="back">Prediction</a></li>
 							<li><a href="#" data-rel="back">Exit</a></li>
 						</ul>
 					</div>
@@ -252,7 +253,9 @@
 				"use strict";
 
 				var	ai = new AntiCrux(),
+					initialized = false,
 					ui_move, ui_rewind;
+				ai.options.board.symbols = true;
 				ai.defaultBoard();
 
 				function acui_options_load() {
@@ -266,7 +269,9 @@
 					$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
 					$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
 					$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
-					$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
+					$('#acui_option_handicap').val(ai.options.ai.handicap);
+					if (initialized)
+						$('#acui_option_handicap').slider('refresh');
 					$('#acui_option_acceleratedendgame').prop('checked', ai.options.ai.acceleratedEndGame);
 					$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
 
@@ -522,7 +527,10 @@
 							acui_refresh_history();
 							ai.highlightMove(move);
 							if (ai.isEndGame())
+							{
 								acui_showWinner();
+								acui_switch_players();
+							}
 							else
 								doSwitch = true;
 						}
@@ -586,6 +594,12 @@
 						acui_refresh_moves();
 						acui_refresh_board();
 						ai.freeMemory();
+					});
+
+					$('#acui_play_hint_irma').click(function() {
+						setTimeout(function() {
+										acui_popup(ai.predictMoves().split("\n").join('<br/>'));
+									}, 500);
 					});
 
 					$('#acui_play_undo').click(function() {
@@ -749,7 +763,8 @@
 						for (d in levels[i])
 							ai.options.ai[d] = levels[i][d];
 						acui_options_load();
-						$("input[type='checkbox']").checkboxradio('refresh');
+						if (initialized)
+							$("input[type='checkbox']").checkboxradio('refresh');
 					});
 
 					$('.AntiCrux-ui-option').change(function() {
@@ -791,6 +806,7 @@
 					$('#acui_option_predef').val(5).change();
 					$('#acui_version').html(ai.options.ai.version);
 					$(document).on('selectstart', false);				//No text selection to avoid moving the pieces on the screen (not supported)
+					initialized = true;
 				});
 			</script>
 		</div>

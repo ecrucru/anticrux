@@ -339,8 +339,10 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.logMove(pMove, pNode)
 - AntiCrux.movePiece(pMove, pCheckLegit, pPlayerIndication, pNode)
 - AntiCrux.moveToString(pMove, pNode)
+- AntiCrux.predictMoves(pNode)
 - AntiCrux.promote(pPiece, pNode)
 - AntiCrux.setPlayer(pPlayer, pNode)
+- AntiCrux.switchPlayer(pNode)
 - AntiCrux.toConsole(pNode)
 - AntiCrux.toFen(pNode)
 - AntiCrux.toHtml(pNode)
@@ -409,6 +411,9 @@ node nodejs_demo.js
 	- UI: easier selection of the moves
 	- Library: new method AntiCrux.prototype.toConsole
 	- Library: support for NodeJS
+	- Library: new method AntiCrux.prototype.switchPlayer
+	- Library: new method AntiCrux.prototype.predictMoves
+	- UI: hint to predict the moves
 
 
 ### License
