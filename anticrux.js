@@ -1479,7 +1479,7 @@ AntiCrux.prototype.toPgn = function(pNode) {
 	return pgn;
 };
 
-AntiCrux.prototype.toConsole = function(pNode) {
+AntiCrux.prototype.toConsole = function(pBorder, pNode) {
 	var x, y, rotated, i, car, buffer;
 
 	//-- Self
@@ -1496,33 +1496,56 @@ AntiCrux.prototype.toConsole = function(pNode) {
 			i = 8*y+x;
 
 			//- Left margin
-			if (x === (rotated?7:0))
-			{
-				if (this.options.board.coordinates)
-					buffer += '12345678'[7-y] + '|';
-				else
-					buffer += '|';
-			}
+			if (pBorder && (x === (rotated?7:0)))
+				buffer += (this.options.board.coordinates ? ' ' + '12345678'[7-y]+' |' : '|');
 
 			//- Nature of the position
-			buffer += (pNode.owner[i] == this.constants.owner.white ? 'w' :
-							(pNode.owner[i] == this.constants.owner.black ? 'b' : ' ')
-					);
 			car = this.constants.piece.mapping_rev[pNode.piece[i]];
-			buffer += (car.length === 0 ? ' ' : car) + ' |';
+			switch (pNode.owner[i])
+			{
+				case this.constants.owner.white:
+					car = car.toUpperCase();
+					break;
+				case this.constants.owner.black:
+					car = car.toLowerCase();
+					break;
+				case this.constants.owner.none:
+					if (!pBorder && (pNode.piece[i] == this.constants.owner.none))
+						car = '.';
+					else
+						car = ' ';	//To mark the black cells, replace by:		((x+y)%2 == 1 ? '.' : ' ');
+					break;
+			}
+			buffer += ' ' + car + (pBorder ? ' |' : '');
 
 			//- Right margin
 			if (x === (rotated?0:7))
 				buffer += "\n";
 		}
-		buffer += ' +---+---+---+---+---+---+---+---+' + "\n";
+		if (pBorder)
+			buffer += (this.options.board.coordinates ? '   ' : '') + '+---+---+---+---+---+---+---+---+';
+		if (y!=(rotated?0:7))
+			buffer += "\n";
+	}
+
+	//-- Top border
+	if (pBorder)
+		buffer =	(this.options.board.coordinates ? '   ' : '') +
+					'+---+---+---+---+---+---+---+---+' + "\n" +
+					buffer;
+
+	//-- Bottom border
+	if (pBorder)
+	{
+		buffer += "\n";
+		if (this.options.board.coordinates)
+			buffer +=	(this.options.board.coordinates ? '    ' : '') +
+						(rotated ?	' H   G   F   E   D   C   B   A  ' :
+									' A   B   C   D   E   F   G   H  ' ) + "\n";
 	}
 
 	//-- Result
-	return	' +---+---+---+---+---+---+---+---+' + "\n" +
-			buffer +
-			(rotated ?	'   H   G   F   E   D   C   B   A  ' :
-						'   A   B   C   D   E   F   G   H  ' );
+	return buffer;
 };
 
 AntiCrux.prototype.freeMemory = function() {

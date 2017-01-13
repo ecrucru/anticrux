@@ -48,16 +48,17 @@ try {
 	}
 
 	//- Analysis
-	console.log(ai.toConsole() + "\n\n");
-	console.log('FEN   : ' + ai.toFen());
-	console.log('Move  : ' + ai.moveToString(ai.getMoveAI()));
+	console.log(ai.toConsole(true) + "\n");
+	console.log('> FEN   : ' + ai.toFen());
+	console.log('> Searching for a move...');
+	console.log('< Move  : ' + ai.moveToString(ai.getMoveAI()));
 	var score = ai.getScore();
 	if (score === 0)
-		console.log('Score : neutral');
+		console.log('< Score : neutral');
 	else if (score < 0)
-		console.log('Score : ' + (-score) + '% against Black');
+		console.log('< Score : ' + (-score) + '% against Black');
 	else
-		console.log('Score : ' + score + '% against White');
+		console.log('< Score : ' + score + '% against White');
 }
 catch(e) {
 	console.log(e);

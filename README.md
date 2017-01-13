@@ -343,7 +343,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.promote(pPiece, pNode)
 - AntiCrux.setPlayer(pPlayer, pNode)
 - AntiCrux.switchPlayer(pNode)
-- AntiCrux.toConsole(pNode)
+- AntiCrux.toConsole(pBorder, pNode)
 - AntiCrux.toFen(pNode)
 - AntiCrux.toHtml(pNode)
 - AntiCrux.toPgn(pNode)
