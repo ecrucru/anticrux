@@ -10,4 +10,6 @@ copy *.html       node_modules\anticrux
 copy images\*.gif node_modules\anticrux\images
 copy images\*.png node_modules\anticrux\images
 
+npm install opn
+
 pause

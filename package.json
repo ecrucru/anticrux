@@ -28,11 +28,14 @@
 	],
 	"main": "anticrux.min.js",
 	"scripts": {
-		"test": "node nodejs_demo.js"
+		"test": "node nodejs_demo_solve.js"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/ecrucru/anticrux.git"
+	},
+	"devDependencies": {
+		"opn": "latest"
 	},
 	"private": false
 }

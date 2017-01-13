@@ -342,6 +342,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.predictMoves(pNode)
 - AntiCrux.promote(pPiece, pNode)
 - AntiCrux.setPlayer(pPlayer, pNode)
+- AntiCrux.startUI()
 - AntiCrux.switchPlayer(pNode)
 - AntiCrux.toConsole(pBorder, pNode)
 - AntiCrux.toFen(pNode)
@@ -414,6 +415,7 @@ node nodejs_demo.js
 	- Library: new method AntiCrux.prototype.switchPlayer
 	- Library: new method AntiCrux.prototype.predictMoves
 	- UI: hint to predict the moves
+	- Library: new method AntiCrux.prototype.startUI (for NodeJS only)
 
 
 ### License

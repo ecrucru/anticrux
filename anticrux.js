@@ -68,6 +68,16 @@ var AntiCrux = function() {
 
 //---- Public members
 
+AntiCrux.prototype.startUI = function() {
+	if ((typeof module !== 'undefined') && module.exports)
+	{
+		const opn = require('opn');
+ 		opn('./node_modules/anticrux/index.html');
+	}
+	else
+		throw 'Error - AntiCrux.prototype.openUI() is restricted to NodeJS';
+}
+
 AntiCrux.prototype.clearBoard = function(pNode) {
 	var i;
 
