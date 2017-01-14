@@ -71,12 +71,12 @@ var AntiCrux = function() {
 AntiCrux.prototype.startUI = function() {
 	if ((typeof module !== 'undefined') && module.exports)
 	{
-		const opn = require('opn');
+		var opn = require('opn');
  		opn('./node_modules/anticrux/index.html');
 	}
 	else
 		throw 'Error - AntiCrux.prototype.openUI() is restricted to NodeJS';
-}
+};
 
 AntiCrux.prototype.clearBoard = function(pNode) {
 	var i;
@@ -96,6 +96,7 @@ AntiCrux.prototype.clearBoard = function(pNode) {
 	this._highlight = [];
 	pNode._history = [];
 	pNode._history_fen0 = '';
+	this.fischer = null;
 	for (i=0 ; i<64 ; i++)
 	{
 		pNode.piece[i] = this.constants.piece.none;
@@ -108,11 +109,11 @@ AntiCrux.prototype.clearBoard = function(pNode) {
 };
 
 AntiCrux.prototype.defaultBoard = function(pFischer, pNode) {
-	var fischer, i, z, p, krn, pieces;
+	var i, z, p, krn, pieces;
 
 	//-- Self
 	if (pFischer === undefined)
-		pFischer = 519;
+		pFischer = this.constants.board.classicalFischer;
 	if (pNode === undefined)
 		pNode = this._root_node;
 
@@ -121,7 +122,6 @@ AntiCrux.prototype.defaultBoard = function(pFischer, pNode) {
 	if ((pFischer < 1) || (pFischer > 960))
 		return false;
 	this.fischer = pFischer;
-	fischer = pFischer-1;
 
 	//-- Defines the main line of pieces with the help of Chess960
 	// https://en.wikipedia.org/wiki/Chess960
@@ -135,11 +135,11 @@ AntiCrux.prototype.defaultBoard = function(pFischer, pNode) {
 				this.constants.piece.none
 			];
 	//Bishop on a white cell
-	pieces[Math.floor(0.08*(Math.floor(25*fischer) % 100)+1.5)] = this.constants.piece.bishop;
+	pieces[Math.floor(0.08*(Math.floor(25*(pFischer-1)) % 100)+1.5)] = this.constants.piece.bishop;
 	//Bishop on a black cell
-	pieces[Math.floor(0.08*(Math.floor(25*Math.floor(fischer/4)) % 100) + 0.5)] = this.constants.piece.bishop;
+	pieces[Math.floor(0.08*(Math.floor(25*Math.floor((pFischer-1)/4)) % 100) + 0.5)] = this.constants.piece.bishop;
 	//Queen
-	z = Math.floor(Math.floor(fischer/4)/4)/6;
+	z = Math.floor(Math.floor((pFischer-1)/4)/4)/6;
 	p = Math.floor(6*(z-Math.floor(z)) + 0.5);
 	for (i=0 ; i<8 ; i++)
 	{
@@ -178,6 +178,10 @@ AntiCrux.prototype.defaultBoard = function(pFischer, pNode) {
 	}
 	pNode._history_fen0 = this.toFen();
 	return true;
+};
+
+AntiCrux.prototype.getNewFischerId = function() {
+	return Math.floor(Math.random()*960)+1;
 };
 
 AntiCrux.prototype.loadFen = function(pFen, pNode) {
@@ -241,8 +245,8 @@ AntiCrux.prototype.loadFen = function(pFen, pNode) {
 
 	//-- Final
 	this._ai_nodeValuate();
-	this.fischer = null;
 	pNode._history_fen0 = this.toFen();
+	this.fischer = this._discoverFischer(pNode);
 	return true;
 };
 
@@ -279,7 +283,7 @@ AntiCrux.prototype.loadLichess = function(pKey, pNode) {
 			if (that._has(data, 'initialFen', true))
 				that.loadFen(data.initialFen, node);
 			else
-				that.defaultBoard(519, node);
+				that.defaultBoard(that.constants.board.classicalFischer, node);
 			fen0 = that.toFen(node);
 
 			//-- Determines the current player
@@ -315,6 +319,7 @@ AntiCrux.prototype.loadLichess = function(pKey, pNode) {
 			pNode.player = playerIndication;
 			pNode._history = hist;
 			pNode._history_fen0 = fen0;
+			that.fischer = that._discoverFischer(pNode);
 			return true;
 		});
 	return true;
@@ -1585,6 +1590,9 @@ AntiCrux.prototype._init = function() {
 		score : {
 			infinite : 16777217,				//8^8+1
 			neutral  : 0
+		},
+		board : {
+			classicalFischer : 519
 		}
 	};
 	this.constants.piece.mapping = {
@@ -1637,7 +1645,7 @@ AntiCrux.prototype._init = function() {
 		board : {
 			rotated : false,							//TRUE rotates the board at 180°
 			symbols : false,							//Symbols in Unicode for the display
-			fischer : Math.floor(Math.random()*960)+1,	//Default layout (519=classical)
+			fischer : this.getNewFischerId(),			//Default layout (519=classical)
 			coordinates : true,							//TRUE displays the coordinates around the board
 			noStatOnOwnMove : true,						//TRUE plays faster but the player won't be able to know if he played the right wove
 			fullDecisionTree : false,					//TRUE displays the full decision tree in the user interface and this may represent too much data. The option is essentially used for debugging purposes
@@ -1671,6 +1679,33 @@ AntiCrux.prototype._has = function(pNode, pField, pLengthCheckOrString) {
 				b = (pNode[pField].length > 0);
 	}
 	return b;
+};
+
+AntiCrux.prototype._discoverFischer = function(pNode) {
+	var f, result, pattern, board;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Checks
+	if (!this._has(pNode, '_history_fen0', true))
+		return null;
+
+	//-- Detects the initial Fischer's position
+	result = null;
+	board = new AntiCrux();
+	pattern = this.toFen(pNode).split(' ')[0];
+	for (f=1 ; f<=960 ; f++)
+	{
+		board.defaultBoard(f);
+		if (board.toFen().substring(0, pattern.length) == pattern)
+		{
+			result = f;
+			break;
+		}
+	}
+	return result;
 };
 
 AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {

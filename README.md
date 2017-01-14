@@ -320,6 +320,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.getInitialPosition(pNode)
 - AntiCrux.getMoveAI(pPlayer, pNode)
 - AntiCrux.getMovesHtml(pPlayer, pNode)
+- AntiCrux.getNewFischerId()
 - AntiCrux.getNumNodes()
 - AntiCrux.getPieceByCoordinate(pCoordinate, pNode)
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbol)
@@ -416,6 +417,8 @@ node nodejs_demo.js
 	- Library: new method AntiCrux.prototype.predictMoves
 	- UI: hint to predict the moves
 	- Library: new method AntiCrux.prototype.startUI (for NodeJS only)
+	- Library: new method AntiCrux.prototype.getNewFischerId
+	- UI: integration around the Fischer's identifier of a game
 
 
 ### License

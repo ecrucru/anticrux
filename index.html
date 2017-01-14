@@ -80,7 +80,6 @@
 
 							<div data-role="tabs" id="tabs">
 								<div><label for="acui_option_autoplay">Autoplay for AI</label> <input id="acui_option_autoplay" type="checkbox" checked /></div>
-								<div><label for="acui_option_pro">Professional mode</label> <input id="acui_option_pro" type="checkbox" /></div>
 
 								<div data-role="navbar">
 									<ul>
@@ -123,7 +122,7 @@
 						<div data-role="controlgroup" data-type="horizontal">
 							<a id="acui_clear" href="#" data-role="button">Clear</a>
 							<a id="acui_default" href="#" data-role="button">New classic game</a>
-							<a id="acui_fischer" href="#" data-role="button">New game 960</a>
+							<a href="#acui_fischer_popup" data-role="button" data-rel="popup" data-transition="slideup">New game 960</a>
 						</div>
 
 						<h2>Import / Export</h2>
@@ -141,6 +140,15 @@
 						<div data-role="controlgroup" data-type="horizontal">
 							<a id="acui_free" href="#" data-role="button">Free the memory</a>
 						</div>
+					</div>
+
+					<!-- Menu item for AntiChess960 -->
+					<div data-role="popup" id="acui_fischer_popup">
+						<ul data-role="listview">
+							<li id="acui_fischer_new"><a href="#" data-rel="back">New identifier</a></li>
+							<li id="acui_fischer_current"><a href="#" data-rel="back">Current identifier</a></li>
+							<li><a href="#" data-rel="back">Exit</a></li>
+						</ul>
 					</div>
 				</div>
 
@@ -180,6 +188,7 @@
 						<div class="AntiCrux-vSizer AntiCrux-leftMargin">
 							<h2>Board</h2>
 							<p><label for="acui_option_fischer">Fischer :</label> <input class="AntiCrux-ui-option" id="acui_option_fischer" type="number" min="1" max="960" value="519" title="519 is classical. Double-click to generate a new number" /></p>
+							<p><label for="acui_option_pro">Professional mode</label> <input id="acui_option_pro" type="checkbox" /></p>
 							<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
 							<p><label for="acui_option_symbol">Symbols for the pieces</label> <input class="AntiCrux-ui-option" id="acui_option_symbol" type="checkbox" /></p>
 							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option" id="acui_option_coordinates" type="checkbox" /></p>
@@ -253,7 +262,6 @@
 				"use strict";
 
 				var	ai = new AntiCrux(),
-					initialized = false,
 					ui_move, ui_rewind;
 				ai.options.board.symbols = true;
 				ai.defaultBoard();
@@ -270,8 +278,7 @@
 					$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
 					$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
 					$('#acui_option_handicap').val(ai.options.ai.handicap);
-					if (initialized)
-						$('#acui_option_handicap').slider('refresh');
+					$('#acui_option_handicap').slider('refresh');
 					$('#acui_option_acceleratedendgame').prop('checked', ai.options.ai.acceleratedEndGame);
 					$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
 
@@ -677,7 +684,15 @@
 						acui_refresh_board();
 					});
 
-					$('#acui_fischer').click(function() {
+					$('#acui_fischer_new').click(function() {
+						$('#acui_option_fischer').dblclick();
+						$('#acui_fischer_current').click();
+						setTimeout(function() {
+									acui_popup('You are playing AntiChess ' + ai.fischer + '.');
+								}, 1000);
+					});
+
+					$('#acui_fischer_current').click(function() {
 						ai.defaultBoard(ai.options.board.fischer);
 						ui_move = '';
 						acui_reset_ui();
@@ -685,7 +700,7 @@
 					});
 
 					$('#acui_option_fischer').dblclick(function() {
-						$('#acui_option_fischer').val(Math.floor(Math.random()*960)+1).change();
+						$('#acui_option_fischer').val(ai.getNewFischerId()).change();
 					});
 
 					$('#acui_fen_load').click(function() {
@@ -700,6 +715,12 @@
 							acui_refresh_board();
 							$('#acui_tab_board_header').trigger('click');
 							$('#acui_player').val(player).change();
+							if (ai.fischer !== null)
+							{
+								$('#acui_option_fischer').val(ai.fischer).change();
+								if (ai.fischer != ai.constants.board.classicalFischer)
+									acui_popup('You are playing AntiChess ' + ai.fischer + '.');
+							}
 						}
 					});
 
@@ -722,6 +743,12 @@
 											acui_refresh_board();
 											acui_refresh_history();
 											$('#acui_player').val(player).change();
+											if (ai.fischer !== null)
+											{
+												$('#acui_option_fischer').val(ai.fischer).change();
+												if (ai.fischer != ai.constants.board.classicalFischer)
+													acui_popup('You are playing AntiChess ' + ai.fischer + '.');
+											}
 										}, 5000);				//5 seconds are arbitrary
 						}
 					});
@@ -763,8 +790,7 @@
 						for (d in levels[i])
 							ai.options.ai[d] = levels[i][d];
 						acui_options_load();
-						if (initialized)
-							$("input[type='checkbox']").checkboxradio('refresh');
+						$("input[type='checkbox']").checkboxradio('refresh');
 					});
 
 					$('.AntiCrux-ui-option').change(function() {
@@ -806,7 +832,6 @@
 					$('#acui_option_predef').val(5).change();
 					$('#acui_version').html(ai.options.ai.version);
 					$(document).on('selectstart', false);				//No text selection to avoid moving the pieces on the screen (not supported)
-					initialized = true;
 				});
 			</script>
 		</div>
