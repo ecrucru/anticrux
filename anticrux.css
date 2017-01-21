@@ -64,25 +64,30 @@
 
 .AntiCrux-board {
 	display:block;
+	box-shadow:1px 1px 5px 1px black;
 }
 
 .AntiCrux-board-coordinates-vertical {
 	float:left;
-	height:50px;
-	width:15px;
+	width:20px;
+	line-height:50px;
+	vertical-align:middle;
+	text-align:center;
 	font-weight:bold;
 }
 .AntiCrux-board-coordinates-horizontal {
 	float:left;
-	height:15px;
 	width:50px;
-	font-weight:bold;
+	line-height:20px;
+	vertical-align:middle;
 	text-align:center;
+	font-weight:bold;
 }
 .AntiCrux-board-coordinates-corner {
 	float:left;
-	height:15px;
-	width:15px;
+	height:20px;
+	width:20px;
+	background-color:#A6ABD6;
 }
 
 .AntiCrux-board-line {

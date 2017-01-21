@@ -31,6 +31,20 @@
 	<!-- Styles -->
 	<link rel="stylesheet" type="text/css" href="jquery-1.5.0.mobile.min.css" />
 	<link rel="stylesheet" type="text/css" href="anticrux.css" />
+	<style type="text/css">
+		#acui_tab_board_evaluation {
+			width:250px;
+		}
+		#acui_tab_board_history {
+			width:250px;
+		}
+		#acui_history_scrollbox {
+			width:100%;
+			height:300px;
+			overflow-x:hidden;
+			overflow-y:auto;
+		}
+	</style>
 
 	<!-- Scripts -->
 	<script type="text/javascript" src="jquery-1.11.1.min.js"></script>
@@ -69,11 +83,11 @@
 						<a id="acui_play_undo" href="#" data-role="button">Undo</a>
 					</div>
 
-					<div>
-						<input id="acui_valuation" type="range" value="0" min="-100" max="100" data-highlight="true" title="Black on the left, White on the right : don't pull the cursor to you !" />
-					</div>
 					<div class="AntiCrux-hSizer">
 						<div class="AntiCrux-vSizer" style="min-width:450px">
+							<div>
+								<input id="acui_valuation" type="range" value="0" min="-100" max="100" data-highlight="true" title="Black on the left, White on the right : don't pull the cursor to you !" />
+							</div>
 							<div id="acui_board"></div>
 						</div>
 						<div class="AntiCrux-vSizer">
@@ -88,17 +102,19 @@
 									</ul>
 								</div>
 
-								<div id="acui_tab_board_evaluation" class="ui-body-d ui-content" style="width:100%">
+								<div id="acui_tab_board_evaluation" class="ui-body-d ui-content">
 									<p id="acui_lastmove"></p>
 									<p id="acui_nodes"></p>
 									<p id="acui_depth"></p>
 									<p id="acui_moves"></p>
 								</div>
 
-								<div id="acui_tab_board_history" class="ui-body-d ui-content" style="width:100%">
-									<p id="acui_sect_rewind"><a id="acui_rewind" href="#" data-role="button">Leave the review</a></p>
-									<p id="acui_history"></p>
-									<p><a id="acui_pgn" class="ui-disabled" href="#" data-role="button">Download PGN</a></p>
+								<div id="acui_tab_board_history" class="ui-body-d ui-content">
+									<div id="acui_sect_rewind"><a id="acui_rewind" href="#" data-role="button" data-theme="b">Leave the review</a></div>
+									<div id="acui_history_scrollbox">
+										<div id="acui_history"></div>
+									</div>
+									<div><a id="acui_pgn" class="ui-disabled" href="#" data-role="button">Download PGN</a></div>
 								</div>
 							</div>
 						</div>
@@ -191,10 +207,10 @@
 							<p><label for="acui_option_pro">Professional mode</label> <input id="acui_option_pro" type="checkbox" /></p>
 							<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
 							<p><label for="acui_option_symbol">Symbols for the pieces</label> <input class="AntiCrux-ui-option" id="acui_option_symbol" type="checkbox" /></p>
-							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option" id="acui_option_coordinates" type="checkbox" /></p>
+							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_coordinates" type="checkbox" /></p>
 							<p><label for="acui_option_nostatonownmove">No statistic on own moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonownmove" type="checkbox" /></p>
-							<p><label for="acui_option_nodtree">No decision tree</label> <input id="acui_option_nodtree" type="checkbox" checked="checked" /></p>
-							<p><label for="acui_option_fulldecisiontree">Full decision tree</label> <input id="acui_option_fulldecisiontree" type="checkbox" checked="checked" /></p>
+							<p><label for="acui_option_decisiontree">Decision tree</label> <input class="AntiCrux-ui-option" id="acui_option_decisiontree" type="checkbox" /></p>
+							<p><label for="acui_option_fulldecisiontree">Full decision tree</label> <input class="AntiCrux-ui-option" id="acui_option_fulldecisiontree" type="checkbox" checked="checked" /></p>
 							<p><label for="acui_option_debugcellid">Internal identifier</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_debugcellid" type="checkbox" /></p>
 						</div>
 
@@ -262,7 +278,7 @@
 				"use strict";
 
 				var	ai = new AntiCrux(),
-					ui_move, ui_rewind;
+					ui_move, ui_move_pending, ui_rewind;
 				ai.options.board.symbols = true;
 				ai.defaultBoard();
 
@@ -288,6 +304,7 @@
 					$('#acui_option_symbol').prop('checked', ai.options.board.symbols);
 					$('#acui_option_coordinates').prop('checked', ai.options.board.coordinates);
 					$('#acui_option_nostatonownmove').prop('checked', ai.options.board.noStatOnOwnMove);
+					$('#acui_option_decisiontree').prop('checked', ai.options.board.decisionTree);
 					$('#acui_option_fulldecisiontree').prop('checked', ai.options.board.fullDecisionTree);
 					$('#acui_option_debugcellid').prop('checked', ai.options.board.debugCellId);
 
@@ -297,14 +314,16 @@
 					$('#acui_option_whiteboard').prop('checked', ai.options.variant.whiteBoard);
 				}
 
-				function acui_reset_ui() {
+				function acui_reset_ui(pResetPlayer) {
 					ui_rewind = false;
 					$('#acui_tab_board_header').trigger('click');
 					$('#acui_valuation').val(0).slider('refresh');
 					$('#acui_lastmove, #acui_nodes, #acui_depth, #acui_moves, #acui_history, #acui_dtree').html('');
 					$('#acui_sect_rewind').hide();
 					$('#acui_pgn').addClass('ui-disabled');
-					$('#acui_player').val(ai.constants.owner.white).change();
+					ai.resetStats();
+					if (pResetPlayer)
+						$('#acui_player').val(ai.constants.owner.white).change();
 				}
 
 				function acui_refresh_board() {
@@ -316,6 +335,8 @@
 					var player = parseInt($('#acui_player').val());
 					ai.freeMemory();
 					$('#acui_board').html(ai.toHtml());
+					$('#acui_board').css('width', (ai.options.board.coordinates?420:400) + 'px');
+					$('#acui_board').css('height', $('#acui_board').css('width'));
 
 					//-- Reactivates the cells of the board
 					$('.AntiCrux-board-cell-0, .AntiCrux-board-cell-1, .AntiCrux-board-cell-hl').click(function() {
@@ -352,8 +373,9 @@
 									ai.getMoveAI(player);
 
 								// Explicit move for the user
-								if (ai.movePiece(ui_move, true, player))
-									acui_promote();
+								move = ai.movePiece(ui_move, true, player);
+								if (move != ai.constants.move.none)
+									acui_promote(move);
 								else
 								{
 									acui_popup('The move has been denied. Choose another one.');
@@ -373,20 +395,22 @@
 							default:
 								throw 'Internal error - Report any error (#007)';
 						}
+						return true;
 					});
+					return true;
 				}
 
 				function acui_refresh_moves() {
 					var player = parseInt($('#acui_player').val());
-					$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore()).slider('refresh');
+					$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore().valuationSolverPC).slider('refresh');
 					$('#acui_nodes').html('Nodes : ' + ai.getNumNodes());
 					$('#acui_depth').html('Depth : ' + ai.getReachedDepth());
 					$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistic with the professional mode.</div>' : ai.getMovesHtml(player));
-					if (!$('#acui_option_nodtree').prop('checked'))
+					if (ai.options.board.decisionTree)
 						$('#acui_dtree').html(ai.getDecisionTreeHtml());
 				}
 
-				function acui_refresh_history() {
+				function acui_refresh_history(pScroll) {
 					//-- Main table
 					var hist = ai.getHistoryHtml();
 					$('#acui_history').html(hist);
@@ -398,6 +422,8 @@
 						$('#acui_sect_rewind').show();
 					else
 						$('#acui_sect_rewind').hide();
+					if (pScroll)
+						$('#acui_history_scrollbox').scrollTop(2*$('#acui_history').height());
 
 					//-- Events
 					$('.AntiCrux-history-item').click(function() {
@@ -416,16 +442,23 @@
 						if (!rewind.loadFen(ai.getInitialPosition()))
 							return false;
 						for (i=0 ; i<=index ; i++)
-							if (!rewind.movePiece(hist[i], false, rewind.constants.owner.none))
-								return false;
+						{
+							if (rewind.movePiece(hist[i], false, rewind.constants.owner.none) == rewind.constants.move.none)
+								throw 'Internal error - Report any error (#015)';
 							else
+							{
+								rewind.switchPlayer();
 								rewind.highlightMove(hist[i]);
+							}
+						}
 
 						//-- Sets the mode
-						acui_reset_ui();
+						acui_reset_ui(false);
 						ui_rewind = true;
-						acui_refresh_history();
+						$('#acui_player').val(rewind.getPlayer()).change();
+						acui_refresh_history(false);
 						$('#acui_board').html(rewind.toHtml());		//No event is attached to the cells
+						return true;
 					});
 				}
 
@@ -438,7 +471,8 @@
 					return ui_rewind;
 				}
 
-				function acui_promote() {
+				function acui_promote(pMove) {
+					ui_move_pending = pMove;
 					if (ai.hasPendingPromotion())
 						$('#acui_promotion').popup('open', {});
 					else
@@ -446,11 +480,15 @@
 				}
 
 				function acui_afterHumanMove() {
-					ai.logMove();
-					acui_refresh_history();
+					ai.logMove(ui_move_pending);
+					ui_move_pending = ai.constants.move.none;
+					acui_refresh_history(true);
 					acui_refresh_board();
 					if (ai.isEndGame())
+					{
 						acui_showWinner();
+						acui_switch_players();
+					}
 					else
 					{
 						acui_switch_players();
@@ -488,6 +526,7 @@
 				$(document).ready(function() {
 					//-- Initialization
 					ui_move = '';
+					ui_move_pending = ai.constants.move.none;
 					ui_rewind = false;
 					acui_refresh_board();
 
@@ -500,11 +539,14 @@
 					//-- Events (General)
 					$("input[type='text']").on('click', function () {
 						$(this).select();
+						return true;
 					});
 
 					//-- Events (Board)
 					$('#acui_player').change(function() {
-						ai.setPlayer(parseInt($('#acui_player').val()));
+						if (!ui_rewind)
+							ai.setPlayer(parseInt($('#acui_player').val()));
+						return !ui_rewind;
 					});
 
 					$('#acui_play_ai').click(function() {
@@ -522,16 +564,16 @@
 						{
 							if (ai.isEndGame())
 								acui_showWinner();
-							return;
+							return true;
 						}
 
 						//-- Moves
 						$('#acui_lastmove').html('Last move : ' + ai.moveToString(move));
 						acui_refresh_moves();
-						if (ai.movePiece(move, true, player))
+						if (ai.movePiece(move, true, player) != ai.constants.move.none)
 						{
-							ai.logMove();
-							acui_refresh_history();
+							ai.logMove(move);
+							acui_refresh_history(true);
 							ai.highlightMove(move);
 							if (ai.isEndGame())
 							{
@@ -546,6 +588,7 @@
 						acui_refresh_board();
 						if (doSwitch)
 							acui_switch_players();
+						return true;
 					});
 
 					$('#acui_play_human').click(function() {
@@ -561,7 +604,7 @@
 						if (move === null)
 						{
 							acui_popup('No move has been considered.');
-							return;
+							return false;
 						}
 
 						//-- Statistics of the current situation
@@ -572,11 +615,13 @@
 						}
 
 						//-- Explicit move for the user
-						if (ai.movePiece(move, true, player))
-							acui_promote();
+						move = ai.movePiece(move, true, player);
+						if (move != ai.constants.move.none)
+							acui_promote(move);
 						else
 							acui_popup('The move has been denied. Choose another one.');
 						ai.freeMemory();
+						return true;
 					});
 
 					$('#acui_play_hint_soft').click(function() {
@@ -585,8 +630,10 @@
 							return false;
 
 						//-- Simple hints
+						ui_move = '';
 						ai.highlightMoves(true);
 						acui_refresh_board();
+						return true;
 					});
 
 					$('#acui_play_hint_hard').click(function() {
@@ -601,12 +648,19 @@
 						acui_refresh_moves();
 						acui_refresh_board();
 						ai.freeMemory();
+						return true;
 					});
 
 					$('#acui_play_hint_irma').click(function() {
+						//-- Checks the current mode
+						if (ui_rewind)
+							return false;
+
+						//-- Suggestion
 						setTimeout(function() {
 										acui_popup(ai.predictMoves().split("\n").join('<br/>'));
 									}, 500);
+						return true;
 					});
 
 					$('#acui_play_undo').click(function() {
@@ -619,8 +673,9 @@
 						if (ai.undoMove())
 						{
 							ui_move = '';
+							acui_reset_ui(false);
 							acui_refresh_moves();
-							acui_refresh_history();
+							acui_refresh_history(true);
 							hist = ai.getHistory();
 							if (hist.length > 0)
 								ai.highlightMove(hist[hist.length-1]);
@@ -629,17 +684,20 @@
 						else
 							acui_popup('Impossible to undo because there is not enough history.');
 						$('#acui_player').val(ai.getPlayer()).change();
+						return true;
 					});
 
 					$('#acui_rewind').click(function() {
 						//-- Checks
 						if (!ui_rewind)
-							return;
+							return false;
 
 						//-- Resets the mode
-						acui_reset_ui();
+						acui_reset_ui(false);
+						$('#acui_player').val(ai.getPlayer()).change();
 						acui_refresh_board();
-						acui_refresh_history();
+						acui_refresh_history(true);
+						return true;
 					});
 
 					$('#acui_pgn').click(function() {
@@ -661,27 +719,36 @@
 							dl.click();
 							document.body.removeChild(dl);
 						}
-
+						return true;
 					});
 
 					$('.AntiCrux-board-promotion').click(function() {
-						ai.promote(this.dataset.promotion);
-						acui_afterHumanMove();
+						var piece = ai.promote(this.dataset.promotion);
+						if (piece != ai.constants.piece.none)
+						{
+							ui_move_pending += 10000 * piece;
+							acui_afterHumanMove();
+							return true;
+						}
+						else
+							return false;
 					});
 
 					//-- Events (Actions)
 					$('#acui_clear').click(function() {
 						ai.clearBoard();
 						ui_move = '';
-						acui_reset_ui();
+						acui_reset_ui(true);
 						acui_refresh_board();
+						return true;
 					});
 
 					$('#acui_default').click(function() {
 						ai.defaultBoard();
 						ui_move = '';
-						acui_reset_ui();
+						acui_reset_ui(true);
 						acui_refresh_board();
+						return true;
 					});
 
 					$('#acui_fischer_new').click(function() {
@@ -690,28 +757,34 @@
 						setTimeout(function() {
 									acui_popup('You are playing AntiChess ' + ai.fischer + '.');
 								}, 1000);
+						return true;
 					});
 
 					$('#acui_fischer_current').click(function() {
 						ai.defaultBoard(ai.options.board.fischer);
 						ui_move = '';
-						acui_reset_ui();
+						acui_reset_ui(true);
 						acui_refresh_board();
+						return true;
 					});
 
 					$('#acui_option_fischer').dblclick(function() {
 						$('#acui_option_fischer').val(ai.getNewFischerId()).change();
+						return true;
 					});
 
 					$('#acui_fen_load').click(function() {
 						var player;
 						if (!ai.loadFen($('#acui_input').val()))
+						{
 							acui_popup('The FEN cannot be loaded because it has a wrong format.');
+							return false;
+						}
 						else
 						{
 							player = ai.getPlayer();
 							ui_move = '';
-							acui_reset_ui();
+							acui_reset_ui(true);
 							acui_refresh_board();
 							$('#acui_tab_board_header').trigger('click');
 							$('#acui_player').val(player).change();
@@ -721,17 +794,22 @@
 								if (ai.fischer != ai.constants.board.classicalFischer)
 									acui_popup('You are playing AntiChess ' + ai.fischer + '.');
 							}
+							return true;
 						}
 					});
 
 					$('#acui_fen_gen').click(function() {
 						$('#acui_input').val(ai.toFen()).focus().click();
+						return true;
 					});
 
 					$('#acui_lichess_load').click(function() {
 						var player;
 						if (!ai.loadLichess($('#acui_input').val()))
+						{
 							acui_popup('The game cannot be retrieved from Lichess.org. Please never abuse.');
+							return false;
+						}
 						else
 						{
 							$('#acui_tab_board_header').trigger('click');
@@ -739,9 +817,9 @@
 							setTimeout(	function() {
 											player = ai.getPlayer();
 											ui_move = '';
-											acui_reset_ui();
+											acui_reset_ui(true);
 											acui_refresh_board();
-											acui_refresh_history();
+											acui_refresh_history(true);
 											$('#acui_player').val(player).change();
 											if (ai.fischer !== null)
 											{
@@ -750,15 +828,18 @@
 													acui_popup('You are playing AntiChess ' + ai.fischer + '.');
 											}
 										}, 5000);				//5 seconds are arbitrary
+							return true;
 						}
 					});
 
 					$('#acui_text_gen').click(function() {
 						$('#acui_input').val(ai.toText()).focus().click();
+						return true;
 					});
 
 					$('#acui_free').click(function() {
 						ai.freeMemory();
+						return true;
 					});
 
 					//-- Events (Options)
@@ -768,11 +849,11 @@
 						//-- Predefined levels
 						var levels = [
 								//Champion
-								{ maxDepth:50,	maxNodes:1000000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
-								{ maxDepth:40,	maxNodes: 500000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
-								{ maxDepth:30,	maxNodes: 200000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:50,	maxNodes:1000000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:40,	maxNodes: 500000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:30,	maxNodes: 200000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
 								//Tactical player
-								{ maxDepth:10,	maxNodes:  90000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:10,	maxNodes:  90000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
 								//Advanced classical player
 								{ maxDepth: 7,	maxNodes:  75000,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
 								//Classical player
@@ -786,11 +867,18 @@
 						//-- Applies the configuration
 						i = parseInt($('#acui_option_predef').val());
 						if (levels[i] === undefined)
-							return;
+							return false;
 						for (d in levels[i])
 							ai.options.ai[d] = levels[i][d];
 						acui_options_load();
 						$("input[type='checkbox']").checkboxradio('refresh');
+						return true;
+					});
+
+					$('#acui_option_fulldecisiontree').change(function() {
+						if ($('#acui_option_fulldecisiontree').prop('checked'))
+							$('#acui_option_decisiontree').prop('checked', true).checkboxradio('refresh');
+						return true;
 					});
 
 					$('.AntiCrux-ui-option').change(function() {
@@ -814,6 +902,7 @@
 						ai.options.board.symbols			= $('#acui_option_symbol').prop('checked');
 						ai.options.board.coordinates		= $('#acui_option_coordinates').prop('checked');
 						ai.options.board.noStatOnOwnMove	= $('#acui_option_nostatonownmove').prop('checked');
+						ai.options.board.decisionTree		= $('#acui_option_decisiontree').prop('checked');
 						ai.options.board.fullDecisionTree	= $('#acui_option_fulldecisiontree').prop('checked');
 						ai.options.board.debugCellId		= $('#acui_option_debugcellid').prop('checked');
 
@@ -821,14 +910,16 @@
 						ai.options.variant.promoteQueen		= $('#acui_option_promotequeen').prop('checked');
 						ai.options.variant.activePawns		= $('#acui_option_activepawns').prop('checked');
 						ai.options.variant.whiteBoard		= $('#acui_option_whiteboard').prop('checked');
+						return true;
 					});
 
 					$('.AntiCrux-ui-option-refresh').change(function() {
 						acui_refresh_board();
+						return true;
 					});
 
 					//-- Default elements
-					$('#acui_js').hide();
+					$('#acui_js, #acui_sect_rewind').hide();
 					$('#acui_option_predef').val(5).change();
 					$('#acui_version').html(ai.options.ai.version);
 					$(document).on('selectstart', false);				//No text selection to avoid moving the pieces on the screen (not supported)

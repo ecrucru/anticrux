@@ -1,6 +1,6 @@
 {
 	"strict": true,
-	"predef": [ "$", "AntiCrux", "module" ],
+	"predef": [ "$", "AntiCrux", "module", "require", "global" ],
 	"maxerr": 9999,
 	"nonew": true,
 	"unused": true,

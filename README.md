@@ -77,7 +77,7 @@ It mainly depends on the settings you set for the analysis of the decision tree.
 
 "Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will probably crash.
 
-The final release of AntiCrux has competed with StockFish Antichess available at [www.lichess.org](https://lichess.org). Following the [calculation rules](http://www.fide.com/component/handbook/?id=172&amp;view=article), the maximal rating of AntiCrux with no time limit is estimated at **1980** (with no guarantee of accuracy).
+AntiCrux has competed with StockFish Antichess available at [www.lichess.org](https://lichess.org). Following the [calculation rules](http://www.fide.com/component/handbook/?id=172&amp;view=article), the maximal rating of AntiCrux version 0.1.0 with no time limit is estimated at **1980** (with no guarantee of accuracy).
 
 
 
@@ -230,11 +230,21 @@ When the option is disabled, the board is more compact.
 
 To not interfere with your thinking, the statistics are not generated when you play. You can use a hint on demand from the general user interface.
 
+- **AntiCrux.options.board.decisionTree**
+
+The decision tree is the basic structure of nodes helping to find the best move. When this option is activated, some memory is allocated to represent the moves in a human-readable way.
+
 - **AntiCrux.options.board.fullDecisionTree**
 
-The decision tree is the basic structure of nodes helping to find the best move. In practice, the player needs to read the deepest level, not every level.
+In practice, the player needs to read the deepest level, not every level.
 
-Essentially for debugging purposes, you can ask to show all the levels. In any case, the depth is restricted to a certain level.
+For debugging purposes, you can ask to show all the levels within a certain limit. The memory is then impacted.
+
+- **AntiCrux.options.board.analysisDepth**
+
+This depth applies on the analysis of the moves. The deeper, the more anticipation you can expect.
+
+This information consumes the memory and is less relevant at deep levels.
 
 - **AntiCrux.options.board.debugCellId**
 
@@ -300,28 +310,31 @@ The moves are identified by 3 notation systems :
 
 ### Methods
 
-A **node** is a position defined by pieces and their owner :
+A **node** is a position defined by pieces and their owner, and a player :
 
 ```javascript
 node = {
-  piece : [ /* 64 cells */ ],
-  owner : [ /* 64 cells */ ]
+  piece  : [ /* 64 cells */ ],
+  owner  : [ /* 64 cells */ ],
+  player : AntiCrux.constants.owner.white
 };
 ```
 
 A node is enriched with attributes when you call the API below. Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application.
 
-- AntiCrux.clearBoard(pNode)
-- AntiCrux.defaultBoard(pFischer, pNode)
+- AntiCrux.clearBoard()
+- AntiCrux.copyOptions(pObject)
+- AntiCrux.defaultBoard(pFischer)
 - AntiCrux.freeMemory()
 - AntiCrux.getDecisionTreeHtml(pNode)
-- AntiCrux.getHistory(pNode)
-- AntiCrux.getHistoryHtml(pNode)
-- AntiCrux.getInitialPosition(pNode)
+- AntiCrux.getHistory()
+- AntiCrux.getHistoryHtml()
+- AntiCrux.getInitialPosition()
 - AntiCrux.getMoveAI(pPlayer, pNode)
 - AntiCrux.getMovesHtml(pPlayer, pNode)
 - AntiCrux.getNewFischerId()
 - AntiCrux.getNumNodes()
+- AntiCrux.getOppositePlayer(pNode)
 - AntiCrux.getPieceByCoordinate(pCoordinate, pNode)
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbol)
 - AntiCrux.getPlayer(pNode)
@@ -329,28 +342,29 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.getScore(pNode)
 - AntiCrux.getWinner(pNode)
 - AntiCrux.hasPendingPromotion(pNode)
-- AntiCrux.hasSetUp(pNode)
+- AntiCrux.hasSetUp()
 - AntiCrux.highlight(pReset, pPosition)
 - AntiCrux.highlightMove(pMove)
 - AntiCrux.highlightMoves(pRefresh)
 - AntiCrux.isDraw(pNode)
 - AntiCrux.isEndGame(pNode)
-- AntiCrux.loadFen(pFen, pNode)
-- AntiCrux.loadLichess(pKey, pNode)
-- AntiCrux.logMove(pMove, pNode)
+- AntiCrux.loadFen(pFen)
+- AntiCrux.loadLichess(pKey)
+- AntiCrux.logMove(pMove)
 - AntiCrux.movePiece(pMove, pCheckLegit, pPlayerIndication, pNode)
 - AntiCrux.moveToString(pMove, pNode)
 - AntiCrux.predictMoves(pNode)
 - AntiCrux.promote(pPiece, pNode)
+- AntiCrux.resetStats()
 - AntiCrux.setPlayer(pPlayer, pNode)
 - AntiCrux.startUI()
 - AntiCrux.switchPlayer(pNode)
 - AntiCrux.toConsole(pBorder, pNode)
 - AntiCrux.toFen(pNode)
 - AntiCrux.toHtml(pNode)
-- AntiCrux.toPgn(pNode)
+- AntiCrux.toPgn()
 - AntiCrux.toText(pNode)
-- AntiCrux.undoMove(pNode)
+- AntiCrux.undoMove()
 
 The parameter *pNode* is generally optional. When you omit it, the internal root node is automatically picked.
 
@@ -380,7 +394,7 @@ npm install anticrux
 If you meet the prerequisites, you can run the demo with the following command :
 
 ```bash
-node nodejs_demo.js
+node --expose-gc nodejs_demo_solve.js
 ```
 
 
@@ -392,7 +406,8 @@ node nodejs_demo.js
 
 - November 11th 2016 - Creation of the project
 - December 25th 2016 - Version 0.1
-- In progress - Version 0.1.1
+	- Initial set of features
+- January 21st 2017 - Version 0.2
 	- Library: AntiCrux.prototype.getMoves renamed as AntiCrux.prototype.getMovesHtml
 	- Library: New mandatory parameter for AntiCrux.prototype.highlightMoves
 	- UI: highlighted target cells when requesting a detailed hint
@@ -416,9 +431,15 @@ node nodejs_demo.js
 	- Library: new method AntiCrux.prototype.switchPlayer
 	- Library: new method AntiCrux.prototype.predictMoves
 	- UI: hint to predict the moves
-	- Library: new method AntiCrux.prototype.startUI (for NodeJS only)
+	- Library: new method AntiCrux.prototype.startUI (restricted to NodeJS)
 	- Library: new method AntiCrux.prototype.getNewFischerId
 	- UI: integration around the Fischer's identifier of a game
+	- Library: deep technical remodelling of the library for speed and lower impact on the memory
+	- Library: new method AntiCrux.prototype.copyOptions
+	- Library: new method AntiCrux.prototype.resetStats
+	- Library: bug fix in the processing of the option AntiCrux.options.ai.noStatOnForcedMove
+	- Library: new method AntiCrux.prototype.getOppositePlayer
+	- UI: improved layout for the history of the moves
 
 
 ### License

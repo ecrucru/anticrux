@@ -52,7 +52,7 @@ try {
 	console.log('> FEN   : ' + ai.toFen());
 	console.log('> Searching for a move...');
 	console.log('< Move  : ' + ai.moveToString(ai.getMoveAI()));
-	var score = ai.getScore();
+	var score = ai.getScore().valuationSolverPC;
 	if (score === 0)
 		console.log('< Score : neutral');
 	else if (score < 0)

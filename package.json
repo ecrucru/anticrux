@@ -1,6 +1,6 @@
 {
 	"name": "AntiCrux",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"description": "Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile",
 	"readmeFilename": "README.md",
 	"keywords": [
