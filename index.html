@@ -191,6 +191,7 @@
 							<p><label for="acui_option_maxnodes">Maximal nodes :</label> <input class="AntiCrux-ui-option" id="acui_option_maxnodes" type="number" min="0" step="100"/></p>
 							<p><label for="acui_option_wholenodes">Maximize the nodes</label> <input class="AntiCrux-ui-option" id="acui_option_wholenodes" type="checkbox" /></p>
 							<p><label for="acui_option_minimizeliberty">Minimize the liberty</label> <input class="AntiCrux-ui-option" id="acui_option_minimizeliberty" type="checkbox" /></p>
+							<p><label for="acui_option_maxreply">Maximal number of replies :</label> <input class="AntiCrux-ui-option" id="acui_option_maxreply" type="range" value="1" min="1" max="10" /></p>
 							<p><label for="acui_option_nostatonforcedmove">No statistic on forced moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonforcedmove" type="checkbox" /></p>
 							<p><label for="acui_option_randomizedsearch">Randomized search</label> <input class="AntiCrux-ui-option" id="acui_option_randomizedsearch" type="checkbox" /></p>
 							<p><label for="acui_option_pessimisticscenario">Pessimistic scenario</label> <input class="AntiCrux-ui-option" id="acui_option_pessimisticscenario" type="checkbox" /></p>
@@ -287,6 +288,7 @@
 					$('#acui_option_maxdepth').val(ai.options.ai.maxDepth);
 					$('#acui_option_maxnodes').val(ai.options.ai.maxNodes);
 					$('#acui_option_minimizeliberty').prop('checked', ai.options.ai.minimizeLiberty);
+					$('#acui_option_maxreply').val(ai.options.ai.maxReply);
 					$('#acui_option_nostatonforcedmove').prop('checked', ai.options.ai.noStatOnForcedMove);
 					$('#acui_option_wholenodes').prop('checked', ai.options.ai.wholeNodes);
 					$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
@@ -849,19 +851,19 @@
 						//-- Predefined levels
 						var levels = [
 								//Champion
-								{ maxDepth:50,	maxNodes:1000000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
-								{ maxDepth:40,	maxNodes: 500000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
-								{ maxDepth:30,	maxNodes: 200000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:50,	maxNodes:1000000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:2,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:40,	maxNodes: 500000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:2,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:30,	maxNodes: 200000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:2,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
 								//Tactical player
-								{ maxDepth:10,	maxNodes:  90000,	wholeNodes:true,	minimizeLiberty:true,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth:10,	maxNodes:  90000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:1,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
 								//Advanced classical player
-								{ maxDepth: 7,	maxNodes:  75000,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth: 7,	maxNodes:  75000,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
 								//Classical player
-								{ maxDepth: 3,	maxNodes:  15000,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
+								{ maxDepth: 3,	maxNodes:  15000,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
 								//Handicaped player
-								{ maxDepth: 7,	maxNodes:  50000,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:70,	acceleratedEndGame:true		},
+								{ maxDepth: 7,	maxNodes:  50000,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:70,	acceleratedEndGame:true		},
 								//Oyster
-								{ maxDepth: 3,	maxNodes:    100,	wholeNodes:false,	minimizeLiberty:false,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:true,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:false	}
+								{ maxDepth: 3,	maxNodes:    100,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:true,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:false	}
 							];
 
 						//-- Applies the configuration
@@ -872,6 +874,11 @@
 							ai.options.ai[d] = levels[i][d];
 						acui_options_load();
 						$("input[type='checkbox']").checkboxradio('refresh');
+						return true;
+					});
+
+					$('#acui_option_maxreply').change(function() {
+						$('#acui_option_minimizeliberty').prop('checked', true).checkboxradio('refresh');
 						return true;
 					});
 
@@ -886,13 +893,14 @@
 						ai.options.ai.maxDepth				= parseInt($('#acui_option_maxdepth').val());
 						ai.options.ai.maxNodes				= parseInt($('#acui_option_maxnodes').val());
 						ai.options.ai.minimizeLiberty		= $('#acui_option_minimizeliberty').prop('checked');
+						ai.options.ai.maxReply				= parseInt($('#acui_option_maxreply').val());
 						ai.options.ai.noStatOnForcedMove	= $('#acui_option_nostatonforcedmove').prop('checked');
 						ai.options.ai.wholeNodes			= $('#acui_option_wholenodes').prop('checked');
 						ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
 						ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
 						ai.options.ai.bestStaticScore		= $('#acui_option_beststaticscore').prop('checked');
 						ai.options.ai.opportunistic			= $('#acui_option_opportunistic').prop('checked');
-						ai.options.ai.handicap				= $('#acui_option_handicap').val();
+						ai.options.ai.handicap				= parseInt($('#acui_option_handicap').val());
 						ai.options.ai.acceleratedEndGame	= $('#acui_option_acceleratedendgame').prop('checked');
 						ai.options.ai.oyster				= $('#acui_option_oyster').prop('checked');
 

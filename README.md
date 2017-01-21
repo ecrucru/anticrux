@@ -137,6 +137,15 @@ In the following table issued from a game, the number of nodes is really reduced
 | 7     | 70712349 (?)  | 648           |
 | 8     | 917562070 (?) | 1506          |
 
+- **AntiCrux.options.ai.maxReply**
+
+The minimization of the liberty of your opponent doesn't necessarily pick the right move. Sometimes it is better to leave more than 1 opportunity of reply to be able to enlarge the strategy. This is very noticeable in the position "4k1nr/7Q/8/8/8/3P4/6PP/6rR b - -" :
+
+- Rxh7 leaves 1 move in Rxg1 but you lose
+- Rxh1 leaves 2 moves in Qxg8 and Qxh8 but you don't lose immediately
+
+This option is relevant when AntiCrux.options.ai.minimizeLiberty is activated. The higher the figure, the higher the nodes and the lower the depth. The recommended values are 1 (forced moves where possible) or 2 (tolerable liberty without forced moves).
+
 - **AntiCrux.options.ai.noStatOnForcedMove**
 
 To play faster when the moves are forced, you can choose to not perform a deep analysis to evaluate the position of the artificial intelligence.

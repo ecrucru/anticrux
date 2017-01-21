@@ -43,8 +43,8 @@
 //		8/7p/8/8/8/b7/1P6/1N6 w - -									Originating piece in movePiece() : xa3, bxa3, b2a3, b2xa3, b1a3, b1xa3, Nxa3 are OK
 //		8/3P4/8/2P5/4P3/8/8/6r1 w - -								Average valuation for weak levels : ignoring the infinite values makes a blunder if promoted to bishop
 //		7K/p1p1p3/7b/7p/8/2k1p3/8/8 b - -							Average valuation for weak levels : ignoring the infinite values makes a blunder when not playing Bg7
+//		2Rn1b1r/1ppppppq/1k3n1p/8/1P6/6P1/2PPPPNP/1KBN1BQR w - -	Minimization of the liberty (Rxd8=minimization, Rxc7=no minimization)
 //		4k1nr/7Q/8/8/8/3P4/6PP/6rR b - -							Minimization of the liberty and its negative effect (Rxg7=minimization but loses)
-//		2Rn1b1r/1ppppppq/1k3n1p/8/1P6/6P1/2PPPPNP/1KBN1BQR w - -	Minimization of the liberty (Rxc7=no minimization, Rxd8=minimization)
 //		1nbqkr2/r1pppp1p/1p6/8/3P4/1P2P3/2P4P/5BN1 w - -			Minimization of the liberty (Ba6=minimization but it is not the best move)
 //		8/5k2/8/3P4/8/8/8/8 b - -									Accelerated end of game
 //		8/P7/1p6/8/8/8/8/8 w - -									Accelerated end of game
@@ -617,6 +617,8 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 		return null;
 	if (this.options.ai.maxDepth < 3)
 		this.options.ai.maxDepth = 3;			//At depth 2, the algorithm doesn't attack...
+	if (this.options.ai.maxReply < 1)
+		this.options.ai.maxReply = 1;
 	this._ai_nodeFreeMemory(pNode);				//Should be done by the calling program in any case
 	pNode.player = pPlayer;
 	maxDepth = this.options.ai.maxDepth;
@@ -1600,6 +1602,7 @@ AntiCrux.prototype._init = function() {
 			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 100000,							//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
 			minimizeLiberty : true,						//TRUE allows a deeper inspection by forcing the moves, FALSE does a complete evaluation
+			maxReply : 1,								//Number >=1 corresponding to the maximal number of moves that a player is allowed in return when minimizeLiberty is enabled
 			noStatOnForcedMove : false,					//TRUE plays faster but the player won't be able to check the situation
 			wholeNodes : true,							//TRUE evaluates the depths until the limit is reached and makes the analysis stronger
 			randomizedSearch : true,					//TRUE helps the game to not played the same pieces
@@ -2005,7 +2008,7 @@ AntiCrux.prototype._ai_nodeRecurseTree = function(pPlayer, pDepth, pNode) {
 	{
 		this._ai_nodeMoves(pNode.nodes[i]);
 		if (this.options.ai.minimizeLiberty && (pNode.nodes[i].player != pPlayer))
-			if ((pNode.nodes[i].moves.length > 0) && (pNode.nodes[i].moves.length < min_moves))
+			if ((pNode.nodes[i].moves.length >= this.options.ai.maxReply) && (pNode.nodes[i].moves.length < min_moves))
 				min_moves = pNode.nodes[i].moves.length;
 	}
 	for (i=pNode.nodes.length-1 ; i>=0 ; i--)
