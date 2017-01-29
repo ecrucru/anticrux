@@ -111,6 +111,8 @@ The value can be increased drastically if you enable *minimizeLiberty*. But the 
 
 If you don't want that, you should reach the maximal depth dynamically at any moment. So you can set the maximal depth to 99, define a maximal number of nodes relevant with the size of your memory (*maxNodes*) and ask to reach this limit all the time (*wholeNodes*).
 
+If you play at depth 1, it is advised to deactivate AntiCrux.options.variant.activePawns because the pawns are stronger once they moved.
+
 - **AntiCrux.options.ai.maxNodes**
 
 The number of positions to be analyzed impacts the consumption of memory. When there is not enough memory, the browser will crash and your game will be lost.
@@ -356,7 +358,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.highlightMove(pMove)
 - AntiCrux.highlightMoves(pRefresh)
 - AntiCrux.isDraw(pNode)
-- AntiCrux.isEndGame(pNode)
+- AntiCrux.isEndGame(pSwitch, pNode)
 - AntiCrux.loadFen(pFen)
 - AntiCrux.loadLichess(pKey)
 - AntiCrux.logMove(pMove)
@@ -414,11 +416,11 @@ node --expose-gc nodejs_demo_solve.js
 ### Change log
 
 - November 11th 2016 - Creation of the project
-- December 25th 2016 - Version 0.1
+- December 25th 2016 - Version 0.1.0
 	- Initial set of features
-- January 21st 2017 - Version 0.2
+- January 29th 2017 - Version 0.2.0
 	- Library: AntiCrux.prototype.getMoves renamed as AntiCrux.prototype.getMovesHtml
-	- Library: New mandatory parameter for AntiCrux.prototype.highlightMoves
+	- Library: new mandatory parameter for AntiCrux.prototype.highlightMoves
 	- UI: highlighted target cells when requesting a detailed hint
 	- Library: no more 'v' in AntiCrux.options.ai.version
 	- Library: AntiCrux.prototype._has can compare to string
@@ -449,6 +451,9 @@ node --expose-gc nodejs_demo_solve.js
 	- Library: bug fix in the processing of the option AntiCrux.options.ai.noStatOnForcedMove
 	- Library: new method AntiCrux.prototype.getOppositePlayer
 	- UI: improved layout for the history of the moves
+	- Library: improvement of the deep analysis
+	- Library: new parameter for AntiCrux.prototype.isEndGame
+	- Library: the minimal search depth is now 1 (previously 3)
 
 
 ### License

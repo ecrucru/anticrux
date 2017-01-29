@@ -44,6 +44,9 @@
 			overflow-x:hidden;
 			overflow-y:auto;
 		}
+		#acui_sect_eval {
+			line-height:30px;
+		}
 	</style>
 
 	<!-- Scripts -->
@@ -103,10 +106,12 @@
 								</div>
 
 								<div id="acui_tab_board_evaluation" class="ui-body-d ui-content">
-									<p id="acui_lastmove"></p>
-									<p id="acui_nodes"></p>
-									<p id="acui_depth"></p>
-									<p id="acui_moves"></p>
+									<div id="acui_sect_eval">
+										<span id="acui_lastmove"></span>
+										<br/><span id="acui_nodes"></span>
+										<br/><span id="acui_depth"></span>
+									</div>
+									<div id="acui_moves"></div>
 								</div>
 
 								<div id="acui_tab_board_history" class="ui-body-d ui-content">
@@ -187,7 +192,7 @@
 									<option value="7">Oyster</option>
 								</select>
 							</p>
-							<p><label for="acui_option_maxdepth">Maximal depth :</label> <input class="AntiCrux-ui-option" id="acui_option_maxdepth" type="number" min="3"/></p>
+							<p><label for="acui_option_maxdepth">Maximal depth :</label> <input class="AntiCrux-ui-option" id="acui_option_maxdepth" type="number" min="1"/></p>
 							<p><label for="acui_option_maxnodes">Maximal nodes :</label> <input class="AntiCrux-ui-option" id="acui_option_maxnodes" type="number" min="0" step="100"/></p>
 							<p><label for="acui_option_wholenodes">Maximize the nodes</label> <input class="AntiCrux-ui-option" id="acui_option_wholenodes" type="checkbox" /></p>
 							<p><label for="acui_option_minimizeliberty">Minimize the liberty</label> <input class="AntiCrux-ui-option" id="acui_option_minimizeliberty" type="checkbox" /></p>
@@ -288,15 +293,14 @@
 					$('#acui_option_maxdepth').val(ai.options.ai.maxDepth);
 					$('#acui_option_maxnodes').val(ai.options.ai.maxNodes);
 					$('#acui_option_minimizeliberty').prop('checked', ai.options.ai.minimizeLiberty);
-					$('#acui_option_maxreply').val(ai.options.ai.maxReply);
+					$('#acui_option_maxreply').val(ai.options.ai.maxReply).slider('refresh');
 					$('#acui_option_nostatonforcedmove').prop('checked', ai.options.ai.noStatOnForcedMove);
 					$('#acui_option_wholenodes').prop('checked', ai.options.ai.wholeNodes);
 					$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
 					$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
 					$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
 					$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
-					$('#acui_option_handicap').val(ai.options.ai.handicap);
-					$('#acui_option_handicap').slider('refresh');
+					$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
 					$('#acui_option_acceleratedendgame').prop('checked', ai.options.ai.acceleratedEndGame);
 					$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
 
@@ -403,10 +407,12 @@
 				}
 
 				function acui_refresh_moves() {
-					var player = parseInt($('#acui_player').val());
+					var val, player = parseInt($('#acui_player').val());
 					$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore().valuationSolverPC).slider('refresh');
-					$('#acui_nodes').html('Nodes : ' + ai.getNumNodes());
-					$('#acui_depth').html('Depth : ' + ai.getReachedDepth());
+					val = ai.getNumNodes();
+					$('#acui_nodes').html((val === 0 ? '' : 'Nodes : '+val));
+					val = ai.getReachedDepth();
+					$('#acui_depth').html((val === 0 ? '' : 'Depth : '+val));
 					$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistic with the professional mode.</div>' : ai.getMovesHtml(player));
 					if (ai.options.board.decisionTree)
 						$('#acui_dtree').html(ai.getDecisionTreeHtml());
@@ -482,11 +488,12 @@
 				}
 
 				function acui_afterHumanMove() {
+					ui_move = '';
 					ai.logMove(ui_move_pending);
 					ui_move_pending = ai.constants.move.none;
 					acui_refresh_history(true);
 					acui_refresh_board();
-					if (ai.isEndGame())
+					if (ai.isEndGame(true))
 					{
 						acui_showWinner();
 						acui_switch_players();
@@ -564,7 +571,7 @@
 						//-- Checks
 						if (move === null)
 						{
-							if (ai.isEndGame())
+							if (ai.isEndGame(false))
 								acui_showWinner();
 							return true;
 						}
@@ -574,10 +581,11 @@
 						acui_refresh_moves();
 						if (ai.movePiece(move, true, player) != ai.constants.move.none)
 						{
+							ui_move = '';
 							ai.logMove(move);
 							acui_refresh_history(true);
 							ai.highlightMove(move);
-							if (ai.isEndGame())
+							if (ai.isEndGame(true))
 							{
 								acui_showWinner();
 								acui_switch_players();
