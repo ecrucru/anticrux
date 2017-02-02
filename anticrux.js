@@ -1633,7 +1633,7 @@ AntiCrux.prototype._init = function() {
 		},
 		variant : {
 			promoteQueen : false,						//TRUE only promotes pawns as queen
-			activePawns : true,							//TRUE makes the pawns stronger for the valuation once they are moved
+			activePawns : false,						//TRUE makes the pawns stronger for the valuation once they are moved, and are consequently less mobile
 			whiteBoard : false							//TRUE makes the board fully white
 		},
 		board : {
