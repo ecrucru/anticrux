@@ -192,8 +192,8 @@
 									<option value="7">Oyster</option>
 								</select>
 							</p>
-							<p><label for="acui_option_maxdepth">Maximal depth :</label> <input class="AntiCrux-ui-option" id="acui_option_maxdepth" type="number" min="1"/></p>
-							<p><label for="acui_option_maxnodes">Maximal nodes :</label> <input class="AntiCrux-ui-option" id="acui_option_maxnodes" type="number" min="0" step="100"/></p>
+							<p><label for="acui_option_maxdepth">Maximal depth :</label> <input class="AntiCrux-ui-option" id="acui_option_maxdepth" type="number" min="1" /></p>
+							<p><label for="acui_option_maxnodes">Maximal nodes :</label> <input class="AntiCrux-ui-option" id="acui_option_maxnodes" type="number" min="0" step="100" title="Zero is infinite" /></p>
 							<p><label for="acui_option_wholenodes">Maximize the nodes</label> <input class="AntiCrux-ui-option" id="acui_option_wholenodes" type="checkbox" /></p>
 							<p><label for="acui_option_minimizeliberty">Minimize the liberty</label> <input class="AntiCrux-ui-option" id="acui_option_minimizeliberty" type="checkbox" /></p>
 							<p><label for="acui_option_maxreply">Maximal number of replies :</label> <input class="AntiCrux-ui-option" id="acui_option_maxreply" type="range" value="1" min="1" max="10" /></p>
@@ -224,7 +224,15 @@
 							<h2>Variant</h2>
 							<p><label for="acui_option_promotequeen">Promote pawns as queen</label> <input class="AntiCrux-ui-option" id="acui_option_promotequeen" type="checkbox" /></p>
 							<p><label for="acui_option_activepawns">Active pawns</label> <input class="AntiCrux-ui-option" id="acui_option_activepawns" type="checkbox" /></p>
-							<p><label for="acui_option_whiteboard">White board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_whiteboard" type="checkbox" /></p>
+							<p><label for="acui_option_pieces">Pieces :</label>
+								<select class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_pieces">
+									<option value="0">Normal</option>
+									<option value="1">White pieces</option>
+									<option value="2">Black pieces</option>
+									<option value="3">Blind</option>
+									<option value="4">Random</option>
+								</select>
+							</p>
 						</div>
 					</div>
 				</div>
@@ -317,7 +325,7 @@
 					//-- Variant
 					$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
 					$('#acui_option_activepawns').prop('checked', ai.options.variant.activePawns);
-					$('#acui_option_whiteboard').prop('checked', ai.options.variant.whiteBoard);
+					$('#acui_option_pieces').val(ai.options.variant.pieces).change();
 				}
 
 				function acui_reset_ui(pResetPlayer) {
@@ -447,6 +455,9 @@
 
 						//-- Determines the position for the provided index
 						rewind = new AntiCrux();
+						rewind.copyOptions(ai);
+						if (rewind.options.variant.pieces == 3)
+							rewind.options.variant.pieces = 0;
 						if (!rewind.loadFen(ai.getInitialPosition()))
 							return false;
 						for (i=0 ; i<=index ; i++)
@@ -925,7 +936,7 @@
 						//-- Variant
 						ai.options.variant.promoteQueen		= $('#acui_option_promotequeen').prop('checked');
 						ai.options.variant.activePawns		= $('#acui_option_activepawns').prop('checked');
-						ai.options.variant.whiteBoard		= $('#acui_option_whiteboard').prop('checked');
+						ai.options.variant.pieces			= parseInt($('#acui_option_pieces').val());
 						return true;
 					});
 

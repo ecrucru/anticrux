@@ -274,9 +274,15 @@ The option gives the pawn a higher static valuation when it has left its initial
 
 The impact is on the valuation, not on the performances.
 
-- **AntiCrux.options.variant.whiteBoard**
+- **AntiCrux.options.variant.pieces**
 
-This human-related option renders the board with white pieces only. It may be used to reduce the readability of the game but the players must still follow the basic rules.
+This human-related option renders the board differently. It may be used to reduce the readability of the game but the players must still follow the basic rules. The possible modes are :
+
+- 0 : normal
+- 1 : only white pieces
+- 2 : only black pieces
+- 3 : blind
+- 4 : random
 
 The export to FEN and PGN is not impacted.
 
@@ -418,7 +424,7 @@ node --expose-gc nodejs_demo_solve.js
 - November 11th 2016 - Creation of the project
 - December 25th 2016 - Version 0.1.0
 	- Initial set of features
-- January 29th 2017 - Version 0.2.0
+- February 3rd 2017 - Version 0.2.0
 	- Library: AntiCrux.prototype.getMoves renamed as AntiCrux.prototype.getMovesHtml
 	- Library: new mandatory parameter for AntiCrux.prototype.highlightMoves
 	- UI: highlighted target cells when requesting a detailed hint
@@ -454,6 +460,7 @@ node --expose-gc nodejs_demo_solve.js
 	- Library: improvement of the deep analysis
 	- Library: new parameter for AntiCrux.prototype.isEndGame
 	- Library: the minimal search depth is now 1 (previously 3)
+	- UI: blind and random modes
 
 
 ### License

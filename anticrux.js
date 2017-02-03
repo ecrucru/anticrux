@@ -35,6 +35,7 @@
 //		1n1qk1n1/r1pp1p1r/1p6/8/8/1P4P1/2PK1P1P/1N3BNR w - -		Mate in 10 to be found (Na3)
 //		rnb4r/p1pk3p/5P2/8/1p6/1P3P2/P1PNP1P1/R3KBN1 b - -			Mate in 10 to be found (Ke7)
 //		rn2k2r/ppp2p1p/5p2/8/8/N6P/PPPKPP1P/R1B2BNR b - -			Mate in 11 to be found (b5)
+//		6n1/p7/2B2p2/8/8/4K3/P1P2PPR/RN6 w - -						Mate in 12 to be found (Rh6)
 //		rnb4K/pppp1k1p/5p2/2b5/4n3/8/8/8 b - -						Mate in 13 to be found
 //		rnb1kb1r/p1pp1ppp/7n/4P3/1p5R/1P6/P1P1PPP1/RNBQKBN1 w - -	Mate in 15 to be found (Bh6)
 //		4k2r/pppn2pp/4p3/8/8/N3PN2/PPP1K1P1/R1B5 w - -				Mate to find g4 and Nb5 (Ne5-g4)
@@ -1226,7 +1227,7 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 };
 
 AntiCrux.prototype.toHtml = function(pNode) {
-	var x, y, rotated, color, abc, output;
+	var x, y, rotated, color, abc, owner, output;
 
 	//-- Self
 	if (pNode === undefined)
@@ -1246,7 +1247,33 @@ AntiCrux.prototype.toHtml = function(pNode) {
 		for (x=(rotated?7:0) ; (!rotated&&(x<8)) || (rotated&&(x>=0)) ; (rotated?x--:x++))
 		{
 			color = 1 - color;
-			output += '<div class="AntiCrux-board-cell-' + (this._highlight.indexOf(8*y+x) != -1 ? 'hl' : color) + ' AntiCrux-board-piece-' + (this.options.variant.whiteBoard && (pNode.owner[8*y+x] != this.constants.owner.none) ? this.constants.owner.white : pNode.owner[8*y+x]) + pNode.piece[8*y+x] + '" data-xy="' + abc[x] + (8-y) + '">';
+			switch (this.options.variant.pieces)
+			{
+				case 1:
+					owner = (pNode.owner[8*y+x] != this.constants.owner.none ? this.constants.owner.white : pNode.owner[8*y+x]);
+					break;
+				case 2:
+					owner = (pNode.owner[8*y+x] != this.constants.owner.none ? this.constants.owner.black : pNode.owner[8*y+x]);
+					break;
+				case 3:
+					owner = this.constants.owner.none;
+					break;
+				case 4:
+					if (pNode.owner[8*y+x] == this.constants.owner.none)
+						owner = this.constants.owner.none;
+					else
+					{
+						if (Math.floor(100*Math.random()) % 2 == 0)
+							owner = this.constants.owner.black;
+						else
+							owner = this.constants.owner.white;
+					}
+					break;
+				default:
+					owner = pNode.owner[8*y+x];
+					break;
+			}
+			output += '<div class="AntiCrux-board-cell-' + (this._highlight.indexOf(8*y+x) != -1 ? 'hl' : color) + ' AntiCrux-board-piece-' + owner + pNode.piece[8*y+x] + '" data-xy="' + abc[x] + (8-y) + '">';
 			if (this.options.board.debugCellId)
 				output += y + '/' + x + '<br/>' + (8*y+x);
 			output += '</div>';
@@ -1348,7 +1375,7 @@ AntiCrux.prototype.toFen = function(pNode) {
 AntiCrux.prototype.toText = function(pNode) {
 	// Use one of the fonts "Chess" available at www.dafont.com
 
-	var x, y, rotated, i, b, car, buffer;
+	var x, y, rotated, i, b, car, buffer, owner;
 
 	//-- Self
 	if (pNode === undefined)
@@ -1372,8 +1399,36 @@ AntiCrux.prototype.toText = function(pNode) {
 					buffer += '$';
 			}
 
+			//- Owner
+			switch (this.options.variant.pieces)
+			{
+				case 1:
+					owner = (pNode.owner[i] != this.constants.owner.none ? this.constants.owner.white : pNode.owner[i]);
+					break;
+				case 2:
+					owner = (pNode.owner[i] != this.constants.owner.none ? this.constants.owner.black : pNode.owner[i]);
+					break;
+				case 3:
+					owner = this.constants.owner.none;
+					break;
+				case 4:
+					if (pNode.owner[i] == this.constants.owner.none)
+						owner = this.constants.owner.none;
+					else
+					{
+						if (Math.floor(100*Math.random()) % 2 == 0)
+							owner = this.constants.owner.black;
+						else
+							owner = this.constants.owner.white;
+					}
+					break;
+				default:
+					owner = pNode.owner[i];
+					break;
+			}
+
 			//- Nature of the position
-			switch (this.options.variant.whiteBoard && (pNode.owner[i] != this.constants.owner.none) ? this.constants.owner.white : pNode.owner[i])
+			switch (owner)
 			{
 				case this.constants.owner.none:
 					car = (b ? '+' : '*');
@@ -1634,7 +1689,7 @@ AntiCrux.prototype._init = function() {
 		variant : {
 			promoteQueen : false,						//TRUE only promotes pawns as queen
 			activePawns : false,						//TRUE makes the pawns stronger for the valuation once they are moved, and are consequently less mobile
-			whiteBoard : false							//TRUE makes the board fully white
+			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
 		},
 		board : {
 			rotated : false,							//TRUE rotates the board at 180°
