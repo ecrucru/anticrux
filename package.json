@@ -1,7 +1,7 @@
 {
 	"name": "anticrux",
-	"version": "0.2.0",
-	"description": "Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile",
+	"version": "0.2.1",
+	"description": "Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js",
 	"readmeFilename": "README.md",
 	"keywords": [
 		"chess",
@@ -28,7 +28,7 @@
 	],
 	"main": "anticrux.min.js",
 	"scripts": {
-		"test": "node nodejs_demo_solve.js"
+		"test": "node --expose-gc nodejs_demo_solve.js"
 	},
 	"repository": {
 		"type": "git",

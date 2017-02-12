@@ -1,5 +1,5 @@
 ﻿/*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 	Copyright (C) 2016-2017, ecrucru
 
 		https://github.com/ecrucru/anticrux/
@@ -88,7 +88,7 @@ AntiCrux.prototype.startUI = function() {
  		opn('./node_modules/anticrux/index.html');
 	}
 	else
-		throw 'Error - AntiCrux.prototype.startUI() is restricted to NodeJS';
+		throw 'Error - AntiCrux.prototype.startUI() is restricted to Node.js';
 };
 
 AntiCrux.prototype.copyOptions = function(pObject) {
@@ -365,6 +365,28 @@ AntiCrux.prototype.getOppositePlayer = function(pNode) {
 	}
 };
 
+AntiCrux.prototype.setLevel = function(pLevel) {
+	//-- Checks
+	if ((pLevel < 1) || (pLevel > 20))
+		return false;
+
+	//-- Applies the new settings
+	this.options.ai.maxDepth			= [3, 8, 8, 8, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 30, 30, 40, 40, 45, 50][pLevel-1];
+	this.options.ai.maxNodes			= [100, 50000, 50000, 50000, 15000, 30000, 50000, 75000, 80000, 85000, 90000, 120000, 150000, 200000, 300000, 400000, 500000, 750000, 1000000, 2000000][pLevel-1];
+	this.options.ai.minimizeLiberty		= (pLevel >= 8);
+	this.options.ai.maxReply			= [1, 1, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2][pLevel-1];
+	this.options.ai.noStatOnForcedMove	= (pLevel >= 6);
+	this.options.ai.wholeNodes			= (pLevel >= 11);
+	this.options.ai.randomizedSearch	= true;
+	this.options.ai.pessimisticScenario	= (pLevel >= 10);
+	this.options.ai.bestStaticScore		= (pLevel >= 12);
+	this.options.ai.opportunistic		= (pLevel >= 13);
+	this.options.ai.handicap			= [0, 70, 50, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
+	this.options.ai.acceleratedEndGame	= (pLevel >= 5);
+	this.options.ai.oyster				= (pLevel == 1);
+	return true;
+};
+
 AntiCrux.prototype.setPlayer = function(pPlayer, pNode) {
 	//-- Self
 	if (pNode === undefined)
@@ -398,6 +420,11 @@ AntiCrux.prototype.getPieceByCoordinate = function(pCoordinate, pNode) {
 		};
 };
 
+AntiCrux.prototype.isMove = function(pMove) {
+	return	pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])(=[RrNnBbQqKk])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/) ||
+			pMove.match(/^[0-6]?[0-7]{4}$/);
+};
+
 AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, pNode) {
 	var	regex, player, node, moves, i, x, y, tX, tY, valid,
 		move_promotion, move_fromY, move_fromX, move_toY, move_toX;
@@ -418,7 +445,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	if (typeof pMove == 'string')
 	{
 		//- Decode the input string
-		regex = pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])(=[RNBQK])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/); //case-sensitive, no castling
+		regex = pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])(=[RrNnBbQqKk])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/); //case-sensitive, no castling
 		if (regex === null)
 			return this.constants.move.none;
 
@@ -799,7 +826,7 @@ AntiCrux.prototype.undoMove = function() {
 	this._history = hist;
 	return true;
 };
-	
+
 AntiCrux.prototype.getNumNodes = function() {
 	return (this.hasOwnProperty('_numNodes') ? this._numNodes : 0);
 };
@@ -1263,7 +1290,7 @@ AntiCrux.prototype.toHtml = function(pNode) {
 						owner = this.constants.owner.none;
 					else
 					{
-						if (Math.floor(100*Math.random()) % 2 == 0)
+						if (Math.floor(100*Math.random()) % 2 === 0)
 							owner = this.constants.owner.black;
 						else
 							owner = this.constants.owner.white;
@@ -1416,7 +1443,7 @@ AntiCrux.prototype.toText = function(pNode) {
 						owner = this.constants.owner.none;
 					else
 					{
-						if (Math.floor(100*Math.random()) % 2 == 0)
+						if (Math.floor(100*Math.random()) % 2 === 0)
 							owner = this.constants.owner.black;
 						else
 							owner = this.constants.owner.white;
@@ -1670,7 +1697,8 @@ AntiCrux.prototype._init = function() {
 	//-- Options
 	this.options = {
 		ai : {
-			version : '0.2.0',							//Version of AntiCrux
+			version : '0.2.1',							//Version of AntiCrux
+			elo : 1900,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
 			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 100000,							//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
@@ -1812,6 +1840,20 @@ AntiCrux.prototype._ai_nodeInventory = function(pPlayer, pPiece, pColumn, pNode)
 					continue;
 			counter++;
 		}
+	return counter;
+};
+
+AntiCrux.prototype._ai_nodeCountPiece = function(pPlayer, pNode) {
+	var i, counter;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Counts
+	counter = 0;
+	for (i=0 ; i<64 ; i++)
+		counter += (pNode.owner[i] == pPlayer ? 1 : 0);
 	return counter;
 };
 
@@ -2631,7 +2673,7 @@ AntiCrux.prototype._ai_gc = function() {
 };
 
 
-//---- NodeJS
+//---- Node.js
 
 if ((typeof module !== 'undefined') && module.exports)
 	module.exports = AntiCrux;

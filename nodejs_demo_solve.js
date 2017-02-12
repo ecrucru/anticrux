@@ -1,5 +1,5 @@
 /*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 	Copyright (C) 2016-2017, ecrucru
 
 		https://github.com/ecrucru/anticrux/
@@ -20,14 +20,6 @@
 */
 
 "use strict";
-
-// To run this demo:
-//	1) Install NodeJS.org
-//	2) Run "build_nodejs.bat" or install the package "anticrux"
-//	3) Open a command line for NodeJS
-//	4) From the right directory, execute:
-//			node nodejs_demo.js
-
 
 //-- Library
 var AntiCrux = require('anticrux');

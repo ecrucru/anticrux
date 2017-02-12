@@ -1,5 +1,5 @@
 /*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 	Copyright (C) 2016-2017, ecrucru
 
 		https://github.com/ecrucru/anticrux/

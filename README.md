@@ -1,6 +1,6 @@
 # AntiCrux
 
-> Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+> Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 
 **Test it online at http://ecrucru.free.fr/?page=anticrux !**
 
@@ -19,7 +19,9 @@
 	- [Notations](#notations)
 	- [Methods](#methods)
 	- [Valuation](#valuation)
-	- [NodeJS](#nodejs)
+- [NodeJS](#nodejs)
+	- [Package](#package)
+	- [AntiCrux Server](#anticrux-server)
 - [Information](#information)
 	- [Change log](#change-log)
 	- [License](#license)
@@ -58,7 +60,7 @@ AntiCrux is neither UCI-compatible, nor working as a Worker (which would allow a
 - Undo
 - Import from FEN, Lichess
 - Export to FEN, PGN, Chess fonts
-- NodeJS
+- Node.js
 
 
 
@@ -365,6 +367,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.highlightMoves(pRefresh)
 - AntiCrux.isDraw(pNode)
 - AntiCrux.isEndGame(pSwitch, pNode)
+- AntiCrux.isMove(pMove)
 - AntiCrux.loadFen(pFen)
 - AntiCrux.loadLichess(pKey)
 - AntiCrux.logMove(pMove)
@@ -373,6 +376,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.predictMoves(pNode)
 - AntiCrux.promote(pPiece, pNode)
 - AntiCrux.resetStats()
+- AntiCrux.setLevel(pLevel)
 - AntiCrux.setPlayer(pPlayer, pNode)
 - AntiCrux.startUI()
 - AntiCrux.switchPlayer(pNode)
@@ -400,19 +404,48 @@ The valuation is based on a deep static score known as [centipawn](http://chess.
 &#x26a0; The score shows the strength of the player, so its ability to lose AntiChess. Your objective is then to modify the score in favor of your opponent.
 
 
-### NodeJS
 
-AntiCrux is built to be compatible with NodeJS through the package named "anticrux".
+## NodeJS
+
+### Package
+
+AntiCrux is built to be compatible with Node.js through the package named "anticrux" :
 
 ```bash
 npm install anticrux
 ```
 
-If you meet the prerequisites, you can run the demo with the following command :
+Once the package is created, you can develop your own scripts. Example :
 
 ```bash
 node --expose-gc nodejs_demo_solve.js
 ```
+
+### AntiCrux Server
+
+If you don't like the web interface, you can run AntiCrux as a server and play with your favorite chess user interface.
+
+To start the server, double-click on the script "run_server.bat" or execute the following command. By default, it listens to local connections on the port 5000. You can't create more than one instance on the same port.
+
+```bash
+node --expose-gc anticrux-server.js
+```
+
+Several user interfaces have been tested :
+
+- Telnet (console) is supported. The commands are the same than FICS.
+
+- WinBoard is supported and offers the highest compatibility because it natively supports the variants of chess.
+	- Connect with : "AntiCrux Server" /icshost=localhost /icsport=5000
+
+- Arena is not really supported because it applies the rules of chess on the variant. It can be mitigated with the following settings :
+	- Log as a guest without timeseal
+	- In the menu "Options > Appearence > Chessboard > Move input", you should disallow the one-click move
+	- In the menu "Options > Appearence > Other settings", you must disable the check of the legality of the moves
+	- To promote a king, you must type the move in the command-line (example: b2b1=K)
+	- You may have to disconnect between two games
+
+- pyChess is not supported.
 
 
 
@@ -444,11 +477,11 @@ node --expose-gc nodejs_demo_solve.js
 	- Library: new method AntiCrux.prototype.getPieceByCoordinate
 	- UI: easier selection of the moves
 	- Library: new method AntiCrux.prototype.toConsole
-	- Library: support for NodeJS
+	- Library: support for Node.js
 	- Library: new method AntiCrux.prototype.switchPlayer
 	- Library: new method AntiCrux.prototype.predictMoves
 	- UI: hint to predict the moves
-	- Library: new method AntiCrux.prototype.startUI (restricted to NodeJS)
+	- Library: new method AntiCrux.prototype.startUI (restricted to Node.js)
 	- Library: new method AntiCrux.prototype.getNewFischerId
 	- UI: integration around the Fischer's identifier of a game
 	- Library: deep technical remodelling of the library for speed and lower impact on the memory
@@ -461,6 +494,10 @@ node --expose-gc nodejs_demo_solve.js
 	- Library: new parameter for AntiCrux.prototype.isEndGame
 	- Library: the minimal search depth is now 1 (previously 3)
 	- UI: blind and random modes
+- In progress - Version 0.2.1
+	- Server: new server based on Node.js
+	- Library: new method AntiCrux.prototype.isMove
+	- Library: new method AntiCrux.prototype.setLevel
 
 
 ### License
@@ -471,7 +508,7 @@ AntiCrux is released under the terms of the **GNU Affero General Public License 
 
 ```javascript
 /*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 	Copyright (C) 2016-2017, ecrucru
 
 		https://github.com/ecrucru/anticrux/
