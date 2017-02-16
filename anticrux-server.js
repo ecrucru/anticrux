@@ -52,7 +52,7 @@ var server = net.createServer(function(pSocket) {
 		pSocket.acsrv_options = {
 			style : 1,
 			level : 5,
-			mode960 : true,
+			mode960 : false,
 			noticePossibleVictory : true,
 			_maxLevel : 20,					//The level impacts the memory, especially when you have multiple players
 			_playOnConnect : false,
@@ -83,8 +83,8 @@ var server = net.createServer(function(pSocket) {
 			"  To be compatible with any existing chess program, the server\r\n" +
 			"  mimics FICS, but it is not a FICS server. Don't be confused !\r\n" +
 			"\r\n" +
-			"  Activate AntiChess960 with the command :\r\n" +
-			"      set mode960 on\r\n" +
+			"  Activate AntiChess960 with the command : set mode960 on\r\n" +
+			"  Change the level between 1 and 20 with : set level 10\r\n" +
 			"\r\n" +
 			"\r\n" +
 			"========================================================================\r\n" +
@@ -361,7 +361,7 @@ server.acsrv_process = function(pSocket) {
 			}
 
 			//- Options and silenced commands
-			if (tab[0] == 'alias')
+			if ((tab[0] == 'alias') || (tab[0] == 'iset'))
 			{
 				pSocket.write('fics% ');
 				continue;
@@ -379,6 +379,23 @@ server.acsrv_process = function(pSocket) {
 				{
 					pSocket.acsrv_options.style = parseInt(tab[2]);
 					pSocket.write("Style "+pSocket.acsrv_options.style+" set.\r\nfics% ");
+				}
+				else if (tab[1] == 'level')
+				{
+					if (!tab[2].match(/^[0-9]+$/))
+						pSocket.write("Unknown level "+tab[2]+".\r\nfics% ");
+					else
+					{
+						i = Math.max(1, Math.min(parseInt(tab[2]), pSocket.acsrv_options._maxLevel, 20));
+						if (pSocket.acsrv_ai.setLevel(i))
+						{
+							pSocket.acsrv_ai.options.ai.noStatOnForcedMove = true;
+							pSocket.acsrv_options.level = i;
+							pSocket.write("Level "+i+" set.\r\nfics% ");
+						}
+						else
+							throw 'Internal error';
+					}
 				}
 				else
 				{
@@ -401,13 +418,6 @@ server.acsrv_process = function(pSocket) {
 						pSocket.write("Variable \""+tab[1]+"\" set.\r\nfics% ");
 					}
 				}
-				pSocket.write('fics% ');
-				continue;
-			}
-			if (tab[0] == 'iset')
-			{
-				if (tab[1].length > 0)
-					pSocket.write(tab[1] + " set.\r\nfics% ");		//In fact nothing...
 				continue;
 			}
 
@@ -461,21 +471,6 @@ server.acsrv_process = function(pSocket) {
 				continue;
 			}
 
-			//- Level (unofficial)
-			if (tab[0] == 'level')
-			{
-				i = Math.max(1, Math.min(parseInt(tab[1]), pSocket.acsrv_options._maxLevel, 20));
-				if (pSocket.acsrv_ai.setLevel(i))
-				{
-					pSocket.acsrv_ai.options.ai.noStatOnForcedMove = true;
-					pSocket.acsrv_options.level = i;
-					pSocket.write("Level "+i+" set.\r\nfics% ");
-				}
-				else
-					pSocket.write("Unknown level "+tab[1]+".\r\nfics% ");
-				continue;
-			}
-
 			//- Help based on the online documentation (http://www.freechess.org/Help/HelpFiles/[COMMAND].html)
 			if ((tab[0] == 'info') || (tab[0] == 'help'))
 			{
@@ -494,7 +489,6 @@ server.acsrv_process = function(pSocket) {
 					"  getgame                 Invoke 'match AntiCrux suicide'\r\n" +
 					"  handles [mask]          Show the list of players\r\n" +
 					"  help/info               Show the list of available commands\r\n" +
-					"  level [n]               Set the strength between 1 and 20\r\n" +
 					"  limits                  Display the limits of the server\r\n" +
 					"  match AntiCrux suicide  Start an unrated game against AntiCrux\r\n" +
 					"  moves                   Show the history of the moves\r\n" +
@@ -1088,7 +1082,7 @@ server.acsrv_playAI = function(pSocket) {
 		if (score.valuationSolver == pSocket.acsrv_aicolor * pSocket.acsrv_ai.constants.score.infinite)
 		{
 			if (!pSocket.acsrv_playerkills)
-				pSocket.write("AntiCrux(C)("+pSocket.acsrv_ai.options.ai.elo+")["+pSocket.acsrv_session+"] kibitzes: I am fealing bad...\r\n");
+				pSocket.write("AntiCrux(C)("+pSocket.acsrv_ai.options.ai.elo+")["+pSocket.acsrv_session+"] kibitzes: I am feeling bad...\r\n");
 			pSocket.acsrv_playerkills = true;
 		}
 		else
