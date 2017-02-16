@@ -52,9 +52,11 @@ var server = net.createServer(function(pSocket) {
 		pSocket.acsrv_options = {
 			style : 1,
 			level : 5,
-			maxLevel : 20,					//The level impacts the memory, especially when you have multiple players
-			playOnConnect : false,
-			consoleInboundFlow : false
+			mode960 : true,
+			noticePossibleVictory : true,
+			_maxLevel : 20,					//The level impacts the memory, especially when you have multiple players
+			_playOnConnect : false,
+			_consoleInboundFlow : false
 		};
 
 		//-- New AI
@@ -80,6 +82,9 @@ var server = net.createServer(function(pSocket) {
 			"\r\n" +
 			"  To be compatible with any existing chess program, the server\r\n" +
 			"  mimics FICS, but it is not a FICS server. Don't be confused !\r\n" +
+			"\r\n" +
+			"  Activate AntiChess960 with the command :\r\n" +
+			"      set mode960 on\r\n" +
 			"\r\n" +
 			"\r\n" +
 			"========================================================================\r\n" +
@@ -150,9 +155,9 @@ server.acsrv_uptime = function(pSeconds) {
 	//-- Converts
 	s = Math.floor(pSeconds);
 	d = Math.floor(s / 86400);
-    h = Math.floor((s - 86400*d) / 3600);
-    m = Math.floor((s - 86400*d - 3600*h) / 60);
-    s = s - 86400*d - 3600*h - 60*m;
+	h = Math.floor((s - 86400*d) / 3600);
+	m = Math.floor((s - 86400*d - 3600*h) / 60);
+	s = s - 86400*d - 3600*h - 60*m;
 
 	//-- Formats
 	return d+' days, '+h+' hrs, '+m+' mins, '+s+' secs';
@@ -190,9 +195,9 @@ server.acsrv_process = function(pSocket) {
 		line = pSocket.acsrv_datastream.substring(0, pos);
 		pSocket.acsrv_datastream = pSocket.acsrv_datastream.substring(pos+1);
 		line = line.split("\r").join('');
-		line = line.split("@").join('');
-		line = line.split("$").join('');
-		if (pSocket.acsrv_options.consoleInboundFlow && (line.length !== 0))
+		line = line.split('@').join('');
+		line = line.split('$').join('');
+		if (pSocket.acsrv_options._consoleInboundFlow && (line.length !== 0))
 			server.acsrv_console(pSocket, '< '+line);
 		tab = line.toLowerCase().split(' ');
 		for (i=0 ; (i<10) || (i<tab.length) ; i++)
@@ -259,6 +264,8 @@ server.acsrv_process = function(pSocket) {
 			{
 				news = [	'1 (Sat, Feb  4) AntiCrux Server is under development',
 							'2 (Sun, Feb  5) AntiCrux Server will be available on GitHub',
+							'3 (Sun, Feb 12) The first release of AntiCrux Server is ready',
+							'4 (Thu, Feb 16) AntiCrux Server now plays AntiChess960'
 						];
 				for (i=0 ; i<news.length ; i++)
 					pSocket.write(news[i]+"\r\n");
@@ -368,10 +375,31 @@ server.acsrv_process = function(pSocket) {
 			{
 				if (tab[1] == 'interface')
 					server.acsrv_console(pSocket, 'Declared software: ' + line.substring(14));
-				if ((tab[1] == 'style') && (tab[2].length > 0))
+				else if ((tab[1] == 'style') && (tab[2].length > 0))
 				{
 					pSocket.acsrv_options.style = parseInt(tab[2]);
 					pSocket.write("Style "+pSocket.acsrv_options.style+" set.\r\nfics% ");
+				}
+				else
+				{
+					if (!tab[1].match(/^[a-zA-Z0-9]+$/) || !pSocket.acsrv_options.hasOwnProperty(tab[1]))
+						pSocket.write("No such variable \""+tab[1]+"\".\r\nfics% ");
+					else
+					{
+						switch (typeof pSocket.acsrv_options[tab[1]])
+						{
+							case 'string':
+								pSocket.acsrv_options[tab[1]] = tab[2];
+								break;
+							case 'boolean':
+								pSocket.acsrv_options[tab[1]] = ((tab[2].toLowerCase() === 'true') || (tab[2].toLowerCase() === 'on') || (tab[2] === '1'));
+								break;
+							case 'number':
+								pSocket.acsrv_options[tab[1]] = parseInt(tab[2]);
+								break;
+						}
+						pSocket.write("Variable \""+tab[1]+"\" set.\r\nfics% ");
+					}
 				}
 				pSocket.write('fics% ');
 				continue;
@@ -388,7 +416,8 @@ server.acsrv_process = function(pSocket) {
 			{
 				pSocket.write("Variable settings of "+pSocket.acsrv_login+":\r\n\r\n");
 				for (buffer in pSocket.acsrv_options)
-					pSocket.write(buffer + '=' + pSocket.acsrv_options[buffer] + "\r\n");
+					if (buffer.substring(0, 1) != '_')				//Private values
+						pSocket.write(buffer + '=' + pSocket.acsrv_options[buffer] + "\r\n");
 				pSocket.write('fics% ');
 				continue;
 			}
@@ -435,7 +464,7 @@ server.acsrv_process = function(pSocket) {
 			//- Level (unofficial)
 			if (tab[0] == 'level')
 			{
-				i = Math.max(1, Math.min(parseInt(tab[1]), pSocket.acsrv_options.maxLevel, 20));
+				i = Math.max(1, Math.min(parseInt(tab[1]), pSocket.acsrv_options._maxLevel, 20));
 				if (pSocket.acsrv_ai.setLevel(i))
 				{
 					pSocket.acsrv_ai.options.ai.noStatOnForcedMove = true;
@@ -536,7 +565,7 @@ server.acsrv_process = function(pSocket) {
 			pSocket.write("You will not hear channel tells.\r\n");
 			pSocket.write("You will not see seek ads.\r\n");
 			pSocket.write('fics% ');
-			if (pSocket.acsrv_options.playOnConnect)
+			if (pSocket.acsrv_options._playOnConnect)
 			{
 				pSocket.acsrv_state = 'match_proposal';
 				pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.none;		//The color is always random, but the player can force it by proposing another match
@@ -677,7 +706,7 @@ server.acsrv_process = function(pSocket) {
 							break;
 					}
 					if (buffer.length > 0)
-						pSocket.write('Promotion piece set to '+buffer+'.');
+						pSocket.write("Promotion piece set to "+buffer+".\r\n");
 					if (tab[1].length === 0)
 					{
 						pSocket.write("Purpose:  set the piece a pawn will be promoted to at the back rank\r\n");
@@ -834,8 +863,8 @@ server.acsrv_process = function(pSocket) {
 					pSocket.write("AntiCrux accepts the match offer.\r\n\r\n");
 					pSocket.acsrv_aicolor = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white ? pSocket.acsrv_ai.constants.owner.black : pSocket.acsrv_ai.constants.owner.white);
 					server.acsrv_startGame(pSocket);
+					continue;
 				}
-				continue;
 			}
 
 			//- Gets a match request
@@ -985,10 +1014,17 @@ server.acsrv_startGame = function(pSocket) {
 	var b;
 
 	//-- New game
-	pSocket.acsrv_ai.defaultBoard();
+	if (pSocket.acsrv_options.mode960)
+	{
+		pSocket.acsrv_ai.defaultBoard(pSocket.acsrv_ai.getNewFischerId());
+		pSocket.write("You are playing AntiChess"+pSocket.acsrv_ai.fischer+".\r\n\r\n");
+	}
+	else
+		pSocket.acsrv_ai.defaultBoard();
 	pSocket.acsrv_promote = pSocket.acsrv_ai.constants.owner.queen;		//Reset at every new game
 	pSocket.acsrv_lastMove = '';
 	pSocket.acsrv_aikills = false;
+	pSocket.acsrv_playerkills = false;
 
 	//-- Chooses the side and White always starts
 	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.none)
@@ -1047,6 +1083,17 @@ server.acsrv_playAI = function(pSocket) {
 	}
 	else
 		pSocket.acsrv_aikills = false;
+	if (pSocket.acsrv_options.noticePossibleVictory)
+	{
+		if (score.valuationSolver == pSocket.acsrv_aicolor * pSocket.acsrv_ai.constants.score.infinite)
+		{
+			if (!pSocket.acsrv_playerkills)
+				pSocket.write("AntiCrux(C)("+pSocket.acsrv_ai.options.ai.elo+")["+pSocket.acsrv_session+"] kibitzes: I am fealing bad...\r\n");
+			pSocket.acsrv_playerkills = true;
+		}
+		else
+			pSocket.acsrv_playerkills = false;
+	}
 	return true;
 };
 
@@ -1184,7 +1231,7 @@ server.acsrv_board = function(pSocket) {
 		else
 			buffer += ' 1';
 
-		//- PEL + EOL
+		//- BEL + EOL
 		buffer = String.fromCharCode(7) + "\r\n" + buffer + "\r\n";
 	}
 	else
