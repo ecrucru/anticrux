@@ -36,11 +36,11 @@ AntiChess is a variant of the classical chess which consists in losing to win. T
 - when you can take several opponent's pieces, you may choose which one to take,
 - you can promote a king.
 
-The logic of loosing all one's pieces leads to a really different way of thinking. On contrary to the classical chess, when you start to lose, you can still expect to win at the end. The programming of such an algorithm is easier than the classical chess because the nodes are generally reduced to the forced moves causing a maximal damage. That's why it is generally called a "forced-move game" or "suicide game".
+The logic of loosing all one's pieces leads to a different way of thinking. Contrary to the classical chess, when you start to lose, you can still expect to win. The programming of such an algorithm is easier than the classical chess because the nodes are generally reduced to the forced moves causing a maximal damage, and hence the name "forced-move game" or "suicide game".
 
-AntiChess is rapidely repetitive. That's why AntiCrux also plays AntiChess960. The concept is to shuffle the pieces of the first line and there are 960 different positions. The rules are the same and will change your habits !
+AntiCrux also plays AntiChess960, which is rapidly repetitive. The rule is to shuffle the pieces of the first line and there are 960 different positions. The rules are the same and will become your habits !
 
-The game is written in JavaScript and requires preferably a powerful desktop computer, else it will use a classical technique. Indeed, the JavaScript interpreter consumes a lot of memory depending on the current settings. The game works slightly better with the JavaScript implemented by Google compared to Mozilla.
+The game is written in JavaScript and requires a powerful desktop computer. The JavaScript interpreter consumes a lot of memory depending on the current settings. The game works slightly better with the JavaScript implemented by Google than by Mozilla.
 
 AntiCrux is neither UCI-compatible, nor working as a Worker (which would allow an asynchronous execution).
 
@@ -86,15 +86,15 @@ AntiCrux has competed with StockFish Antichess available at [www.lichess.org](ht
 
 ### Some theory
 
-The options influence how the choice of a move is done by AntiCrux. Therefore, it is needed to know a little how it works.
+It is important to know how the options influence a move AntiCrux makes. 
 
-Schematically, AntiCrux plays all the possible moves to find a better situation. The problem is that it becomes rapidely exponential and exploring more than 4 half-moves is complicated, at least in JavaScript. Thanks to the rules of AntiChess which insist on the forced moves, their quantity can be reduced a lot and it allows the algorithm to explore deeper. Then its efficiency is higher.
+Schematically, AntiCrux plays all the possible moves to find a better situation. Finding the possible moves becomes exponential rapidly. Exploring more than 4 half-moves is complicated in JavaScript. Because AntiChess insist on the forced moves, the number of possible moves can be reduced a lot, allowing the algorithm to explore deeper with higher efficiency.
 
-Basically, playing one piece is an **half-move** and it generates a new position called **node**. This node leads to new nodes if there are available moves for the next player. The nodes are linked to each other and the player is alternate between each turn. This is modelled with a tree with plenty of leaves and we have to cut the branches to discover its hidden treasure : the right move to play !
+Playing one piece is an **half-move**, generating a new position called **node**. This node will lead to new nodes if there are available moves for the next player. The nodes are connected, and the players take turns in the play. This game is modelled with a tree structure, whose branches can be cut for its hidden treasure : the right move to play !
 
-The positions are valuated at the lowest level. Then by use of rules of aggregations, the upper levels are weighted with some formulas based on the number of moves, the strength of the remaining pieces, etc... Once the first level is reached, we can pick the move with the best score. This score is a collection of hypothesis which should help the artificial intelligence to win. It is up to you to beat it. Have fun !
+The positions are valuated from the bottom. Then by rules of aggregation, the upper levels are weighted based on the number of moves, the strength of the remaining pieces, etc... Once the top level is reached, we can pick the move with the best score. This score, a collection of hypothesis is the artificial intelligence's winning tactic. It is your job to beat it. Have fun !
 
-The algorithm implements some randomness in order to never play the same games. With the level "Champion", the randomness is rather reduced.
+The algorithm adopts some randomness to never play the same game. With the level "Champion", the randomness is rather reduced.
 
 
 ### For the intelligence
@@ -211,7 +211,7 @@ Mechanically, it deactivates the other options based on the decision tree.
 
 - **AntiCrux.options.board.rotated**
 
-When you play Black, the board must be rotated at 180°.
+When you play Black, the board must be rotated at 180Â°.
 
 - **AntiCrux.options.board.symbols**
 
