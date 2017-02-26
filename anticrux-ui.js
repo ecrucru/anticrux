@@ -19,8 +19,10 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+"use strict";
+
 var	ai = new AntiCrux(),
-	ui_move, ui_move_pending, ui_rewind;
+	ui_move, ui_move_pending, ui_rewind, ui_rematch;
 ai.options.board.symbols = true;
 ai.defaultBoard();
 
@@ -251,6 +253,13 @@ function acui_afterHumanMove() {
 	}
 }
 
+function acui_autostart() {
+	if (ai.getPlayer() == (ai.options.board.rotated ? ai.constants.owner.white : ai.constants.owner.black))
+		setTimeout(function() {
+					$('#acui_play_ai').click();
+				}, 500);
+}
+
 function acui_switch_players() {
 	if (ai.getPlayer() == ai.constants.owner.black)
 		$('#acui_player').val(ai.constants.owner.white).change();
@@ -276,6 +285,7 @@ $(document).ready(function() {
 	ui_move = '';
 	ui_move_pending = ai.constants.move.none;
 	ui_rewind = false;
+	ui_rematch = ai.constants.owner.white;
 	acui_refresh_board();
 
 	//-- Updates the list of players
@@ -497,6 +507,7 @@ $(document).ready(function() {
 		ui_move = '';
 		acui_reset_ui(true);
 		acui_refresh_board();
+		acui_autostart();
 		return true;
 	});
 
@@ -505,7 +516,7 @@ $(document).ready(function() {
 		$('#acui_fischer_current').click();
 		setTimeout(function() {
 					acui_popup('You are playing AntiChess ' + ai.fischer + '.');
-				}, 1000);
+				}, 750);
 		return true;
 	});
 
@@ -514,12 +525,17 @@ $(document).ready(function() {
 		ui_move = '';
 		acui_reset_ui(true);
 		acui_refresh_board();
+		acui_autostart();
 		return true;
 	});
 
-	$('#acui_option_fischer').dblclick(function() {
-		$('#acui_option_fischer').val(ai.getNewFischerId()).change();
-		return true;
+	$('#acui_rematch').click(function() {
+		ui_rematch = (ui_rematch == ai.constants.owner.white ? ai.constants.owner.black : ai.constants.owner.white);
+		$('#acui_option_rotated').prop('checked', (ui_rematch == ai.constants.owner.black)).checkboxradio('refresh').change();
+		if (ai.fischer == ai.constants.board.classicalFischer)
+			$('#acui_default').click();
+		else
+			$('#acui_fischer_current').click();
 	});
 
 	$('#acui_fen_load').click(function() {
@@ -626,6 +642,11 @@ $(document).ready(function() {
 
 	$('#acui_option_maxreply').change(function() {
 		$('#acui_option_minimizeliberty').prop('checked', true).checkboxradio('refresh');
+		return true;
+	});
+
+	$('#acui_option_fischer').dblclick(function() {
+		$('#acui_option_fischer').val(ai.getNewFischerId()).change();
 		return true;
 	});
 
