@@ -779,7 +779,7 @@ server.acsrv_process = function(pSocket) {
 						if (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_aicolor)
 							throw 'Internal error';
 
-						node = pSocket.acsrv_ai._ai_nodeCopy(pSocket.acsrv_ai._root_node, false);
+						node = pSocket.acsrv_ai._ai_nodeCopy(pSocket.acsrv_ai.getMainNode(), false);
 						move = pSocket.acsrv_ai.movePiece(line, true, pSocket.acsrv_ai.getPlayer());
 						if (move == pSocket.acsrv_ai.constants.move.none)
 						{
@@ -1097,7 +1097,7 @@ server.acsrv_board = function(pSocket) {
 		x, y, i;
 
 	//-- Board
-	node = pSocket.acsrv_ai._root_node;
+	node = pSocket.acsrv_ai.getMainNode();
 	hist = pSocket.acsrv_ai.getHistory();
 	move = (hist.length === 0 ? pSocket.acsrv_ai.constants.move.none : hist[hist.length-1]);
 	rotated = pSocket.acsrv_ai.options.board.rotated;		//Shortened syntax

@@ -318,7 +318,7 @@ $(document).ready(function() {
 			doSwitch = false;
 
 		//-- Checks
-		if (move === null)
+		if (move == ai.constants.move.none)
 		{
 			if (ai.isEndGame(false))
 				acui_showWinner();

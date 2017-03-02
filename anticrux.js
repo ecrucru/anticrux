@@ -75,6 +75,7 @@
 var AntiCrux = function() {
 	this._init();
 	this._root_node = {};
+	this._lastLevel = null;
 	this.clearBoard();
 };
 
@@ -99,6 +100,10 @@ AntiCrux.prototype.copyOptions = function(pObject) {
 	//-- Proceeds to the copy
 	this.options = JSON.parse(JSON.stringify(pObject.options));
 	return true;
+};
+
+AntiCrux.prototype.getMainNode = function() {
+	return this._root_node;
 };
 
 AntiCrux.prototype.clearBoard = function() {
@@ -384,6 +389,7 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 	this.options.ai.handicap			= [0, 70, 50, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
 	this.options.ai.acceleratedEndGame	= (pLevel >= 5);
 	this.options.ai.oyster				= (pLevel == 1);
+	this._lastLevel = pLevel;
 	return true;
 };
 
@@ -421,7 +427,7 @@ AntiCrux.prototype.getPieceByCoordinate = function(pCoordinate, pNode) {
 };
 
 AntiCrux.prototype.isMove = function(pMove) {
-	return	pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])(=[RrNnBbQqKk])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/) ||
+	return	pMove.match(/^[RNBQK]?([a-h]([0-9])?)?x?[a-h][0-9]=?[RrNnBbQqKk]?\s?[\!|\+|\#|\-|\/|\=|\?]*$/) ||
 			pMove.match(/^[0-6]?[0-7]{4}$/);
 };
 
@@ -445,7 +451,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	if (typeof pMove == 'string')
 	{
 		//- Decode the input string
-		regex = pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])(=[RrNnBbQqKk])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/); //case-sensitive, no castling
+		regex = pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])=?([RrNnBbQqKk])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/); //case-sensitive, no castling
 		if (regex === null)
 			return this.constants.move.none;
 
@@ -455,10 +461,10 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 				regex[i] = '';
 
 		//- Promotion
-		if (regex[6].length > 1)
-			move_promotion = this.constants.piece.mapping[regex[6].substring(1)];
+		if (regex[6].length > 0)
+			move_promotion = this.constants.piece.mapping[regex[6]];
 		else
-			move_promotion = 0;
+			move_promotion = this.constants.piece.none;
 
 		//- Move to
 		move_toX = 'abcdefgh'.indexOf(regex[5].charAt(0));
@@ -520,8 +526,8 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 		//- Move from : chooses the final move
 		if (moves.length != 1)
 			return this.constants.move.none;
-		move_fromY = Math.floor(moves[0]/1000 ) % 10;
-		move_fromX = Math.floor(moves[0]/100  ) % 10;
+		move_fromY = Math.floor(moves[0]/1000) % 10;
+		move_fromX = Math.floor(moves[0]/100 ) % 10;
 	}
 	else
 	{
@@ -642,12 +648,12 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	if (pPlayer === undefined)
 		pPlayer = this.getPlayer(pNode);
 	if ((pPlayer != this.constants.owner.black) && (pPlayer != this.constants.owner.white))
-		return null;
+		return this.constants.move.none;
 	this._buffer = '';
 
 	//-- Pre-conditions
 	if (this.hasPendingPromotion(pNode))
-		return null;
+		return this.constants.move.none;
 	if (this.options.ai.maxReply < 1)
 		this.options.ai.maxReply = 1;
 	this._ai_nodeFreeMemory(pNode);				//Should be done by the calling program in any case
@@ -658,7 +664,7 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	//-- End of game ?
 	this._ai_nodeMoves(pNode);
 	if (pNode.moves.length === 0)
-		return null;
+		return this.constants.move.none;
 	limitDepth = (this.options.ai.noStatOnForcedMove && (pNode.moves.length === 1));
 
 	//-- Oyster : you can't lose against this level
@@ -678,6 +684,10 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 		this.options.ai.maxDepth = curDepth;
 		this._ai_nodeRecurseTree(pPlayer, 0, pNode);
 		this._reachedDepth = curDepth;
+
+		//- Callback
+		if (this.callbackExploration !== null)
+			this.callbackExploration(maxDepth, this._reachedDepth, this._numNodes);
 
 		//- Estimates the number of nodes for the next level
 		// The mathematical background is at http://keisan.casio.com/exec/system/14059930754231
@@ -762,7 +772,7 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 	{
 		//- Gets the move
 		move = subai.getMoveAI();
-		if (move === null)
+		if (move === subai.constants.move.none)
 		{
 			subai.freeMemory();
 			break;
@@ -915,7 +925,7 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
-	if (pMove === null)
+	if ((pMove === null) || (pMove == this.constants.move.none))
 		return '';
 
 	//-- Elements
@@ -973,6 +983,18 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 
 	//-- Result
 	return output;
+};
+
+AntiCrux.prototype.moveToUCI = function(pMove) {
+	if ((pMove === null) || (typeof pMove !== 'number') || (pMove == this.constants.move.none))
+		return '0000';
+	else
+		return ( 'abcdefgh'[Math.floor(pMove/100) % 10] +
+				 (8-Math.floor(pMove/1000) % 10) +
+				 'abcdefgh'[pMove % 10] +
+				 (8-Math.floor(pMove/10) % 10) +
+				 '  rnbqk'[Math.floor(pMove/10000) % 10]
+				).trim();
 };
 
 AntiCrux.prototype.getScore = function(pNode) {
@@ -1498,11 +1520,11 @@ AntiCrux.prototype.toPgn = function() {
 	pgn += '[Site "https://github.com/ecrucru/anticrux/"]' + "\n";
 	pgn += '[Date "' + (new Date().toISOString().slice(0, 10)) + '"]' + "\n";
 	if (this.options.board.rotated)
-		pgn +=	'[White "AntiCrux '+this.options.ai.version+'"]' + "\n" +
+		pgn +=	'[White "AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel) + '"]' + "\n" +
 				'[Black "You"]' + "\n";
 	else
 		pgn +=	'[White "You"]' + "\n" +
-				'[Black "AntiCrux '+this.options.ai.version+'"]' + "\n";
+				'[Black "AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel) + '"]' + "\n";
 	pgn += '[Result "?"]' + "\n";
 	if (this.hasSetUp())
 	{
@@ -1638,6 +1660,11 @@ AntiCrux.prototype.freeMemory = function() {
 	this._ai_gc();
 	return count;
 };
+
+
+//---- Events
+
+AntiCrux.prototype.callbackExploration = null;
 
 
 //---- Private members

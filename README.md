@@ -1,4 +1,4 @@
-# AntiCrux
+AntiCrux
 
 > Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 
@@ -9,64 +9,88 @@
 ## Quick summary
 
 - [Presentation](#presentation)
-- [Features](#features)
-- [Gameplay](#gameplay)
-- [Options](#options)
-	- [Some theory](#some-theory)
-	- [For the intelligence](#for-the-intelligence)
-	- [For the board](#for-the-board)
-- [Programming interface](#programming-interface)
-	- [Notations](#notations)
-	- [Methods](#methods)
-	- [Valuation](#valuation)
-- [NodeJS](#nodejs)
-	- [Package](#package)
+- [Installation](#installation)
+	- [Grab your copy](#grab-your-copy)
+	- [Web-interface](#web-interface)
+	- [Node.js](#nodejs)
 	- [AntiCrux Server](#anticrux-server)
+	- [AntiCrux Engine](#anticrux-engine)
+		- [Procedure for pyChess](#procedure-for-pychess)
 - [Information](#information)
 	- [Change log](#change-log)
 	- [License](#license)
+- [Corner for developers](#corner-for-developers)
+	- [General approach](#general-approach)
+	- [Options](#options)
+		- [For the AI](#for-the-ai)
+		- [For the board](#for-the-board)
+		- [For the gameplay](#for-the-gameplay)
+		- [Levels](#levels)
+	- [Notations](#notations)
+	- [API](#api)
+	- [Valuation](#valuation)
 
 
 
 ## Presentation
 
-AntiChess is a variant of the classical chess which consists in losing to win. The rules are very simple :
+AntiCrux is a library written in JavaScript which plays a single variant of chess named "AntiChess", "Suicide chess" or also "Loosing chess". You can play against the computer with :
 
-- there are no check, no mate and no castling,
-- the winner has no more piece on the board or cannot move,
-- when you can take an opponent's piece, you **must** take it,
-- when you can take several opponent's pieces, you may choose which one to take,
-- you can promote a king.
+- a mobile web-interface for tablets and desktops (Firefox, Chrome...)
+- a remote server by using the same commands than the Free Internet Chess Server (FICS)
+- a chess engine to connect with your UCI-compatible desktop application (WinBoard, pyChess...)
 
-The logic of loosing all one's pieces leads to a really different way of thinking. On contrary to the classical chess, when you start to lose, you can still expect to win at the end. The programming of such an algorithm is easier than the classical chess because the nodes are generally reduced to the forced moves causing a maximal damage. That's why it is generally called a "forced-move game" or "suicide game".
+For technical reasons inherited from JavaScript, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *normal* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills.
 
-AntiChess is rapidely repetitive. That's why AntiCrux also plays AntiChess960. The concept is to shuffle the pieces of the first line and there are 960 different positions. The rules are the same and will change your habits !
+AntiCrux has competed with StockFish AntiChess available at [www.lichess.org](https://lichess.org). Following the [calculation rules](http://www.fide.com/component/handbook/?id=172&amp;view=article), the maximal rating of AntiCrux version 0.1.0 with no time limit is estimated at **1980** (with no guarantee of accuracy).
 
-The game is written in JavaScript and requires preferably a powerful desktop computer, else it will use a classical technique. Indeed, the JavaScript interpreter consumes a lot of memory depending on the current settings. The game works slightly better with the JavaScript implemented by Google compared to Mozilla.
+About the variant AntiChess, the objective consists in losing all your own pieces or reaching a stalemate. For that, you will probably have to force the moves. The rules are very simple :
 
-AntiCrux is neither UCI-compatible, nor working as a Worker (which would allow an asynchronous execution).
+- there are no check, no mate and no castling
+- the winner has no more piece on the board or cannot move
+- when you can take an opponent's piece, you **must** take it
+- when you can take several opponent's pieces, you may choose which one to take
+- you can promote a king
 
+AntiChess960 is another variant for which the pieces of the first line are shuffled in a precise order. It offers 959 new start positions, the 519th one being the classical position. The other rules are not changed.
 
-
-## Features
-
-- Client-side
-- Based on HTML5 and jQuery Mobile
-- 1 player (human vs. AI) or 2 local players (human vs. human)
-- Initial or advanced position for AntiChess and AntiChess 960
-- Several levels for the AI
-- Informative or detailed hints
-- History of the moves
-- Undo
-- Import from FEN, Lichess
-- Export to FEN, PGN, Chess fonts
-- Node.js
+The logic of loosing all one's pieces leads to a really different way of thinking. When you start to lose, you can still expect to win at the end. The number of materials counts but the way you play at any moment as well.
 
 
 
-## Gameplay
+## Installation
 
-It mainly depends on the settings you set for the analysis of the decision tree. The default application is shipped along with several possible levels :
+AntiCrux is delivered via Github and NPM.
+
+
+### Grab your copy
+
+You can download a stable release as a ZIP file from the public releases :
+
+- [https://github.com/ecrucru/anticrux/releases](https://github.com/ecrucru/anticrux/releases)
+
+You can download a work in progress as a ZIP file which includes new and unstable functionalities :
+
+- [https://github.com/ecrucru/anticrux/archive/dev.zip](https://github.com/ecrucru/anticrux/archive/dev.zip)
+
+You can replicate the repository if you own Git :
+
+```bash
+git clone https://github.com/ecrucru/anticrux.git
+```
+
+The stable release is available through the NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" :
+
+```bash
+npm install anticrux
+```
+
+
+### Web-interface
+
+As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface.
+
+The options can be set within the tab "Options". You have a reduced set of preconfigured levels :
 
 - Oyster : random play
 - Handicaped player : restricted classical play
@@ -77,29 +101,232 @@ It mainly depends on the settings you set for the analysis of the decision tree.
 - Champion 1 GB : deeper full set of techniques
 - Champion 2 GB : deepest full set of techniques
 
-"Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will probably crash.
-
-AntiCrux has competed with StockFish Antichess available at [www.lichess.org](https://lichess.org). Following the [calculation rules](http://www.fide.com/component/handbook/?id=172&amp;view=article), the maximal rating of AntiCrux version 0.1.0 with no time limit is estimated at **1980** (with no guarantee of accuracy).
+"Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will probably crash (your game will be lost).
 
 
+### Node.js
 
-## Options
+To use AntiCrux Server and AntiCrux Engine, you need to install [Node.js](https://nodejs.org).
+
+The package can be built locally with two scripts :
+
+- "build_min.bat" creates the minimized version of the library (depends on "uglify-js")
+- "build_nodejs.bat" copies the right files into the sub-directory "node_modules"
+
+To test if your installation is working, you can run the following test :
+
+```bash
+node --expose-gc nodejs_demo_solve.js
+```
 
 
-### Some theory
+### AntiCrux Server
 
-The options influence how the choice of a move is done by AntiCrux. Therefore, it is needed to know a little how it works.
+You need first to install [Node.js](#node-js).
 
-Schematically, AntiCrux plays all the possible moves to find a better situation. The problem is that it becomes rapidely exponential and exploring more than 4 half-moves is complicated, at least in JavaScript. Thanks to the rules of AntiChess which insist on the forced moves, their quantity can be reduced a lot and it allows the algorithm to explore deeper. Then its efficiency is higher.
+To access the engine remotely, you can execute AntiCrux as a chess server. By default, it listens to local connections on the port 5000 and you can't create more than one instance on the same port.
 
-Basically, playing one piece is an **half-move** and it generates a new position called **node**. This node leads to new nodes if there are available moves for the next player. The nodes are linked to each other and the player is alternate between each turn. This is modelled with a tree with plenty of leaves and we have to cut the branches to discover its hidden treasure : the right move to play !
+Start the server by double-clicking on the script "run_server.bat".
 
-The positions are valuated at the lowest level. Then by use of rules of aggregations, the upper levels are weighted with some formulas based on the number of moves, the strength of the remaining pieces, etc... Once the first level is reached, we can pick the move with the best score. This score is a collection of hypothesis which should help the artificial intelligence to win. It is up to you to beat it. Have fun !
+Because it mimics the commands of the Free Internet Chess Server (FICS), AntiCrux Server is compatible with any ICS client not supporting timeseal.
 
-The algorithm implements some randomness in order to never play the same games. With the level "Champion", the randomness is rather reduced.
+- Telnet (text-mode, console) is supported. Type "help" to view the implemented commands.
+
+```
+telnet localhost 5000
+```
+
+- WinBoard is supported and offers the highest compatibility because it natively supports the variants of chess.
+
+```
+"AntiCrux Server" /icshost=localhost /icsport=5000
+```
+
+- Arena is not really supported because it applies the rules of chess on the variant. It can be mitigated with the following settings :
+	- Log as a guest without timeseal
+	- In the menu "Options > Appearence > Chessboard > Move input", you should disallow the one-click move
+	- In the menu "Options > Appearence > Other settings", you must disable the check of the legality of the moves
+	- To promote a king, you must type the move in the command-line (example: b2b1=K)
+	- You may have to disconnect between two games
+
+- pyChess is not supported.
 
 
-### For the intelligence
+### AntiCrux Engine
+
+You need first to install [Node.js](#node-js) and to build the package.
+
+AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches !
+
+Some restrictions apply :
+
+- AntiCrux Engine is a script (not an executable file) : the procedure is detailed below
+- You can't stop the engine while it is thinking
+- There is no time control
+- No suggestion is displayed during the analysis
+
+#### Verification
+
+To verify that AntiCrux Engine reacts correctly, you can create the following file "uci_test.txt" **with an empty line at its end** :
+
+```
+uci
+isready
+ucinewgame
+position startpos moves a3
+go depth 5
+```
+
+Then run the command :
+
+```
+node --expose-gc anticrux-engine.js < uci_test.txt
+```
+
+#### Procedure for pyChess
+
+Open the file "%USERPROFILE%\\.config\\pychess\\engines.json" with a text editor.
+
+Append the following content (paths to be adapted) before the last "]" :
+
+```json
+, {
+  "args": [
+    "--expose-gc",
+    "C:\\fullpath\\anticrux-engine.js"
+  ],
+  "command": "C:\\fullpath\\nodejs\\node.exe",
+  "country": "fr",
+  "name": "AntiCrux",
+  "protocol": "uci",
+  "variants": [
+    "suicide"
+  ],
+  "workingDirectory": "C:\\fullpath\\anticrux\\"
+}
+```
+
+Run pyChess : it will update this new entry with other custom fields provided by the latest release of AntiCrux.
+
+You can now play from the menu "Game > New game > Suicide chess". If the engine doesn't appear in the dropdown list, then you can try to restore the following section in the configuration file :
+
+```json
+"variants": [
+    "suicide"
+  ],
+```
+
+
+
+## Information
+
+
+### Change log
+
+- November 11th 2016 - Creation of the project
+- December 25th 2016 - Version 0.1.0
+	- Initial set of features
+- February 3rd 2017 - Version 0.2.0
+	- Library: AntiCrux.prototype.getMoves renamed as AntiCrux.prototype.getMovesHtml
+	- Library: new mandatory parameter for AntiCrux.prototype.highlightMoves
+	- UI: highlighted target cells when requesting a detailed hint
+	- Library: no more 'v' in AntiCrux.options.ai.version
+	- Library: AntiCrux.prototype._has can compare to string
+	- UI: notification when JavaScript is disabled
+	- UI: fix of incorrect error messages
+	- UI: reordered tabs
+	- Library: new method AntiCrux.prototype.highlightMove
+	- Library: improved load from LiChess (example: 8efxLAuw)
+	- Library: AntiCrux.prototype.getHistory renamed as AntiCrux.prototype.getHistoryHtml
+	- Library: new method AntiCrux.prototype.getHistory
+	- UI: enriched highlighted moves
+	- Library: corrected spelling mistake for AntiCrux.options.board.fischer
+	- Library: optimization of the AI (gameplay for weak levels and technical)
+	- UI: review the game based on the history
+	- Library: new method AntiCrux.prototype.getPieceByCoordinate
+	- UI: easier selection of the moves
+	- Library: new method AntiCrux.prototype.toConsole
+	- Library: support for Node.js
+	- Library: new method AntiCrux.prototype.switchPlayer
+	- Library: new method AntiCrux.prototype.predictMoves
+	- UI: hint to predict the moves
+	- Library: new method AntiCrux.prototype.startUI (restricted to Node.js)
+	- Library: new method AntiCrux.prototype.getNewFischerId
+	- UI: integration around the Fischer's identifier of a game
+	- Library: deep technical remodelling of the library for speed and lower impact on the memory
+	- Library: new method AntiCrux.prototype.copyOptions
+	- Library: new method AntiCrux.prototype.resetStats
+	- Library: bug fix in the processing of the option AntiCrux.options.ai.noStatOnForcedMove
+	- Library: new method AntiCrux.prototype.getOppositePlayer
+	- UI: improved layout for the history of the moves
+	- Library: improvement of the deep analysis
+	- Library: new parameter for AntiCrux.prototype.isEndGame
+	- Library: the minimal search depth is now 1 (previously 3)
+	- UI: blind and random modes
+- In progress - Version 0.2.1
+	- Server: new server based on Node.js
+	- Readme: update
+	- UI: button "Rematch"
+	- Library: new method AntiCrux.prototype.isMove
+	- Library: new method AntiCrux.prototype.setLevel
+	- Library: new method AntiCrux.prototype.moveToUCI
+	- Library: new method AntiCrux.prototype.getMainNode
+	- Library: new method AntiCrux.prototype.callbackExploration(pMaxDepth, pDepth, pNodes)
+	- Engine: new UCI-compatible chess engine based on Node.js
+	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.move.none
+
+
+### License
+
+AntiCrux is released under the terms of the **GNU Affero General Public License version 3**.
+
+- https://www.gnu.org/licenses/agpl-3.0.html
+
+```javascript
+/*
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
+	Copyright (C) 2016-2017, ecrucru
+
+		https://github.com/ecrucru/anticrux/
+		http://ecrucru.free.fr/?page=anticrux
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+```
+
+
+
+## Corner for developers
+
+
+### General approach
+
+It is important to know how the options influence a move AntiCrux makes.
+
+Schematically, AntiCrux plays all the possible moves to find a better situation. Finding the possible moves becomes exponential rapidly. Exploring more than 4 half-moves can be complicated. Because AntiChess insists on the forced moves, the number of possible moves can be reduced a lot, allowing the algorithm to explore deeper with higher efficiency.
+
+Playing one piece is an *half-move* generating a new position called *node*. This node will lead to new nodes if there are available moves for the next player. The nodes are connected and the players take turns in the play. This game is modelled with a tree structure whose branches can be cut for its hidden treasure : the right move to play !
+
+The positions are valuated from the bottom. Then by rules of aggregation, the upper levels are weighted based on the number of moves, the strength of the remaining pieces, etc... Once the top level is reached, AntiCrux can pick the move with the best score. It is your job to beat the AI !
+
+The algorithm adopts some randomness to never play the same game. With the level "Champion", the randomness is rather reduced.
+
+
+### Options
+
+
+#### For the AI
 
 - **AntiCrux.options.ai.version**
 
@@ -209,11 +436,11 @@ This option activates the worst play ever. It just picks randomly among the poss
 Mechanically, it deactivates the other options based on the decision tree.
 
 
-### For the board
+#### For the board
 
 - **AntiCrux.options.board.rotated**
 
-When you play Black, the board must be rotated at 180°.
+When you play Black, the board must be rotated at 180Â°.
 
 - **AntiCrux.options.board.symbols**
 
@@ -264,7 +491,7 @@ This information consumes the memory and is less relevant at deep levels.
 This option is used for debugging purposes in the process of developing AntiCrux.
 
 
-### For the gameplay
+#### For the gameplay
 
 - **AntiCrux.options.variant.promoteQueen**
 
@@ -289,19 +516,40 @@ This human-related option renders the board differently. It may be used to reduc
 The export to FEN and PGN is not impacted.
 
 
+#### Levels
 
-## Programming interface
+The options above are combined into predefined levels in a range from 1 to 20. They serve for AntiCrux Server and AntiCrux Engine.
+
+Please note that the web-interface offers all the options individually and fewer predefined levels.
+
+| Level               | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  | 11  | 12   | 13   | 14   | 15   | 16   | 17   | 18   | 19 | 20 |
+|---------------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:--:|:--:|
+| maxDepth            | 3   | 8   | 8   | 8   | 3   | 5   | 6   | 7   | 8   | 9   | 10  | 15   | 20   | 30   | 30   | 30   | 40   | 40   | 45 | 50 |
+| maxNodes            | 100 | 50k | 50k | 50k | 15k | 30k | 50k | 75k | 80k | 85k | 90k | 120k | 150k | 200k | 300k | 400k | 500k | 750k | 1M | 2M |
+| minimizeLiberty     | -   | -   | -   | -   | -   | -   | -   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
+| maxReply            | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 3   | 2   | 1   | 1   | 1    | 1    | 2    | 2    | 2    | 2    | 2    | 2  | 2  |
+| noStatOnForcedMove  | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
+| wholeNodes          | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
+| randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
+| pessimisticScenario | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
+| bestStaticScore     | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
+| opportunistic       | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | X    | X    | X    | X    | X    | X    | X  | X  |
+| handicap            | 0   | 70  | 50  | 25  | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  | 0  |
+| acceleratedEndGame  | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
+| oyster              | X   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | -    | -    | -    | -    | -    | -    | -  | -  |
+
+Remark : There is no evidence that these levels have very different ELO ratings.
 
 
 ### Notations
 
-The board is a mono-dimensional array of 64 cells. Black is at the top. White is at the bottom.
+The board is a mono-dimensional array of 64 cells. Black is at the top and White is at the bottom, whatever the rotation of the board.
 
-|     |  A |  B |  C | . |  H |
-|-----|----|----|----|---|----|
-|**8**|  0 |  1 |  2 | . |  7 |
-|**7**|  8 |  9 | 10 | . | 15 |
-|**.**|  . |  . |  . | . |  . |
+|     | A  | B  | C  | . | H  |
+|:---:|:--:|:--:|:--:|:-:|:--:|
+|**8**| 0  | 1  | 2  | . | 7  |
+|**7**| 8  | 9  | 10 | . | 15 |
+|**.**| .  | .  | .  | . | .  |
 |**1**| 56 | 57 | 58 | . | 63 |
 
 The pieces are represented with an arbitrary internal identifier :
@@ -327,9 +575,9 @@ The moves are identified by 3 notation systems :
 - XY notation : massively used internally for the processing of the moves, X and Y are concatenated. The first figure is X from 0 to 7. The second figure is Y from 0 to 7. For example, 56=G3. You can combine up to 5 figures to build a move : the first one is the promotion based on *AntiCrux.constants.piece*, the following 2 figures describe the source position, the following 2 figures describe the target position. For example, 51201=(cxb8=Q).
 
 
-### Methods
+### API
 
-A **node** is a position defined by pieces and their owner, and a player :
+A node is a position defined by pieces and their owner, and a player :
 
 ```javascript
 node = {
@@ -341,6 +589,7 @@ node = {
 
 A node is enriched with attributes when you call the API below. Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application.
 
+- AntiCrux.callbackExploration(pMaxDepth, pDepth, pNodes)
 - AntiCrux.clearBoard()
 - AntiCrux.copyOptions(pObject)
 - AntiCrux.defaultBoard(pFischer)
@@ -349,6 +598,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.getHistory()
 - AntiCrux.getHistoryHtml()
 - AntiCrux.getInitialPosition()
+- AntiCrux.getMainNode()
 - AntiCrux.getMoveAI(pPlayer, pNode)
 - AntiCrux.getMovesHtml(pPlayer, pNode)
 - AntiCrux.getNewFischerId()
@@ -373,6 +623,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.logMove(pMove)
 - AntiCrux.movePiece(pMove, pCheckLegit, pPlayerIndication, pNode)
 - AntiCrux.moveToString(pMove, pNode)
+- AntiCrux.moveToUCI(pMove)
 - AntiCrux.predictMoves(pNode)
 - AntiCrux.promote(pPiece, pNode)
 - AntiCrux.resetStats()
@@ -399,132 +650,6 @@ Once a node is evaluated, you get 2 attributes among others :
 - node.valuation : the static score based on the weight of every piece
 - node.valuationSolver : the deep valuation after a certain exploration of the depths and based on the settings of the instance
 
-The valuation is based on a deep static score known as [centipawn](http://chess.wikia.com/wiki/Centipawn). A queen has a high score, not a pawn. Black and White are added and the valuation is changed to a percentage for a better understanding. This score varies between -100% (bad score for Black) and +100% (bad score for white).
+The valuation is based on a deep static score known as [centipawn](http://chess.wikia.com/wiki/Centipawn). A queen has a high score, not a pawn. Black and White are added and the valuation is changed to a percentage for a better understanding. This score varies between -100% (**bad** score for Black) and +100% (**bad** score for white).
 
 &#x26a0; The score shows the strength of the player, so its ability to lose AntiChess. Your objective is then to modify the score in favor of your opponent.
-
-
-
-## NodeJS
-
-### Package
-
-AntiCrux is built to be compatible with Node.js through the package named "anticrux" :
-
-```bash
-npm install anticrux
-```
-
-Once the package is created, you can develop your own scripts. Example :
-
-```bash
-node --expose-gc nodejs_demo_solve.js
-```
-
-### AntiCrux Server
-
-If you don't like the web interface, you can run AntiCrux as a server and play with your favorite chess user interface.
-
-To start the server, double-click on the script "run_server.bat" or execute the following command. By default, it listens to local connections on the port 5000. You can't create more than one instance on the same port.
-
-```bash
-node --expose-gc anticrux-server.js
-```
-
-Several user interfaces have been tested :
-
-- Telnet (console) is supported. The commands are the same than FICS.
-
-- WinBoard is supported and offers the highest compatibility because it natively supports the variants of chess.
-	- Connect with : "AntiCrux Server" /icshost=localhost /icsport=5000
-
-- Arena is not really supported because it applies the rules of chess on the variant. It can be mitigated with the following settings :
-	- Log as a guest without timeseal
-	- In the menu "Options > Appearence > Chessboard > Move input", you should disallow the one-click move
-	- In the menu "Options > Appearence > Other settings", you must disable the check of the legality of the moves
-	- To promote a king, you must type the move in the command-line (example: b2b1=K)
-	- You may have to disconnect between two games
-
-- pyChess is not supported.
-
-
-
-## Information
-
-
-### Change log
-
-- November 11th 2016 - Creation of the project
-- December 25th 2016 - Version 0.1.0
-	- Initial set of features
-- February 3rd 2017 - Version 0.2.0
-	- Library: AntiCrux.prototype.getMoves renamed as AntiCrux.prototype.getMovesHtml
-	- Library: new mandatory parameter for AntiCrux.prototype.highlightMoves
-	- UI: highlighted target cells when requesting a detailed hint
-	- Library: no more 'v' in AntiCrux.options.ai.version
-	- Library: AntiCrux.prototype._has can compare to string
-	- UI: notification when JavaScript is disabled
-	- UI: fix of incorrect error messages
-	- UI: reordered tabs
-	- Library: new method AntiCrux.prototype.highlightMove
-	- Library: improved load from LiChess (example: 8efxLAuw)
-	- Library: AntiCrux.prototype.getHistory renamed as AntiCrux.prototype.getHistoryHtml
-	- Library: new method AntiCrux.prototype.getHistory
-	- UI: enriched highlighted moves
-	- Library: corrected spelling mistake for AntiCrux.options.board.fischer
-	- Library: optimization of the AI (gameplay for weak levels and technical)
-	- UI: review the game based on the history
-	- Library: new method AntiCrux.prototype.getPieceByCoordinate
-	- UI: easier selection of the moves
-	- Library: new method AntiCrux.prototype.toConsole
-	- Library: support for Node.js
-	- Library: new method AntiCrux.prototype.switchPlayer
-	- Library: new method AntiCrux.prototype.predictMoves
-	- UI: hint to predict the moves
-	- Library: new method AntiCrux.prototype.startUI (restricted to Node.js)
-	- Library: new method AntiCrux.prototype.getNewFischerId
-	- UI: integration around the Fischer's identifier of a game
-	- Library: deep technical remodelling of the library for speed and lower impact on the memory
-	- Library: new method AntiCrux.prototype.copyOptions
-	- Library: new method AntiCrux.prototype.resetStats
-	- Library: bug fix in the processing of the option AntiCrux.options.ai.noStatOnForcedMove
-	- Library: new method AntiCrux.prototype.getOppositePlayer
-	- UI: improved layout for the history of the moves
-	- Library: improvement of the deep analysis
-	- Library: new parameter for AntiCrux.prototype.isEndGame
-	- Library: the minimal search depth is now 1 (previously 3)
-	- UI: blind and random modes
-- In progress - Version 0.2.1
-	- Server: new server based on Node.js
-	- Library: new method AntiCrux.prototype.isMove
-	- Library: new method AntiCrux.prototype.setLevel
-
-
-### License
-
-AntiCrux is released under the terms of the **GNU Affero General Public License version 3**.
-
-- https://www.gnu.org/licenses/agpl-3.0.html
-
-```javascript
-/*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
-	Copyright (C) 2016-2017, ecrucru
-
-		https://github.com/ecrucru/anticrux/
-		http://ecrucru.free.fr/?page=anticrux
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU Affero General Public License as
-	published by the Free Software Foundation, either version 3 of the
-	License, or (at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-	GNU Affero General Public License for more details.
-
-	You should have received a copy of the GNU Affero General Public License
-	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-```
