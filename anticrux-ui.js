@@ -532,10 +532,25 @@ $(document).ready(function() {
 	$('#acui_rematch').click(function() {
 		ui_rematch = (ui_rematch == ai.constants.owner.white ? ai.constants.owner.black : ai.constants.owner.white);
 		$('#acui_option_rotated').prop('checked', (ui_rematch == ai.constants.owner.black)).checkboxradio('refresh').change();
-		if (ai.fischer == ai.constants.board.classicalFischer)
-			$('#acui_default').click();
+		if (ai.fischer !== null)
+		{
+			if (ai.fischer == ai.constants.board.classicalFischer)
+				$('#acui_default').click();
+			else
+				$('#acui_fischer_current').click();
+		}
 		else
-			$('#acui_fischer_current').click();
+		{
+			if (ai.hasSetUp())
+			{
+				ui_move = '';
+				$('#acui_input').val(ai.getInitialPosition());
+				$('#acui_fen_load').click();
+				acui_autostart();
+			}
+			else
+				$('#acui_default').click();
+		}
 	});
 
 	$('#acui_fen_load').click(function() {
