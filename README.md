@@ -1,4 +1,4 @@
-AntiCrux
+# AntiCrux
 
 > Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 
@@ -106,12 +106,22 @@ The options can be set within the tab "Options". You have a reduced set of preco
 
 ### Node.js
 
-To use AntiCrux Server and AntiCrux Engine, you need to install [Node.js](https://nodejs.org).
+To use AntiCrux Server and AntiCrux Engine, you need to install [Node.js](https://nodejs.org). With a packet manager under Linux, you can type :
 
-The package can be built locally with two scripts :
+```bash
+apt-get install nodejs nodejs-legacy
+```
 
-- "build_min.bat" creates the minimized version of the library (depends on "uglify-js")
-- "build_nodejs.bat" copies the right files into the sub-directory "node_modules"
+Additional tools may be added globally :
+
+```bash
+npm install -g uglify-js jshint
+```
+
+AntiCrux can be built locally with two scripts :
+
+- "build_min.bat" (Windows) or "build_min.sh" (Linux) creates the minimized version of the library
+- "build_nodejs.bat"(Windows) or "build_nodejs.sh" (Linux) copies the right files into the sub-directory "node_modules"
 
 To test if your installation is working, you can run the following test :
 
@@ -119,14 +129,16 @@ To test if your installation is working, you can run the following test :
 node --expose-gc nodejs_demo_solve.js
 ```
 
+Remark : if you don't install the package "nodejs-legacy", replace the command "node" by "nodejs".
+
 
 ### AntiCrux Server
 
-You need first to install [Node.js](#node-js).
+You need first to install [Node.js](#nodejs).
 
 To access the engine remotely, you can execute AntiCrux as a chess server. By default, it listens to local connections on the port 5000 and you can't create more than one instance on the same port.
 
-Start the server by double-clicking on the script "run_server.bat".
+Start the server by double-clicking on the script "run_server.bat" (Windows) or "run_server.sh" (Linux).
 
 Because it mimics the commands of the Free Internet Chess Server (FICS), AntiCrux Server is compatible with any ICS client not supporting timeseal.
 
@@ -154,7 +166,7 @@ telnet localhost 5000
 
 ### AntiCrux Engine
 
-You need first to install [Node.js](#node-js) and to build the package.
+You need first to install [Node.js](#nodejs) and to build the package.
 
 AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches !
 
@@ -208,7 +220,7 @@ Append the following content (paths to be adapted) before the last "]" :
 
 Run pyChess : it will update this new entry with other custom fields provided by the latest release of AntiCrux.
 
-You can now play from the menu "Game > New game > Suicide chess". If the engine doesn't appear in the dropdown list, then you can try to restore the following section in the configuration file :
+You can now play from the menu "Game > New game > Suicide chess". If the engine doesn't appear in the drop-down list, then you can try to restore the following section in the configuration file :
 
 ```json
 "variants": [
@@ -274,6 +286,7 @@ You can now play from the menu "Game > New game > Suicide chess". If the engine 
 	- Library: new method AntiCrux.prototype.callbackExploration(pMaxDepth, pDepth, pNodes)
 	- Engine: new UCI-compatible chess engine based on Node.js
 	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.move.none
+	- Library: scripts for Linux
 
 
 ### License
