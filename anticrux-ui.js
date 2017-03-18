@@ -463,7 +463,7 @@ $(document).ready(function() {
 		var dl, pgn;
 
 		//-- Gets the PGN data
-		pgn = ai.toPgn();
+		pgn = ai.toPgn({});
 		if (pgn.length === 0)
 			acui_popup('No data to export to PGN.');
 		else

@@ -16,6 +16,7 @@
 	- [AntiCrux Server](#anticrux-server)
 	- [AntiCrux Engine](#anticrux-engine)
 		- [Procedure for pyChess](#procedure-for-pychess)
+	- [AntiCrux hELO world](#anticrux-helo-world)
 - [Information](#information)
 	- [Change log](#change-log)
 	- [License](#license)
@@ -36,13 +37,11 @@
 
 AntiCrux is a library written in JavaScript which plays a single variant of chess named "AntiChess", "Suicide chess" or also "Loosing chess". You can play against the computer with :
 
-- a mobile web-interface for tablets and desktops (Firefox, Chrome...)
+- a mobile web-interface for tablets and desktops
 - a remote server by using the same commands than the Free Internet Chess Server (FICS)
-- a chess engine to connect with your UCI-compatible desktop application (WinBoard, pyChess...)
+- a chess engine to connect with your UCI-compatible desktop application
 
-For technical reasons inherited from JavaScript, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *normal* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills.
-
-AntiCrux has competed with StockFish AntiChess available at [www.lichess.org](https://lichess.org). Following the [calculation rules](http://www.fide.com/component/handbook/?id=172&amp;view=article), the maximal rating of AntiCrux version 0.1.0 with no time limit is estimated at **1980** (with no guarantee of accuracy).
+For technical reasons inherited from JavaScript and its design, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *(normal)[#anticrux-helo-world]* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills with fun.
 
 About the variant AntiChess, the objective consists in losing all your own pieces or reaching a stalemate. For that, you will probably have to force the moves. The rules are very simple :
 
@@ -60,7 +59,7 @@ The logic of loosing all one's pieces leads to a really different way of thinkin
 
 ## Installation
 
-AntiCrux is delivered via Github and NPM.
+AntiCrux is delivered via [Github](https://github.com/ecrucru/anticrux/) and [NPM](https://www.npmjs.com/package/anticrux).
 
 
 ### Grab your copy
@@ -106,7 +105,7 @@ The options can be set within the tab "Options". You have a reduced set of preco
 
 ### Node.js
 
-To use AntiCrux Server and AntiCrux Engine, you need to install [Node.js](https://nodejs.org). With a packet manager under Linux, you can type :
+To use the different modules of AntiCrux out of a web-browser, you need to install [Node.js](https://nodejs.org). With a packet manager under Linux, you can type :
 
 ```bash
 apt-get install nodejs nodejs-legacy
@@ -120,7 +119,7 @@ npm install -g uglify-js jshint
 
 AntiCrux can be built locally with two scripts :
 
-- "build_min.bat" (Windows) or "build_min.sh" (Linux) creates the minimized version of the library
+- "build_min.bat" (Windows) or "build_min.sh" (Linux) creates the minimized version of the library for the HTML user interface
 - "build_nodejs.bat"(Windows) or "build_nodejs.sh" (Linux) copies the right files into the sub-directory "node_modules"
 
 To test if your installation is working, you can run the following test :
@@ -229,6 +228,63 @@ You can now play from the menu "Game > New game > Suicide chess". If the engine 
 ```
 
 
+## AntiCrux hELO world
+
+This tool generates a [PGN file](https://en.wikipedia.org/wiki/Portable_Game_Notation) to estimate the level of AntiCrux in regard of other UCI-compatible chess engines. For now, only AntiCrux and the special Stockfish-based engine developed by @ddugovic and compiled by @niklasf are considered because they are related to JavaScript.
+
+To get reliable games, the processing will take hours (or days !). To accelerate the generation, you may launch in parallel with the script "run_elo.*" as many processes as your computer has CPU.
+
+The script has 3 main changeable parameters :
+
+- job.genGames : should the script play games and append the result to the PGN file ?
+- job.numGames : how many games should be generated per CPU ?
+- job.genStats : should the script estimate AntiCrux's rating based on the rules provided by the chess federation FIDE ?
+
+The following rules apply to make the determination possible :
+
+- The player is identified by its name : 2 different levels are 2 separate players even if the engine is the same
+- The level of Stockfish AntiChess is assumed to be known : the taken reference is lichess.org
+	- Please note that lichess.org uses [Glicko](https://en.wikipedia.org/wiki/Glicko_rating_system) which is assumed not being the same than ELO
+- A player must compete with at least 3 different players having known ratings
+- AntiCrux doesn't compete with itself
+- Stockfish AntiChess can compete with itself
+- A player should play at least 9 times
+- A player must win at least one time
+
+You will read such an output at the end :
+
+```
+>> Based on the declared rankings of Stockfish 8 with multi-variants support on lichess.org :
+   - AntiCrux Level 14 is ranked 1727 after 124 games (+50/=4/-70).
+```
+
+If you don't have enough data, you can rely on another statistical method with the tool named "[BayesElo](https://www.remi-coulom.fr/Bayesian-Elo/)". Download it and type the following commands :
+
+```
+> bayeselo.exe
+ResultSet>readpgn anticrux-elo.pgn
+639 game(s) loaded, 0 game(s) with unknown result ignored.
+ResultSet>elo
+ResultSet-EloRating>mm 1 1
+ResultSet-EloRating>exactdist
+ResultSet-EloRating>ratings
+Rank Name                Elo    +    - games score oppo. draws
+   1 Stockfish Level 8  1052  232  152   125  100%   -13    0%
+   4 Stockfish Level 5   322   92   87   128   66%   110    0%
+   5 AntiCrux Level 9    155  281  274    10   50%   184    0%
+  11 AntiCrux Level 15     0  262  317    14   18%   431    7%
+  12 Stockfish Level 4   -28   87   86   103   44%   105    3%
+  14 AntiCrux Level 4    -52  251  271    13   31%   218    0%
+  21 Stockfish Level 1  -593  106  125   137    6%   222    0%
+  23 AntiCrux Level 1   -783  313  491    13    0%   363    0%
+ResultSet-EloRating>x
+ResultSet>x
+```
+
+The ELO is shown relatively to an offset equal to 0 by default. If the offset is equal to 1500, you add that offset to the displayed ELO to get the estimation. However, if we assume that the lowest level is 900 ELO, the offset becomes 1683. So depending on the considered offset, the rank of AntiCrux may vary from 1650 to 1850.
+
+It is also interesting to point out that AntiCrux Level 9 is stronger than AntiCrux Level 15. This is due to the implemented tactical rules which don't rely "linearly" on the depth and the time to get a competitive advantage.
+
 
 ## Information
 
@@ -287,6 +343,7 @@ You can now play from the menu "Game > New game > Suicide chess". If the engine 
 	- Engine: new UCI-compatible chess engine based on Node.js
 	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.move.none
 	- Library: scripts for Linux
+	- ELO: new tool to create games between computers
 
 
 ### License
@@ -558,12 +615,16 @@ Remark : There is no evidence that these levels have very different ELO ratings.
 
 The board is a mono-dimensional array of 64 cells. Black is at the top and White is at the bottom, whatever the rotation of the board.
 
-|     | A  | B  | C  | . | H  |
-|:---:|:--:|:--:|:--:|:-:|:--:|
-|**8**| 0  | 1  | 2  | . | 7  |
-|**7**| 8  | 9  | 10 | . | 15 |
-|**.**| .  | .  | .  | . | .  |
-|**1**| 56 | 57 | 58 | . | 63 |
+|     | A  | B  | C  | D  | E  | F  | G  | H  |
+|:---:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|**8**|  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+|**7**|  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|**6**| 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 |
+|**5**| 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 |
+|**4**| 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 |
+|**3**| 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 |
+|**2**| 48 | 49 | 50 | 51 | 52 | 53 | 54 | 55 |
+|**1**| 56 | 57 | 58 | 59 | 60 | 61 | 62 | 63 |
 
 The pieces are represented with an arbitrary internal identifier :
 
@@ -647,7 +708,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.toConsole(pBorder, pNode)
 - AntiCrux.toFen(pNode)
 - AntiCrux.toHtml(pNode)
-- AntiCrux.toPgn()
+- AntiCrux.toPgn(pHeader)
 - AntiCrux.toText(pNode)
 - AntiCrux.undoMove()
 

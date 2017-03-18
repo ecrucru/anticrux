@@ -1506,34 +1506,58 @@ AntiCrux.prototype.toText = function(pNode) {
 			(this.options.board.coordinates ? (rotated?'DïîíìëêéèF':'DèéêëìíîïF') : 'D((((((((F');
 };
 
-AntiCrux.prototype.toPgn = function() {
+AntiCrux.prototype.toPgn = function(pHeader) {
 	// https://www.chessclub.com/user/help/PGN-spec
 
-	var pgn, trace, i, turn, move, symbols;
+	var	lf_setheader, pgn, trace,
+		i, e, turn, move, symbols;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
 		return '';
 
-	//-- Header
-	pgn  = '[Event "Game"]' + "\n";
-	pgn += '[Site "https://github.com/ecrucru/anticrux/"]' + "\n";
-	pgn += '[Date "' + (new Date().toISOString().slice(0, 10)) + '"]' + "\n";
+	//-- Prepares the header
+	if (typeof pHeader !== 'object')
+		pHeader = {};
+	lf_setheader = function (pKey, pValue) {
+		if (!pHeader.hasOwnProperty(pKey))
+			pHeader[pKey] = pValue;
+	};
+
+	lf_setheader('Event', 'Game');
+	lf_setheader('Site', 'https://github.com/ecrucru/anticrux/');
+	lf_setheader('Date', (new Date().toISOString().slice(0, 10)));
 	if (this.options.board.rotated)
-		pgn +=	'[White "AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel) + '"]' + "\n" +
-				'[Black "You"]' + "\n";
+	{
+		lf_setheader('White', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
+		lf_setheader('Black', 'You');
+	}
 	else
-		pgn +=	'[White "You"]' + "\n" +
-				'[Black "AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel) + '"]' + "\n";
-	pgn += '[Result "?"]' + "\n";
+	{
+		lf_setheader('White', 'You');
+		lf_setheader('Black', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
+	}
+	lf_setheader('Termination', 'normal');
+	lf_setheader('Result', '?');
 	if (this.hasSetUp())
 	{
-		pgn += '[SetUp "1"]' + "\n";
-		pgn += '[FEN "' + this._history_fen0 + '"]' + "\n";
+		lf_setheader('SetUp', '1');
+		lf_setheader('FEN', this._history_fen0);
 	}
-	pgn += '[PlyCount "' + (this._history.length) +'"]' + "\n";
-	pgn += '[Variant "antichess"]' + "\n";
-	pgn += '[TimeControl "-"]' + "\n\n";
+	lf_setheader('PlyCount', this._history.length);
+	lf_setheader('Variant', 'antichess');
+	lf_setheader('TimeControl', '-');
+
+	//-- Builds the header
+	pgn = '';
+	for (e in pHeader)
+	{
+		if (typeof pHeader[e] === 'string')
+			pgn += '['+e+' "'+pHeader[e].split('"').join("'")+'"]' + "\n";
+		else
+			pgn += '['+e+' "'+pHeader[e]+'"]' + "\n";
+	}
+	pgn += "\n";
 
 	//-- Deactivates the symbols
 	symbols = this.options.board.symbols;
@@ -1565,17 +1589,27 @@ AntiCrux.prototype.toPgn = function() {
 	}
 
 	//-- Final position
-	switch (trace.getWinner())
-	{
-		case trace.constants.owner.white:
-			pgn += '# 1-0';
-			pgn = pgn.replace('[Result "?"]', '[Result "1-0"]');
-			break;
-		case trace.constants.owner.black:
-			pgn += '# 0-1';
-			pgn = pgn.replace('[Result "?"]', '[Result "0-1"]');
-			break;
-	}
+	if (pHeader.Result != '?')
+		pgn += '# ' + pHeader.Result;
+	else
+		switch (trace.getWinner())
+		{
+			case trace.constants.owner.white:
+				pgn += '# 1-0';
+				pgn = pgn.replace('[Result "?"]', '[Result "1-0"]');
+				break;
+			case trace.constants.owner.black:
+				pgn += '# 0-1';
+				pgn = pgn.replace('[Result "?"]', '[Result "0-1"]');
+				break;
+			case trace.constants.owner.none:
+				if (trace.isDraw())
+				{
+					pgn += '# 1/2-1/2';
+					pgn = pgn.replace('[Result "?"]', '[Result "1/2-1/2"]');
+				}
+				break;
+		}
 
 	//-- Restores the symbols
 	this.options.board.symbols = symbols;
@@ -1725,7 +1759,7 @@ AntiCrux.prototype._init = function() {
 	this.options = {
 		ai : {
 			version : '0.2.1',							//Version of AntiCrux
-			elo : 1900,									//Approximative strength of the algorithm
+			elo : 1750,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
 			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 100000,							//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
