@@ -11,6 +11,7 @@
 		"antichess960",
 		"artificial intelligence",
 		"jquery mobile",
+		"node.js",
 		"html5"
 	],
 	"homepage": "http://ecrucru.free.fr/?page=anticrux",
@@ -26,7 +27,7 @@
 		"images/*.gif",
 		"images/*.png"
 	],
-	"main": "anticrux.min.js",
+	"main": "anticrux.js",
 	"scripts": {
 		"test": "node --expose-gc nodejs_demo_solve.js"
 	},
