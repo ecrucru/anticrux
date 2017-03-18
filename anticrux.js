@@ -250,7 +250,7 @@ AntiCrux.prototype.loadFen = function(pFen) {
 		this._root_node.player = (list[1] == 'b' ? this.constants.owner.black : this.constants.owner.white);
 
 	//-- En-passant
-	if ((list[3] !== undefined) && (list[3] !== '-'))
+	if (this.options.variant.enPassant && (list[3] !== undefined) && (list[3] !== '-'))
 	{
 		i = 'abcdefgh'.indexOf(list[3]);
 		if (i !== -1)
@@ -582,7 +582,8 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 
 	//-- En passant...
 	//- Executes the move
-	if (	pNode.hasOwnProperty('enpassant') &&
+	if (	this.options.variant.enPassant &&
+			pNode.hasOwnProperty('enpassant') &&
 			(8*move_toY+move_toX == pNode.enpassant) &&									//Target cell is identified as "en passant"
 			(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&		//Source piece is a pawn
 			(pNode.piece[8*move_toY+move_toX] == this.constants.piece.none)				//Target piece is blank
@@ -945,7 +946,7 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	//-- Taken piece
 	taken = (pNode.owner[8*move_toY+move_toX] != pNode.owner[8*move_fromY+move_fromX]) &&
 			(pNode.owner[8*move_toY+move_toX] != this.constants.owner.none);
-	if (pNode.hasOwnProperty('enpassant'))
+	if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
 		taken = taken || (	(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&
 							(8*move_toY+move_toX == pNode.enpassant)
 						);
@@ -1403,7 +1404,7 @@ AntiCrux.prototype.toFen = function(pNode) {
 	output += ' -';
 
 	//-- En passant
-	if (pNode.hasOwnProperty('enpassant'))
+	if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
 		output += ' ' + ('abcdefgh'[pNode.enpassant%8]);
 	else
 		output += ' -';
@@ -1776,6 +1777,7 @@ AntiCrux.prototype._init = function() {
 			oyster : false								//TRUE is a full random play
 		},
 		variant : {
+			enPassant : true,							//TRUE activates the move "en passant" (some AI doesn't manage IT)
 			promoteQueen : false,						//TRUE only promotes pawns as queen
 			activePawns : false,						//TRUE makes the pawns stronger for the valuation once they are moved, and are consequently less mobile
 			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
@@ -2035,7 +2037,7 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 					moveLegit(y+directionY, x+1, true, true);
 
 					// En passant
-					if (pNode.hasOwnProperty('enpassant'))
+					if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
 					{
 						//Source pawn at y/x
 						//Mid position at epX/epY

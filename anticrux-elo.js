@@ -32,9 +32,9 @@ var fs        = require('fs'),							// https://nodejs.org/api/fs.html
 //======== Definitions
 
 var enginePool = [
-		{ ai:null, type:'AC', selfDuel:false, level:0, levelMin:1, levelMax:15, owner:null, name:'' },	//Up to 20
-		{ ai:null, type:'SF', selfDuel:true,  level:0, levelMin:1, levelMax:8,  owner:null, name:'' },	//Up to 8
-		{ ai:null, type:'SF', selfDuel:true,  level:0, levelMin:1, levelMax:8,  owner:null, name:'' }	//Up to 8
+		{ ai:null, type:'AC', selfDuel:false, enPassant:true,  level:0, levelMin:1, levelMax:15, owner:null, name:'' },	//Up to 20
+		{ ai:null, type:'SF', selfDuel:true,  enPassant:false, level:0, levelMin:1, levelMax:8,  owner:null, name:'' },	//Up to 8
+		{ ai:null, type:'SF', selfDuel:true,  enPassant:false, level:0, levelMin:1, levelMax:8,  owner:null, name:'' }	//Up to 8
 	],
 
 	sfmv_levels = [
@@ -149,6 +149,7 @@ function acelo_newjob() {
 	//-- Initialization of AntiCrux
 	job.referee.defaultBoard();
 	job.referee.options.board.rotated = (job.referee.owner == job.referee.constants.owner.white);	//To set the right names during the export to PGN
+	job.referee.options.variant.enPassant = (job.engineOne.enPassant && job.engineTwo.enPassant);	//Else it may infringe the rules
 
 	//-- Initialization of Stockfish Multi-Variant
 	if (job.debugLevel >= 1)

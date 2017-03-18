@@ -344,6 +344,7 @@ It is also interesting to point out that AntiCrux Level 9 is stronger than AntiC
 	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.move.none
 	- Library: scripts for Linux
 	- ELO: new tool to create games between computers
+	- Library: deactivable move "en passant"
 
 
 ### License
@@ -562,6 +563,10 @@ This option is used for debugging purposes in the process of developing AntiCrux
 
 
 #### For the gameplay
+
+- **AntiCrux.options.variant.enPassant**
+
+Some engines don't accept the rule "[en passant](https://en.wikipedia.org/wiki/En_passant)". So to comply with this restriction, you can (de)activate this chess rule.
 
 - **AntiCrux.options.variant.promoteQueen**
 
