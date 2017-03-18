@@ -1386,8 +1386,4 @@ server.acsrv_quit = function(pSocket, pMessage) {
 
 //======== Entry-point
 
-server.listen({
-	host: 'localhost',
-	port: 5000
-	//, exclusive: true
-});
+server.listen(5000, 'localhost');		//Syntax for Linux
