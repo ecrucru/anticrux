@@ -475,7 +475,7 @@ $(document).ready(function() {
 			// http://stackoverflow.com/questions/3665115/
 			dl = document.createElement('a');
 			dl.setAttribute('href', 'data:application/x-chess-pgn;charset=iso-8859-1,' + encodeURIComponent(pgn));
-			dl.setAttribute('download', 'anticrux_'+(new Date().toISOString().slice(0, 10))+'.pgn');
+			dl.setAttribute('download', 'anticrux_'+(new Date().toISOString().slice(0, 10))+'_'+(new Date().toLocaleTimeString().replace(/[^0-9]/g, ''))+'.pgn');
 			dl.style.display = 'none';
 			document.body.appendChild(dl);
 			dl.click();

@@ -1546,7 +1546,7 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	// https://www.chessclub.com/user/help/PGN-spec
 
 	var	lf_setheader, pgn, trace,
-		i, e, turn, move, symbols;
+		i, e, turn, moveStr, symbols;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
@@ -1614,18 +1614,20 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 			pgn += (turn>0 ? ' ' : '') + (++turn) + '.';
 
 		//- Move
-		move = trace.moveToString(this._history[i]);
-		if (trace.movePiece(this._history[i], true, this.constants.owner.none) == trace.constants.move.none)
+		moveStr = trace.moveToString(this._history[i]);
+		if (trace.movePiece(this._history[i], true, trace.getPlayer()) == trace.constants.move.none)
 			throw 'Internal error - Report any error (#011)';
 		else
 		{
-			pgn += ' ' + move;
+			pgn += ' ' + moveStr;
+			trace.updateHalfMoveClock();
+			trace.logMove(this._history[i]);
 			trace.switchPlayer();
 		}
 	}
 
 	//-- Final position
-	if (pHeader.Result != '?')
+	if (pHeader.Result != '*')
 		pgn += '# ' + pHeader.Result;
 	else
 		switch (trace.getWinner())
