@@ -192,10 +192,13 @@ pipe = readline.createInterface({
 					}
 					if (b)
 					{
-						if (aceng_engine.movePiece(tab[j]) !== aceng_engine.constants.move.none)
-							aceng_engine.switchPlayer();
-						else
+						if (aceng_engine.movePiece(tab[j]) == aceng_engine.constants.move.none)
 							throw 'Internal error - Rejected move history';
+						else
+						{
+							aceng_engine.updateHalfMoveClock();
+							aceng_engine.switchPlayer();
+						}
 					}
 				}
 			}

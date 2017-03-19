@@ -345,6 +345,9 @@ It is also interesting to point out that AntiCrux Level 9 is stronger than AntiC
 	- Library: scripts for Linux
 	- ELO: new tool to create games between computers
 	- Library: deactivable move "en passant"
+	- Library: support for the halfmove clock
+	- Library: new method AntiCrux.prototype.updateHalfMoveClock
+	- Library: new method AntiCrux.prototype.getHalfMoveClock
 
 
 ### License
@@ -674,6 +677,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.defaultBoard(pFischer)
 - AntiCrux.freeMemory()
 - AntiCrux.getDecisionTreeHtml(pNode)
+- AntiCrux.getHalfMoveClock()
 - AntiCrux.getHistory()
 - AntiCrux.getHistoryHtml()
 - AntiCrux.getInitialPosition()
@@ -716,6 +720,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.toPgn(pHeader)
 - AntiCrux.toText(pNode)
 - AntiCrux.undoMove()
+- AntiCrux.updateHalfMoveClock()
 
 The parameter *pNode* is generally optional. When you omit it, the internal root node is automatically picked.
 

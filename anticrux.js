@@ -115,6 +115,8 @@ AntiCrux.prototype.clearBoard = function() {
 	this._highlight = [];
 	this._history = [];
 	this._history_fen0 = '';
+	this._halfmoveclock = 0;
+	this._halfmoveclock_status = -1;		//-1=undef, 0=reset, 1=increment
 	this._root_node = {
 		piece  : [],
 		owner  : [],
@@ -249,13 +251,17 @@ AntiCrux.prototype.loadFen = function(pFen) {
 	else
 		this._root_node.player = (list[1] == 'b' ? this.constants.owner.black : this.constants.owner.white);
 
-	//-- En-passant
+	//-- En passant
 	if (this.options.variant.enPassant && (list[3] !== undefined) && (list[3] !== '-'))
 	{
 		i = 'abcdefgh'.indexOf(list[3]);
 		if (i !== -1)
 			this._root_node.enpassant = 8*(this._root_node.player == this.constants.owner.white ? 2 : 5) + i;
 	}
+
+	//-- Halfmove clock
+	this._halfmoveclock = (list[4] !== undefined ? parseInt(list[4]) : 0);
+	this._halfmoveclock_status = -1;
 
 	//-- Final
 	this._root_node.valuation = this._ai_nodeValuate().valuation;
@@ -321,7 +327,8 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 					return false;
 				else
 				{
-					that._history.push(move);
+					that.updateHalfMoveClock();
+					that.logMove(move);
 					that.highlightMove(move);
 					playerIndication = (playerIndication == that.constants.owner.white ? that.constants.owner.black : that.constants.owner.white);
 				}
@@ -611,6 +618,13 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	else
 		delete pNode.enpassant;
 
+	//-- Updates the status to change the halfmove clock later
+	this._halfmoveclock_status = 1;
+	if ((pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) ||		//Pawn advance
+		(pNode.piece[8*move_toY+move_toX] != this.constants.piece.none)				//Capturing move
+	)
+		this._halfmoveclock_status = 0;
+
 	//-- Performs the move
 	pNode.piece[8*move_toY+move_toX]     = pNode.piece[8*move_fromY+move_fromX];
 	pNode.piece[8*move_fromY+move_fromX] = this.constants.piece.none;
@@ -809,6 +823,20 @@ AntiCrux.prototype.logMove = function(pMove) {
 	}
 };
 
+AntiCrux.prototype.getHalfMoveClock = function() {
+	return this._halfmoveclock;
+};
+
+AntiCrux.prototype.updateHalfMoveClock = function() {
+	// To be called after AntiCrux.prototype.movePiece()
+	if (this._halfmoveclock_status == 1)
+		this._halfmoveclock++;
+	else
+		if (this._halfmoveclock_status === 0)
+			this._halfmoveclock = 0;
+	this._halfmoveclock_status = -1;
+};
+
 AntiCrux.prototype.resetStats = function() {
 	this._numNodes = 0;
 	this._reachedDepth = 0;
@@ -832,7 +860,10 @@ AntiCrux.prototype.undoMove = function() {
 		if (this.movePiece(hist[i], true, this.constants.owner.none) == this.constants.move.none)
 			throw 'Internal error - Report any error (#004)';
 		else
+		{
+			this.updateHalfMoveClock();
 			this.switchPlayer();
+		}
 	}
 	this._history = hist;
 	return true;
@@ -1054,6 +1085,10 @@ AntiCrux.prototype.isDraw = function(pNode) {
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
+
+	//-- Halfmove clock
+	if (this._halfmoveclock >= 50)
+		return true;
 
 	//-- Checks
 	if (	!this.hasOwnProperty('_reachedDepth') ||
@@ -1409,8 +1444,8 @@ AntiCrux.prototype.toFen = function(pNode) {
 	else
 		output += ' -';
 
-	//-- Halfmove clock: count of ply since the last pawn advance or capturing move (not supported)
-	output += ' 0';
+	//-- Halfmove clock: count of ply since the last pawn advance or capturing move
+	output += ' ' + this._halfmoveclock;
 
 	//-- Fullmove number
 	if (!this._has(this, '_history', true))
@@ -1539,7 +1574,7 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 		lf_setheader('Black', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
 	}
 	lf_setheader('Termination', 'normal');
-	lf_setheader('Result', '?');
+	lf_setheader('Result', '*');
 	if (this.hasSetUp())
 	{
 		lf_setheader('SetUp', '1');
@@ -1597,17 +1632,17 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 		{
 			case trace.constants.owner.white:
 				pgn += '# 1-0';
-				pgn = pgn.replace('[Result "?"]', '[Result "1-0"]');
+				pgn = pgn.replace('[Result "*"]', '[Result "1-0"]');
 				break;
 			case trace.constants.owner.black:
 				pgn += '# 0-1';
-				pgn = pgn.replace('[Result "?"]', '[Result "0-1"]');
+				pgn = pgn.replace('[Result "*"]', '[Result "0-1"]');
 				break;
 			case trace.constants.owner.none:
 				if (trace.isDraw())
 				{
 					pgn += '# 1/2-1/2';
-					pgn = pgn.replace('[Result "?"]', '[Result "1/2-1/2"]');
+					pgn = pgn.replace('[Result "*"]', '[Result "1/2-1/2"]');
 				}
 				break;
 		}

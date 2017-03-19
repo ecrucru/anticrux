@@ -203,6 +203,7 @@ function acelo_play() {
 		}
 		else
 		{
+			job.referee.updateHalfMoveClock();
 			job.referee.logMove(move);
 			if (job.debugLevel >= 1)
 				console.log('- '+player.name+' : ' + moveStr);
@@ -249,6 +250,7 @@ function acelo_parseSfmv(pText) {
 		}
 		else
 		{
+			job.referee.updateHalfMoveClock();
 			job.referee.logMove(move);
 			if (job.debugLevel >= 1)
 				console.log('- '+player.name+' : ' + (job.debugLevel >= 1 ? job.referee.moveToString(move, node) : move));
@@ -315,7 +317,7 @@ function acelo_nextTurn() {
 	pgn = job.referee.toPgn(pgnHeader);
 
 	//-- Saves the PGN file
-	fs.appendFile(job.file, pgn+"\r\n\r\n", function(pError) {
+	fs.appendFile(job.file, pgn+"\n\n", function(pError) {
 		if (pError !== null)
 			console.log('Error : ' + pError);
 	});
@@ -447,7 +449,7 @@ function acelo_elo() {
 						levelStat[game.level].opponents[game.whiteElo] = (levelStat[game.level].opponents[game.whiteElo] === undefined ? 1 : levelStat[game.level].opponents[game.whiteElo]+1);
 					else
 						levelStat[game.level].opponents[game.blackElo] = (levelStat[game.level].opponents[game.blackElo] === undefined ? 1 : levelStat[game.level].opponents[game.blackElo]+1);
-					if (['1/2', '1/2-1/2'].indexOf(game.result) !== -1)
+					if (game.result == '1/2-1/2')
 						levelStat[game.level].draw++;
 					else
 						if (((game.white == 'AC') && (game.result == '1-0')) ||

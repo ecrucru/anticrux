@@ -231,6 +231,7 @@ function acui_promote(pMove) {
 
 function acui_afterHumanMove() {
 	ui_move = '';
+	ai.updateHalfMoveClock();
 	ai.logMove(ui_move_pending);
 	ui_move_pending = ai.constants.move.none;
 	acui_refresh_history(true);
@@ -332,6 +333,7 @@ $(document).ready(function() {
 		if (ai.movePiece(move, true, player) != ai.constants.move.none)
 		{
 			ui_move = '';
+			ai.updateHalfMoveClock();
 			ai.logMove(move);
 			acui_refresh_history(true);
 			ai.highlightMove(move);

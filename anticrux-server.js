@@ -792,6 +792,7 @@ server.acsrv_process = function(pSocket) {
 							if (pSocket.acsrv_ai.hasPendingPromotion())
 								move += 10000 * pSocket.acsrv_ai.promote(pSocket.acsrv_promote);
 							pSocket.acsrv_lastMove = pSocket.acsrv_ai.moveToString(move, node);
+							pSocket.acsrv_ai.updateHalfMoveClock();
 							pSocket.acsrv_ai.logMove(move);
 
 							// Next player
@@ -1064,6 +1065,7 @@ server.acsrv_playAI = function(pSocket) {
 	move = pSocket.acsrv_ai.getMoveAI();
 	pSocket.acsrv_lastMove = pSocket.acsrv_ai.moveToString(move);
 	pSocket.acsrv_ai.movePiece(move, true);
+	pSocket.acsrv_ai.updateHalfMoveClock();
 	pSocket.acsrv_ai.logMove(move);
 	pSocket.acsrv_ai.switchPlayer();
 
