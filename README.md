@@ -125,7 +125,7 @@ AntiCrux can be built locally with two scripts :
 To test if your installation is working, you can run the following test :
 
 ```bash
-node --expose-gc nodejs_demo_solve.js
+node --expose-gc anticrux-demo.js
 ```
 
 Remark : if you don't install the package "nodejs-legacy", replace the command "node" by "nodejs".
@@ -165,7 +165,7 @@ telnet localhost 5000
 
 ### AntiCrux Engine
 
-You need first to install [Node.js](#nodejs) and to build the package.
+You need first to install [Node.js](#nodejs).
 
 AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches !
 

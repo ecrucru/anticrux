@@ -29,7 +29,7 @@
 	],
 	"main": "anticrux.js",
 	"scripts": {
-		"test": "node --expose-gc nodejs_demo_solve.js"
+		"test": "node --expose-gc anticrux-demo.js"
 	},
 	"repository": {
 		"type": "git",
