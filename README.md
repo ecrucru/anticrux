@@ -348,6 +348,9 @@ It is also interesting to point out that AntiCrux Level 9 is stronger than AntiC
 	- Library: support for the halfmove clock
 	- Library: new method AntiCrux.prototype.updateHalfMoveClock
 	- Library: new method AntiCrux.prototype.getHalfMoveClock
+	- Library: new method AntiCrux.prototype.isPossibleDraw
+	- Library: new parameter for AntiCrux.prototype.isDraw
+	- Library: new method AntiCrux.prototype.getDrawReason
 
 
 ### License
@@ -677,6 +680,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.defaultBoard(pFischer)
 - AntiCrux.freeMemory()
 - AntiCrux.getDecisionTreeHtml(pNode)
+- AntiCrux.getDrawReason()
 - AntiCrux.getHalfMoveClock()
 - AntiCrux.getHistory()
 - AntiCrux.getHistoryHtml()
@@ -698,9 +702,10 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.highlight(pReset, pPosition)
 - AntiCrux.highlightMove(pMove)
 - AntiCrux.highlightMoves(pRefresh)
-- AntiCrux.isDraw(pNode)
+- AntiCrux.isDraw(pCriteria, pNode)
 - AntiCrux.isEndGame(pSwitch, pNode)
 - AntiCrux.isMove(pMove)
+- AntiCrux.isPossibleDraw(pNode)
 - AntiCrux.loadFen(pFen)
 - AntiCrux.loadLichess(pKey)
 - AntiCrux.logMove(pMove)

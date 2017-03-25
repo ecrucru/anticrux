@@ -284,7 +284,7 @@ function acelo_nextTurn() {
 			result = (job.referee.getWinner() == job.referee.constants.owner.white ? '1-0' : '0-1');
 		}
 		else
-			if (job.referee.isDraw())
+			if (job.referee.isDraw() || (job.referee.getHistory().length >= 150))
 			{
 				if (job.debugLevel >= 3)
 					console.log('> Trace : end of game, draw');

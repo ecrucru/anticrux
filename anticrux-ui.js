@@ -22,7 +22,7 @@
 "use strict";
 
 var	ai = new AntiCrux(),
-	ui_move, ui_move_pending, ui_rewind, ui_rematch;
+	ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
 ai.options.board.symbols = true;
 ai.defaultBoard();
 
@@ -138,7 +138,7 @@ function acui_refresh_board() {
 				break;
 
 			default:
-				throw 'Internal error - Report any error (#007)';
+				throw 'Internal error - Report any error (#001)';
 		}
 		return true;
 	});
@@ -194,7 +194,7 @@ function acui_refresh_history(pScroll) {
 		for (i=0 ; i<=index ; i++)
 		{
 			if (rewind.movePiece(hist[i], false, rewind.constants.owner.none) == rewind.constants.move.none)
-				throw 'Internal error - Report any error (#015)';
+				throw 'Internal error - Report any error (#002)';
 			else
 			{
 				rewind.switchPlayer();
@@ -247,10 +247,18 @@ function acui_afterHumanMove() {
 		if ($('#acui_option_autoplay').prop('checked'))
 		{
 			if (ai.isDraw())
-				acui_popup('The game is a possible draw.');
-			setTimeout(	function() {		//Refreshes the screen before the AI plays
-							$('#acui_play_ai').click();
-						}, 1000);
+				acui_popup("The game ended in a tie.\n\nReason : "+ai.getDrawReason()+'.');
+			else
+			{
+				if (ai.isPossibleDraw() && !ui_possibledraw)
+				{
+					acui_popup('The game is a possible draw.');
+					ui_possibledraw = true;
+				}
+				setTimeout(	function() {		//Refreshes the screen before the AI plays
+								$('#acui_play_ai').click();
+							}, 1000);
+			}
 		}
 	}
 }
@@ -272,20 +280,23 @@ function acui_switch_players() {
 function acui_showWinner() {
 	var winner = ai.getWinner();
 	if (winner == ai.constants.owner.none)
-		throw 'Internal error - Report any error (#008)';
+		throw 'Internal error - Report any error (#003)';
 	winner = (winner == ai.constants.owner.white ? 'White' : 'Black');
 	acui_popup('End of the game. '+winner+' has won !');
 }
 
 function acui_popup(pMessage) {
-	$('#acui_popup_text').html(pMessage);
-	$('#acui_popup').popup('open', {});
+	setTimeout(function() {
+					$('#acui_popup_text').html(pMessage.split("\n").join('<br/>'));
+					$('#acui_popup').popup('open', {});
+				}, 750);
 }
 
 $(document).ready(function() {
 	//-- Initialization
 	ui_move = '';
 	ui_move_pending = ai.constants.move.none;
+	ui_possibledraw = false;
 	ui_rewind = false;
 	ui_rematch = ai.constants.owner.white;
 	acui_refresh_board();
@@ -316,8 +327,7 @@ $(document).ready(function() {
 
 		//-- Inputs
 		var	player = parseInt($('#acui_player').val()),
-			move = ai.getMoveAI(player),
-			doSwitch = false;
+			move = ai.getMoveAI(player);
 
 		//-- Checks
 		if (move == ai.constants.move.none)
@@ -338,18 +348,15 @@ $(document).ready(function() {
 			acui_refresh_history(true);
 			ai.highlightMove(move);
 			if (ai.isEndGame(true))
-			{
 				acui_showWinner();
-				acui_switch_players();
-			}
 			else
-				doSwitch = true;
+				if (ai.isDraw())
+					acui_popup("The game ended in a tie.\n\nReason : "+ai.getDrawReason()+'.');
 		}
 		else
-			acui_popup('The move has been denied. Choose another one.');
+			throw 'Internal error - Report any error (#004)';
 		acui_refresh_board();
-		if (doSwitch)
-			acui_switch_players();
+		acui_switch_players();
 		return true;
 	});
 
@@ -419,9 +426,7 @@ $(document).ready(function() {
 			return false;
 
 		//-- Suggestion
-		setTimeout(function() {
-						acui_popup(ai.predictMoves().split("\n").join('<br/>'));
-					}, 500);
+		acui_popup(ai.predictMoves().split("\n").join('<br/>'));
 		return true;
 	});
 
@@ -435,6 +440,7 @@ $(document).ready(function() {
 		if (ai.undoMove())
 		{
 			ui_move = '';
+			ui_possibledraw = false;
 			acui_reset_ui(false);
 			acui_refresh_moves();
 			acui_refresh_history(true);
@@ -500,6 +506,7 @@ $(document).ready(function() {
 	$('#acui_clear').click(function() {
 		ai.clearBoard();
 		ui_move = '';
+		ui_possibledraw = false;
 		acui_reset_ui(true);
 		acui_refresh_board();
 		return true;
@@ -508,6 +515,7 @@ $(document).ready(function() {
 	$('#acui_default').click(function() {
 		ai.defaultBoard();
 		ui_move = '';
+		ui_possibledraw = false;
 		acui_reset_ui(true);
 		acui_refresh_board();
 		acui_autostart();
@@ -517,15 +525,14 @@ $(document).ready(function() {
 	$('#acui_fischer_new').click(function() {
 		$('#acui_option_fischer').dblclick();
 		$('#acui_fischer_current').click();
-		setTimeout(function() {
-					acui_popup('You are playing AntiChess ' + ai.fischer + '.');
-				}, 750);
+		acui_popup('You are playing AntiChess ' + ai.fischer + '.');
 		return true;
 	});
 
 	$('#acui_fischer_current').click(function() {
 		ai.defaultBoard(ai.options.board.fischer);
 		ui_move = '';
+		ui_possibledraw = false;
 		acui_reset_ui(true);
 		acui_refresh_board();
 		acui_autostart();
@@ -567,6 +574,7 @@ $(document).ready(function() {
 		{
 			player = ai.getPlayer();
 			ui_move = '';
+			ui_possibledraw = false;
 			acui_reset_ui(true);
 			acui_refresh_board();
 			$('#acui_tab_board_header').trigger('click');
@@ -600,6 +608,7 @@ $(document).ready(function() {
 			setTimeout(	function() {
 							player = ai.getPlayer();
 							ui_move = '';
+							ui_possibledraw = false;
 							acui_reset_ui(true);
 							acui_refresh_board();
 							acui_refresh_history(true);

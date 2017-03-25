@@ -641,7 +641,7 @@ server.acsrv_process = function(pSocket) {
 
 				//- Receives a draw offer
 				case 'draw':
-					if (!pSocket.acsrv_ai.isDraw())
+					if (!pSocket.acsrv_ai.isDraw() && !pSocket.acsrv_ai.isPossibleDraw())
 						pSocket.write("AntiCrux declines the draw request.\r\nfics% ");
 					else
 					{
@@ -1310,36 +1310,51 @@ server.acsrv_board = function(pSocket) {
 server.acsrv_endGame = function(pSocket) {
 	var winner, white, black, stalemate;
 
-	//-- Verifies the position
-	if (pSocket.acsrv_ai.isEndGame(false))
+	//-- Prepares the output
+	white = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white ? 'AntiCrux' : pSocket.acsrv_login);
+	black = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.black ? 'AntiCrux' : pSocket.acsrv_login);
+
+	//-- Checks for a draw
+	if (pSocket.acsrv_ai.isDraw())		//The possible draws are processed through an explicit request from the human player
 	{
-		//- Elements of the situation
-		winner = pSocket.acsrv_ai.getWinner();
-		if (winner == pSocket.acsrv_aicolor)
-			server.acsrv_stats.win++;
-		else
-			server.acsrv_stats.loss++;
-		white = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white ? 'AntiCrux' : pSocket.acsrv_login);
-		black = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.black ? 'AntiCrux' : pSocket.acsrv_login);
-		stalemate =	(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.owner.white, null) !== 0) &&
-					(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.owner.black, null) !== 0);
-
-		//- Output
-		pSocket.write(
-				"\r\n{Game "+pSocket.acsrv_session+" ("+white+" vs. "+black+") "+(winner == pSocket.acsrv_aicolor ? 'AntiCrux' : pSocket.acsrv_login)+" wins by " +
-				(stalemate ? "having less material (stalemate)" : "losing all material") +
-				"} " +
-				(winner == pSocket.acsrv_ai.constants.owner.white ? "1-0" : "0-1") +
-				"\r\n"
-			);
+		server.acsrv_stats.draw++;
+		pSocket.write("\r\n{Game "+pSocket.acsrv_session+" ("+white+" vs. "+black+") is a draw} 1/2-1/2\r\n");
 		pSocket.write("No ratings adjustment done.\r\nfics% ");
-
-		//- Status
 		pSocket.acsrv_state = 'home';
-		return true;
+		return true;	
 	}
+
+	//-- Verifies the position
 	else
-		return false;
+		if (pSocket.acsrv_ai.isEndGame(false))
+		{
+			//- Elements of the situation
+			winner = pSocket.acsrv_ai.getWinner();
+			if (winner == pSocket.acsrv_aicolor)
+				server.acsrv_stats.win++;
+			else
+				server.acsrv_stats.loss++;
+			stalemate =	(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.owner.white, null) !== 0) &&
+						(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.owner.black, null) !== 0);
+
+			//- Output
+			pSocket.write(
+					"\r\n{Game "+pSocket.acsrv_session+" ("+white+" vs. "+black+") "+(winner == pSocket.acsrv_aicolor ? 'AntiCrux' : pSocket.acsrv_login)+" wins by " +
+					(stalemate ? "having less material (stalemate)" : "losing all material") +
+					"} " +
+					(winner == pSocket.acsrv_ai.constants.owner.white ? "1-0" : "0-1") +
+					"\r\n"
+				);
+			pSocket.write("No ratings adjustment done.\r\nfics% ");
+
+			//- Status
+			pSocket.acsrv_state = 'home';
+			return true;
+		}
+
+		//-- No end of game
+		else
+			return false;
 };
 
 server.acsrv_shout = function(pSocket, pMessage) {

@@ -67,6 +67,7 @@
 //		8/4P3/6P1/7P/8/8/8/1k6 b - -								Deep promotions push the score to ±100% but it is not a mate
 //		k7/8/8/2R5/8/8/8/8 w - -									Exploration level by level
 //		1n1k4/8/5n2/5p2/3P1P2/1P6/8/8 b - -							Nfd7 is the move of 1 knight only
+//		8/8/8/8/5B2/8/1p6/8 b - -									Draw by position : choose a bishop for the black pawn
 */
 
 
@@ -115,6 +116,7 @@ AntiCrux.prototype.clearBoard = function() {
 	this._highlight = [];
 	this._history = [];
 	this._history_fen0 = '';
+	this._lastDrawReason = '';
 	this._halfmoveclock = 0;
 	this._halfmoveclock_status = -1;		//-1=undef, 0=reset, 1=increment
 	this._root_node = {
@@ -1081,29 +1083,123 @@ AntiCrux.prototype.getWinner = function(pNode) {
 	return this.constants.owner.none;
 };
 
-AntiCrux.prototype.isDraw = function(pNode) {
+AntiCrux.prototype.isDraw = function(pCriteria, pNode) {
+	var	trace, positions, pivot, fen, white, black,
+		i, e;
+
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
 
+	//-- Defines the parameters to check
+	if (typeof pCriteria !== 'object')
+		pCriteria = {
+			halfmoveClock		: true,
+			threefoldRepetition	: true,
+			position			: true
+		};
+	if (!pCriteria.hasOwnProperty('halfmoveClock'))
+		pCriteria.halfmoveClock = false;
+	if (!pCriteria.hasOwnProperty('threefoldRepetition'))
+		pCriteria.threefoldRepetition = false;
+	if (!pCriteria.hasOwnProperty('position'))
+		pCriteria.position = false;
+
 	//-- Halfmove clock
-	if (this._halfmoveclock >= 50)
+	// https://en.wikipedia.org/wiki/Fifty-move_rule
+	if (pCriteria.halfmoveClock && (this._halfmoveclock >= 50))
+	{
+		this._lastDrawReason = 'Halfmove clock';
+		return true;
+	}
+
+	//-- Threefold repetition
+	// https://en.wikipedia.org/wiki/Threefold_repetition
+	if (pCriteria.threefoldRepetition)
+	{
+		trace = new AntiCrux();
+		trace.copyOptions(this);
+		if (trace.loadFen(this._history_fen0))
+		{
+			//- Builds all the positions
+			positions = [this._history_fen0.substring(0, this._history_fen0.indexOf(' '))];
+			for (i=0 ; i<this._history.length ; i++)
+			{
+				if (trace.movePiece(this._history[i], true, trace.getPlayer()) == trace.constants.move.none)
+					throw 'Internal error - Report any error (#017)';
+				else
+				{
+					fen = trace.toFen();
+					positions.push(fen.substring(0, fen.indexOf(' ')));
+					trace.switchPlayer();
+				}
+			}
+
+			//- Counts the positions
+			pivot = {};
+			positions.forEach(function(pElement) {
+				pivot[pElement] = (pivot[pElement] || 0) + 1;
+			});
+
+			//- Finds a position which occurred 3 times
+			for (e in pivot)
+				if (pivot[e] >= 3)
+				{
+					this._lastDrawReason = 'Threefold repetition';
+					return true;
+				}
+		}
+	}
+
+	//-- Draw by position
+	if (pCriteria.position)
+	{
+		//- Bishop vs. Bishop on different colors
+		if (	(this._ai_nodeCountPiece(this.constants.owner.white) == 1) &&
+				(this._ai_nodeCountPiece(this.constants.owner.black) == 1)
+		) {
+			white = this._ai_nodeLocatePiece(this.constants.owner.white, this.constants.piece.bishop);
+			black = this._ai_nodeLocatePiece(this.constants.owner.black, this.constants.piece.bishop);
+			if ((white !== null) && (black !== null))
+				if ((white.x+white.y)%2 !== (black.x+black.y)%2)
+				{
+					this._lastDrawReason = 'Position';
+					return true;
+				}
+		}
+	}
+
+	//-- Default result
+	this._lastDrawReason = '';
+	return false;
+};
+
+AntiCrux.prototype.isPossibleDraw = function(pNode) {
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Too long history
+	if (this._history.length >= 150)
 		return true;
 
-	//-- Checks
+	//-- Possible draw based on the deep evaluation
 	if (	!this.hasOwnProperty('_reachedDepth') ||
 			!pNode.hasOwnProperty('valuation') ||
 			!pNode.hasOwnProperty('valuationSolver')
 	)
 		return false;
+	else
+		return (	(this._reachedDepth >= 5) &&															//Sufficient depth for the valuation
+					(pNode.valuation === 0) &&																//Equal game on both side
+					(pNode.valuationSolver === 0) &&														//No deep opportunity
+					(this._ai_nodeInventory(this.constants.owner.black, null, undefined, pNode) <= 5) &&	//Few remaining pieces
+					(this._ai_nodeInventory(this.constants.owner.white, null, undefined, pNode) <= 5)		//Few remaining pieces
+				);
+};
 
-	//-- Possible draw
-	return (	(this._reachedDepth >= 5) &&															//Sufficient depth for the valuation
-				(pNode.valuation === 0) &&																//Equal game on both side
-				(pNode.valuationSolver === 0) &&														//No deep opportunity
-				(this._ai_nodeInventory(this.constants.owner.black, null, undefined, pNode) <= 5) &&	//Few remaining pieces
-				(this._ai_nodeInventory(this.constants.owner.white, null, undefined, pNode) <= 5)		//Few remaining pieces
-			);
+AntiCrux.prototype.getDrawReason = function() {
+	return this._lastDrawReason;
 };
 
 AntiCrux.prototype.isEndGame = function(pSwitch, pNode) {
