@@ -76,7 +76,6 @@
 var AntiCrux = function() {
 	this._init();
 	this._root_node = {};
-	this._lastLevel = null;
 	this.clearBoard();
 };
 
@@ -268,7 +267,14 @@ AntiCrux.prototype.loadFen = function(pFen) {
 	//-- Final
 	this._root_node.valuation = this._ai_nodeValuate().valuation;
 	this._history_fen0 = this.toFen();
-	this.fischer = this._discoverFischer();
+	if (list[0].indexOf('8/8/8/8') == -1)
+		this.fischer = null;
+	else
+	{
+		this._initFischer();
+		this.fischer = this._buffer_fischer.indexOf(list[0]);
+		this.fischer = (this.fischer !== -1 ? this.fischer+1 : null);
+	}
 	return true;
 };
 
@@ -760,7 +766,7 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 };
 
 AntiCrux.prototype.predictMoves = function(pNode) {
-	var subai, move, i, buffer;
+	var move, i, buffer;
 
 	//-- Self
 	if (pNode === undefined)
@@ -770,17 +776,17 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 
 	//-- Duplicates the game
 	this._ai_nodeFreeMemory(pNode);
-	subai = new AntiCrux();
-	subai.options.ai.maxDepth = 3;
-	subai.options.ai.maxNodes = 0;
-	subai.options.ai.wholeNodes = true;
-	subai.options.board.symbols = this.options.board.symbols;
-	if (!subai.loadFen(this.toFen(pNode)))
+	this._initHelper();
+	this._helper.options.ai.maxDepth = 3;
+	this._helper.options.ai.maxNodes = 0;
+	this._helper.options.ai.wholeNodes = true;
+	this._helper.options.board.symbols = this.options.board.symbols;
+	if (!this._helper.loadFen(this.toFen(pNode)))
 		return 'Error : the position cannot be loaded.';
 
 	//-- End of game ?
-	subai._ai_nodeMoves(subai._root_node);
-	if (subai._root_node.moves.length === 0)
+	this._helper._ai_nodeMoves(this._helper._root_node);
+	if (this._helper._root_node.moves.length === 0)
 		return 'The game is over.';
 
 	//-- Builds N levels of data
@@ -788,26 +794,26 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 	for (i=0 ; i<5 ; i++)
 	{
 		//- Gets the move
-		move = subai.getMoveAI();
-		if (move === subai.constants.move.none)
+		move = this._helper.getMoveAI();
+		if (move === this._helper.constants.move.none)
 		{
-			subai.freeMemory();
+			this._helper.freeMemory();
 			break;
 		}
 		if (buffer.length > 0)
 			buffer += ' ';
-		buffer += subai.moveToString(move);
+		buffer += this._helper.moveToString(move);
 
 		//- Next position
-		subai.freeMemory();
-		if (subai.movePiece(move, true) == subai.constants.move.none)
+		this._helper.freeMemory();
+		if (this._helper.movePiece(move, true) == this._helper.constants.move.none)
 			throw 'Internal error - Report any error (#012)';
 		else
-			subai.switchPlayer();
+			this._helper.switchPlayer();
 	}
 
 	//-- Result
-	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + subai.getScore().valuationSolverPC + '%';
+	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + this._helper.getScore().valuationSolverPC + '%';
 };
 
 AntiCrux.prototype.logMove = function(pMove) {
@@ -1084,7 +1090,7 @@ AntiCrux.prototype.getWinner = function(pNode) {
 };
 
 AntiCrux.prototype.isDraw = function(pCriteria, pNode) {
-	var	trace, positions, pivot, fen, white, black,
+	var	positions, pivot, fen, white, black,
 		i, e;
 
 	//-- Self
@@ -1117,21 +1123,21 @@ AntiCrux.prototype.isDraw = function(pCriteria, pNode) {
 	// https://en.wikipedia.org/wiki/Threefold_repetition
 	if (pCriteria.threefoldRepetition)
 	{
-		trace = new AntiCrux();
-		trace.copyOptions(this);
-		if (trace.loadFen(this._history_fen0))
+		this._initHelper();
+		this._helper.copyOptions(this);
+		if (this._helper.loadFen(this._history_fen0))
 		{
 			//- Builds all the positions
 			positions = [this._history_fen0.substring(0, this._history_fen0.indexOf(' '))];
 			for (i=0 ; i<this._history.length ; i++)
 			{
-				if (trace.movePiece(this._history[i], true, trace.getPlayer()) == trace.constants.move.none)
+				if (this._helper.movePiece(this._history[i], true, this._helper.getPlayer()) == this._helper.constants.move.none)
 					throw 'Internal error - Report any error (#017)';
 				else
 				{
-					fen = trace.toFen();
+					fen = this._helper.toFen();
 					positions.push(fen.substring(0, fen.indexOf(' ')));
-					trace.switchPlayer();
+					this._helper.switchPlayer();
 				}
 			}
 
@@ -1290,16 +1296,16 @@ AntiCrux.prototype.getHistory = function() {
 };
 
 AntiCrux.prototype.getHistoryHtml = function() {
-	var trace, i, output;
+	var i, output;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
 		return '';
 
 	//-- Initial position
-	trace = new AntiCrux();
-	trace.copyOptions(this);
-	if (!trace.loadFen(this._history_fen0))
+	this._initHelper();
+	this._helper.copyOptions(this);
+	if (!this._helper.loadFen(this._history_fen0))
 		return '';
 
 	//-- Builds the moves
@@ -1308,8 +1314,8 @@ AntiCrux.prototype.getHistoryHtml = function() {
 	{
 		if (i % 2 === 0)
 			output += '<tr><th>' + Math.floor((i+2)/2) + '</th>';
-		output += '<td class="AntiCrux-history-item" data-index="'+i+'" title="Click to review this past move">' + trace.moveToString(this._history[i]) + '</td>';
-		if (trace.movePiece(this._history[i], true, trace.constants.owner.none) == trace.constants.move.none)
+		output += '<td class="AntiCrux-history-item" data-index="'+i+'" title="Click to review this past move">' + this._helper.moveToString(this._history[i]) + '</td>';
+		if (this._helper.movePiece(this._history[i], true, this._helper.constants.owner.none) == this._helper.constants.move.none)
 			throw 'Internal error - Report any error (#010)';
 		if (i % 2 == 1)
 			output += '</tr>';
@@ -1641,7 +1647,7 @@ AntiCrux.prototype.toText = function(pNode) {
 AntiCrux.prototype.toPgn = function(pHeader) {
 	// https://www.chessclub.com/user/help/PGN-spec
 
-	var	lf_setheader, pgn, trace,
+	var	lf_setheader, pgn,
 		i, e, turn, moveStr, symbols;
 
 	//-- Checks
@@ -1696,9 +1702,9 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	this.options.board.symbols = false;
 
 	//-- Loads the initial position
-	trace = new AntiCrux();
-	trace.copyOptions(this);
-	if (!trace.loadFen(this._history_fen0))
+	this._initHelper();
+	this._helper.copyOptions(this);
+	if (!this._helper.loadFen(this._history_fen0))
 		return '';
 
 	//-- Moves
@@ -1710,15 +1716,15 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 			pgn += (turn>0 ? ' ' : '') + (++turn) + '.';
 
 		//- Move
-		moveStr = trace.moveToString(this._history[i]);
-		if (trace.movePiece(this._history[i], true, trace.getPlayer()) == trace.constants.move.none)
+		moveStr = this._helper.moveToString(this._history[i]);
+		if (this._helper.movePiece(this._history[i], true, this._helper.getPlayer()) == this._helper.constants.move.none)
 			throw 'Internal error - Report any error (#011)';
 		else
 		{
 			pgn += ' ' + moveStr;
-			trace.updateHalfMoveClock();
-			trace.logMove(this._history[i]);
-			trace.switchPlayer();
+			this._helper.updateHalfMoveClock();
+			this._helper.logMove(this._history[i]);
+			this._helper.switchPlayer();
 		}
 	}
 
@@ -1726,18 +1732,18 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	if (pHeader.Result != '*')
 		pgn += '# ' + pHeader.Result;
 	else
-		switch (trace.getWinner())
+		switch (this._helper.getWinner())
 		{
-			case trace.constants.owner.white:
+			case this._helper.constants.owner.white:
 				pgn += '# 1-0';
 				pgn = pgn.replace('[Result "*"]', '[Result "1-0"]');
 				break;
-			case trace.constants.owner.black:
+			case this._helper.constants.owner.black:
 				pgn += '# 0-1';
 				pgn = pgn.replace('[Result "*"]', '[Result "0-1"]');
 				break;
-			case trace.constants.owner.none:
-				if (trace.isDraw())
+			case this._helper.constants.owner.none:
+				if (this._helper.isDraw())
 				{
 					pgn += '# 1/2-1/2';
 					pgn = pgn.replace('[Result "*"]', '[Result "1/2-1/2"]');
@@ -1935,6 +1941,11 @@ AntiCrux.prototype._init = function() {
 	this.options.ai.valuation[ this.constants.piece.bishop] = 300;
 	this.options.ai.valuation[ this.constants.piece.queen ] = 900;
 	this.options.ai.valuation[ this.constants.piece.king  ] = 250;
+
+	//-- General variables
+	this._helper = null;								//You can't refer to that variable without calling first _initHelper()
+	this._buffer_fischer = [];							//You can't refer to that variable without calling first _initFischer()
+	this._lastLevel = null;
 };
 
 AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
@@ -1961,27 +1972,26 @@ AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
 	return b;
 };
 
-AntiCrux.prototype._discoverFischer = function(pNode) {
-	var f, result, pattern, board;
+AntiCrux.prototype._initHelper = function() {
+	if (this._helper === null)
+		this._helper = new AntiCrux();
+};
 
-	//-- Self
-	if (pNode === undefined)
-		pNode = this._root_node;
+AntiCrux.prototype._initFischer = function() {
+	var id, fen;
 
-	//-- Detects the initial Fischer's position
-	result = null;
-	board = new AntiCrux();
-	pattern = this.toFen(pNode).split(' ')[0];
-	for (f=1 ; f<=960 ; f++)
+	//-- Checks
+	if (this._buffer_fischer.length > 0)
+		return;
+
+	//-- Fischer's positions
+	this._initHelper();
+	for (id=1 ; id<=960 ; id++)
 	{
-		board.defaultBoard(f);
-		if (board.toFen().substring(0, pattern.length) == pattern)
-		{
-			result = f;
-			break;
-		}
+		this._helper.defaultBoard(id);
+		fen = this._helper.toFen();
+		this._buffer_fischer.push(fen.substring(0, fen.indexOf(' ')));
 	}
-	return result;
 };
 
 AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {

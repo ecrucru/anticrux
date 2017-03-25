@@ -22,6 +22,7 @@
 "use strict";
 
 var	ai = new AntiCrux(),
+	ai_rewind = new AntiCrux(),
 	ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
 ai.options.board.symbols = true;
 ai.defaultBoard();
@@ -176,7 +177,7 @@ function acui_refresh_history(pScroll) {
 	$('.AntiCrux-history-item').click(function() {
 		var	index = parseInt(this.dataset.index),
 			hist = ai.getHistory(),
-			rewind, i;
+			i;
 
 		//-- Checks
 		if (hist.length === 0)
@@ -185,29 +186,28 @@ function acui_refresh_history(pScroll) {
 			return false;
 
 		//-- Determines the position for the provided index
-		rewind = new AntiCrux();
-		rewind.copyOptions(ai);
-		if (rewind.options.variant.pieces == 3)
-			rewind.options.variant.pieces = 0;
-		if (!rewind.loadFen(ai.getInitialPosition()))
+		ai_rewind.copyOptions(ai);
+		if (ai_rewind.options.variant.pieces == 3)
+			ai_rewind.options.variant.pieces = 0;
+		if (!ai_rewind.loadFen(ai.getInitialPosition()))
 			return false;
 		for (i=0 ; i<=index ; i++)
 		{
-			if (rewind.movePiece(hist[i], false, rewind.constants.owner.none) == rewind.constants.move.none)
+			if (ai_rewind.movePiece(hist[i], false, ai_rewind.constants.owner.none) == ai_rewind.constants.move.none)
 				throw 'Internal error - Report any error (#002)';
 			else
 			{
-				rewind.switchPlayer();
-				rewind.highlightMove(hist[i]);
+				ai_rewind.switchPlayer();
+				ai_rewind.highlightMove(hist[i]);
 			}
 		}
 
 		//-- Sets the mode
 		acui_reset_ui(false);
 		ui_rewind = true;
-		$('#acui_player').val(rewind.getPlayer()).change();
+		$('#acui_player').val(ai_rewind.getPlayer()).change();
 		acui_refresh_history(false);
-		$('#acui_board').html(rewind.toHtml());		//No event is attached to the cells
+		$('#acui_board').html(ai_rewind.toHtml());		//No event is attached to the cells
 		return true;
 	});
 }

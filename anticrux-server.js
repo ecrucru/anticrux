@@ -184,7 +184,7 @@ server.acsrv_countSockets = function() {
 };
 
 server.acsrv_process = function(pSocket) {
-	var pos, line, tab, i, b, news, move, node, trace, hist, buffer, white, black;
+	var pos, line, tab, i, b, news, move, node, hist, buffer, white, black;
 
 	while (true)
 	{
@@ -247,7 +247,7 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'uptime')
 			{
 				pSocket.write(
-					"AntiCrux Server " + ((new AntiCrux()).options.ai.version) + "\r\n" +
+					"AntiCrux Server " + pSocket.acsrv_ai.options.ai.version + "\r\n" +
 					"The server has been up since " + server.acsrv_upDate + ".\r\n" +
 					"(Up for " + server.acsrv_uptime(process.uptime()) + ")\r\n" +
 					"\r\n" +
@@ -461,7 +461,7 @@ server.acsrv_process = function(pSocket) {
 						"Timeseal: Off\r\n" +
 						"\r\n" +
 						" 1: This computer plays AntiChess only, a.k.a. suicide chess.\r\n" +
-						" 2: The engine born in 2016 is AntiCrux "+((new AntiCrux()).options.ai.version)+" available on GitHub.\r\n" +
+						" 2: The engine born in 2016 is AntiCrux "+pSocket.acsrv_ai.options.ai.version+" available on GitHub.\r\n" +
 						" 3: I use neither database, opening book, nor time control.\r\n" +
 						" 4: I use classical techniques to play, unless you change my level.\r\n" +
 						" 5: I play unrated games, so I will accept most of your commands.\r\n" +
@@ -738,17 +738,17 @@ server.acsrv_process = function(pSocket) {
 					buffer += "----  ----------------   ----------------\r\n";
 
 					// History
-					trace = new AntiCrux();
-					trace.copyOptions(pSocket.acsrv_ai);
-					if (trace.loadFen(pSocket.acsrv_ai.getInitialPosition()))
+					pSocket._trace = pSocket._trace || new AntiCrux();
+					pSocket._trace.copyOptions(pSocket.acsrv_ai);
+					if (pSocket._trace.loadFen(pSocket.acsrv_ai.getInitialPosition()))
 					{
 						hist = pSocket.acsrv_ai.getHistory();
 						for (i=0 ; i<hist.length ; i++)
 						{
 							if (i % 2 === 0)
 								buffer += server.acsrv_fixedString(Math.ceil((i+1)/2), 3, true) + '.  ';
-							buffer += server.acsrv_fixedString(trace.moveToString(hist[i]), 8) + '(0:00)     ';
-							if (trace.movePiece(hist[i], true, trace.constants.owner.none) == trace.constants.move.none)
+							buffer += server.acsrv_fixedString(pSocket._trace.moveToString(hist[i]), 8) + '(0:00)     ';
+							if (pSocket._trace.movePiece(hist[i], true, pSocket._trace.constants.owner.none) == pSocket._trace.constants.move.none)
 							{
 								buffer = '';
 								break;
