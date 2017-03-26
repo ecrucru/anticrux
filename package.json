@@ -1,7 +1,7 @@
 {
 	"name": "anticrux",
-	"version": "0.2.0",
-	"description": "Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile",
+	"version": "0.2.1",
+	"description": "Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js",
 	"readmeFilename": "README.md",
 	"keywords": [
 		"chess",
@@ -11,6 +11,7 @@
 		"antichess960",
 		"artificial intelligence",
 		"jquery mobile",
+		"node.js",
 		"html5"
 	],
 	"homepage": "http://ecrucru.free.fr/?page=anticrux",
@@ -26,9 +27,9 @@
 		"images/*.gif",
 		"images/*.png"
 	],
-	"main": "anticrux.min.js",
+	"main": "anticrux.js",
 	"scripts": {
-		"test": "node nodejs_demo_solve.js"
+		"test": "node --expose-gc anticrux-demo.js"
 	},
 	"repository": {
 		"type": "git",

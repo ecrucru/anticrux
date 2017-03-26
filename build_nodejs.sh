@@ -13,4 +13,3 @@ cp images/*.gif node_modules/anticrux/images
 cp images/*.png node_modules/anticrux/images
 
 npm install opn
-

@@ -1,5 +1,5 @@
 /*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 	Copyright (C) 2016-2017, ecrucru
 
 		https://github.com/ecrucru/anticrux/
@@ -19,11 +19,25 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
+#acui_tab_board_evaluation {
+	width:250px;
+}
 
-//-- Library
-var AntiCrux = require('anticrux');
+#acui_tab_board_history {
+	width:250px;
+}
 
-//-- Instance
-var ai = new AntiCrux();
-ai.startUI();
+#acui_history_scrollbox {
+	width:100%;
+	height:300px;
+	overflow-x:hidden;
+	overflow-y:auto;
+}
+
+#acui_sect_eval {
+	line-height:30px;
+}
+
+.acui_img {
+	vertical-align:middle;
+}

@@ -1,5 +1,5 @@
 ﻿/*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 	Copyright (C) 2016-2017, ecrucru
 
 		https://github.com/ecrucru/anticrux/
@@ -67,11 +67,26 @@
 //		8/4P3/6P1/7P/8/8/8/1k6 b - -								Deep promotions push the score to ±100% but it is not a mate
 //		k7/8/8/2R5/8/8/8/8 w - -									Exploration level by level
 //		1n1k4/8/5n2/5p2/3P1P2/1P6/8/8 b - -							Nfd7 is the move of 1 knight only
+//		8/8/8/8/5B2/8/1p6/8 b - -									Draw by position : choose a bishop for the black pawn
 */
 
 
 
+/**
+ * This module is the main library.
+ *
+ * @module AntiCrux
+ * @submodule main
+ */
+ 
+
 //======== Main class
+/**
+ * This class handles the data model to play antichess.
+ *
+ * @class AntiCrux
+ * @constructor
+ */
 var AntiCrux = function() {
 	this._init();
 	this._root_node = {};
@@ -81,6 +96,12 @@ var AntiCrux = function() {
 
 //---- Public members
 
+/**
+ * The method opens the web UI through the call to the file "index.html".
+ * It is restricted to Node.js.
+ *
+ * @method startUI
+ */
 AntiCrux.prototype.startUI = function() {
 	if ((typeof module !== 'undefined') && module.exports)
 	{
@@ -88,9 +109,16 @@ AntiCrux.prototype.startUI = function() {
  		opn('./node_modules/anticrux/index.html');
 	}
 	else
-		throw 'Error - AntiCrux.prototype.startUI() is restricted to NodeJS';
+		throw 'Error - AntiCrux.prototype.startUI() is restricted to Node.js';
 };
 
+/**
+ * The method copies the options from another instance of AntiCrux.
+ *
+ * @method copyOptions
+ * @param {AntiCrux} pObject Instance of AntiCrux.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.copyOptions = function(pObject) {
 	//-- Checks
 	if (!pObject.hasOwnProperty('options'))
@@ -101,6 +129,23 @@ AntiCrux.prototype.copyOptions = function(pObject) {
 	return true;
 };
 
+/**
+ * The method returns the primary node which contains the information about the board.
+ * This is typically the node claimed by any argument of the other methods named *pNode*,
+ * even if *pNode* is generally optional.
+ *
+ * @method getMainNode
+ * @return {Object} The node is an object.
+ */
+AntiCrux.prototype.getMainNode = function() {
+	return this._root_node;
+};
+
+/**
+ * The method completely resets all the data related to the current game.
+ *
+ * @method clearBoard
+ */
 AntiCrux.prototype.clearBoard = function() {
 	var i;
 
@@ -110,6 +155,9 @@ AntiCrux.prototype.clearBoard = function() {
 	this._highlight = [];
 	this._history = [];
 	this._history_fen0 = '';
+	this._lastDrawReason = '';
+	this._halfmoveclock = 0;
+	this._halfmoveclock_status = -1;		//-1=undef, 0=reset, 1=increment
 	this._root_node = {
 		piece  : [],
 		owner  : [],
@@ -123,10 +171,26 @@ AntiCrux.prototype.clearBoard = function() {
 	this.fischer = null;
 };
 
+/**
+ * The method returns a random number to be used for a new game AntiChess960.
+ * The number 519 corresponds to the classical start position.
+ *
+ * @method getNewFischerId
+ * @return {Integer} A number between 1 and 960.
+ */
 AntiCrux.prototype.getNewFischerId = function() {
 	return Math.floor(Math.random()*960)+1;
 };
 
+/**
+ * The method sets the initial position of the pieces on the board.
+ * If you want to play from a random start position, you have to specify the argument,
+ * eventually with the help of the method *getNewFischerId()*.
+ *
+ * @method defaultBoard
+ * @param {Integer} pFischer (Optional) Identifier of the start position.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.defaultBoard = function(pFischer) {
 	var i, z, p, krn, pieces;
 
@@ -197,6 +261,18 @@ AntiCrux.prototype.defaultBoard = function(pFischer) {
 	return true;
 };
 
+/**
+ * The method loads the game from the provided position.
+ * Read more about the Forsyth–Edwards notation (FEN) <a href="https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation">at Wikipedia</a>.
+ *
+ * For example, the default start position is represented by the following string :
+ *
+ *	rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 0
+ *
+ * @method loadFen
+ * @param {String} pFen Position encoded according to the Forsyth–Edwards notation (FEN).
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.loadFen = function(pFen) {
 	var list, x, y, i, car;
 
@@ -244,21 +320,39 @@ AntiCrux.prototype.loadFen = function(pFen) {
 	else
 		this._root_node.player = (list[1] == 'b' ? this.constants.owner.black : this.constants.owner.white);
 
-	//-- En-passant
-	if ((list[3] !== undefined) && (list[3] !== '-'))
+	//-- En passant
+	if (this.options.variant.enPassant && (list[3] !== undefined) && (list[3] !== '-'))
 	{
 		i = 'abcdefgh'.indexOf(list[3]);
 		if (i !== -1)
 			this._root_node.enpassant = 8*(this._root_node.player == this.constants.owner.white ? 2 : 5) + i;
 	}
 
+	//-- Halfmove clock
+	this._halfmoveclock = (list[4] !== undefined ? parseInt(list[4]) : 0);
+	this._halfmoveclock_status = -1;
+
 	//-- Final
 	this._root_node.valuation = this._ai_nodeValuate().valuation;
 	this._history_fen0 = this.toFen();
-	this.fischer = this._discoverFischer();
+	if (list[0].indexOf('8/8/8/8') == -1)
+		this.fischer = null;
+	else
+	{
+		this._initFischer();
+		this.fischer = this._buffer_fischer.indexOf(list[0]);
+		this.fischer = (this.fischer !== -1 ? this.fischer+1 : null);
+	}
 	return true;
 };
 
+/**
+ * The method loads asynchronously a game from lichess.org.
+ *
+ * @method loadLichess
+ * @param {String} pKey Identifier of the game on 8 or 12 characters.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.loadLichess = function(pKey) {
 	var that;
 
@@ -316,7 +410,8 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 					return false;
 				else
 				{
-					that._history.push(move);
+					that.updateHalfMoveClock();
+					that.logMove(move);
 					that.highlightMove(move);
 					playerIndication = (playerIndication == that.constants.owner.white ? that.constants.owner.black : that.constants.owner.white);
 				}
@@ -329,6 +424,12 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 	return true;
 };
 
+/**
+ * The method indicates if the game doesn't start with the classical position.
+ *
+ * @method hasSetUp
+ * @return {Boolean} *true* if there is a special start position, else *false*.
+ */
 AntiCrux.prototype.hasSetUp = function() {
 	//-- Position
 	if (!this._has(this, '_history_fen0', true))
@@ -338,10 +439,23 @@ AntiCrux.prototype.hasSetUp = function() {
 	return (this._history_fen0.substring(0,43) != 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
 };
 
+/**
+ * The method returns the start position.
+ *
+ * @method getInitialPosition
+ * @return {String} *true* The start position in FEN format.
+ */
 AntiCrux.prototype.getInitialPosition = function() {
 	return (!this._has(this, '_history_fen0', true) ? '' : this._history_fen0);
 };
 
+/**
+ * The method returns the current player.
+ *
+ * @method getPlayer
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} A value from AntiCrux.constants.owner.
+ */
 AntiCrux.prototype.getPlayer = function(pNode) {
 	//-- Self
 	if (pNode === undefined)
@@ -351,6 +465,13 @@ AntiCrux.prototype.getPlayer = function(pNode) {
 	return (pNode.hasOwnProperty('player') ? pNode.player : this.constants.owner.none);
 };
 
+/**
+ * The method returns the player who is not playing.
+ *
+ * @method getOppositePlayer
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} A value from AntiCrux.constants.owner.
+ */
 AntiCrux.prototype.getOppositePlayer = function(pNode) {
 	switch (this.getPlayer(pNode))
 	{
@@ -365,6 +486,45 @@ AntiCrux.prototype.getOppositePlayer = function(pNode) {
 	}
 };
 
+/**
+ * The method sets the level of difficulty. The level activates various techniques but
+ * it doesn't ensure that the greater the level, the stronger the artificial intelligence.
+ *
+ * @method setLevel
+ * @param {Integer} pLevel A value from 1 to 20.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
+AntiCrux.prototype.setLevel = function(pLevel) {
+	//-- Checks
+	if ((pLevel < 1) || (pLevel > 20))
+		return false;
+
+	//-- Applies the new settings
+	this.options.ai.maxDepth			= [3, 8, 8, 8, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 30, 30, 40, 40, 45, 50][pLevel-1];
+	this.options.ai.maxNodes			= [100, 50000, 50000, 50000, 15000, 30000, 50000, 75000, 80000, 85000, 90000, 120000, 150000, 200000, 300000, 400000, 500000, 750000, 1000000, 2000000][pLevel-1];
+	this.options.ai.minimizeLiberty		= (pLevel >= 8);
+	this.options.ai.maxReply			= [1, 1, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2][pLevel-1];
+	this.options.ai.noStatOnForcedMove	= (pLevel >= 6);
+	this.options.ai.wholeNodes			= (pLevel >= 11);
+	this.options.ai.randomizedSearch	= true;
+	this.options.ai.pessimisticScenario	= (pLevel >= 10);
+	this.options.ai.bestStaticScore		= (pLevel >= 12);
+	this.options.ai.opportunistic		= (pLevel >= 13);
+	this.options.ai.handicap			= [0, 70, 50, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
+	this.options.ai.acceleratedEndGame	= (pLevel >= 5);
+	this.options.ai.oyster				= (pLevel == 1);
+	this._lastLevel = pLevel;
+	return true;
+};
+
+/**
+ * The method sets the current player about to play.
+ *
+ * @method setPlayer
+ * @param {AntiCrux.constants.owner} pPlayer The player.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.setPlayer = function(pPlayer, pNode) {
 	//-- Self
 	if (pNode === undefined)
@@ -380,24 +540,58 @@ AntiCrux.prototype.setPlayer = function(pPlayer, pNode) {
 		return false;
 };
 
+/**
+ * The method returns the piece located at the given coordinate.
+ *
+ * @method getPieceByCoordinate
+ * @param {String} pCoordinate A coordinate written with a letter then a figure (ex.: a8, f4...).
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Object} An object composed of the fields *owner* and *piece*.
+ */
 AntiCrux.prototype.getPieceByCoordinate = function(pCoordinate, pNode) {
 	var index;
 
 	//-- Checks
 	if (!pCoordinate.match(/^[a-h][1-8]$/))
-		return false;
+		return { owner: this.constants.owner.none,
+				 piece: this.constants.piece.none
+			};
 
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
 
 	//-- Information
-	index = (8-parseInt(pCoordinate.charAt(1)))*8 + 'abcdefgh'.indexOf(pCoordinate.charAt(0));
+	index = (8-parseInt(pCoordinate.charAt(1)))*8 + 'abcdefgh'.indexOf(pCoordinate.toLowerCase().charAt(0));
 	return { owner: pNode.owner[index],
 			 piece: pNode.piece[index]
 		};
 };
 
+/**
+ * The method indicates if the provided argument describes a move.
+ * The check complies with different formats : Bxc3, g4g5, f8=K, c1-c7, Rae6...
+ *
+ * @method isMove
+ * @param {String} pMove The move to verify.
+ * @return {Boolean} *true* if valid, else *false*.
+ */
+AntiCrux.prototype.isMove = function(pMove) {
+	return	pMove.match(/^[RNBQK]?([a-h]([0-9])?)?x?[a-h][0-9]=?[RrNnBbQqKk]?\s?[\!|\+|\#|\-|\/|\=|\?]*$/) ||
+			pMove.match(/^[0-6]?[0-7]{4}$/);
+};
+
+/**
+ * The method executes one move.
+ *
+ * @method movePiece
+ * @param {String, Integer} pMove Move.
+ * @param {Boolean} pCheckLegit Verify the validity of the move.
+ * @param {AntiCrux.constants.owner} pPlayerIndication (Optional) The current player.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} The internal representation of the move (to be used for the log for example),
+ *                   else *AntiCrux.constants.move.none* if the move is incorrect.
+ */
 AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, pNode) {
 	var	regex, player, node, moves, i, x, y, tX, tY, valid,
 		move_promotion, move_fromY, move_fromX, move_toY, move_toX;
@@ -418,7 +612,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	if (typeof pMove == 'string')
 	{
 		//- Decode the input string
-		regex = pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])(=[RNBQK])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/); //case-sensitive, no castling
+		regex = pMove.match(/^([RNBQK])?([a-h]([0-9])?)?(x)?([a-h][0-9])=?([RrNnBbQqKk])?\s?[\!|\+|\#|\-|\/|\=|\?]*$/); //case-sensitive, no castling
 		if (regex === null)
 			return this.constants.move.none;
 
@@ -428,10 +622,10 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 				regex[i] = '';
 
 		//- Promotion
-		if (regex[6].length > 1)
-			move_promotion = this.constants.piece.mapping[regex[6].substring(1)];
+		if (regex[6].length > 0)
+			move_promotion = this.constants.piece.mapping[regex[6]];
 		else
-			move_promotion = 0;
+			move_promotion = this.constants.piece.none;
 
 		//- Move to
 		move_toX = 'abcdefgh'.indexOf(regex[5].charAt(0));
@@ -493,8 +687,8 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 		//- Move from : chooses the final move
 		if (moves.length != 1)
 			return this.constants.move.none;
-		move_fromY = Math.floor(moves[0]/1000 ) % 10;
-		move_fromX = Math.floor(moves[0]/100  ) % 10;
+		move_fromY = Math.floor(moves[0]/1000) % 10;
+		move_fromX = Math.floor(moves[0]/100 ) % 10;
 	}
 	else
 	{
@@ -549,7 +743,8 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 
 	//-- En passant...
 	//- Executes the move
-	if (	pNode.hasOwnProperty('enpassant') &&
+	if (	this.options.variant.enPassant &&
+			pNode.hasOwnProperty('enpassant') &&
 			(8*move_toY+move_toX == pNode.enpassant) &&									//Target cell is identified as "en passant"
 			(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&		//Source piece is a pawn
 			(pNode.piece[8*move_toY+move_toX] == this.constants.piece.none)				//Target piece is blank
@@ -576,6 +771,13 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	//- Removes the cell
 	else
 		delete pNode.enpassant;
+
+	//-- Updates the status to change the halfmove clock later
+	this._halfmoveclock_status = 1;
+	if ((pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) ||		//Pawn advance
+		(pNode.piece[8*move_toY+move_toX] != this.constants.piece.none)				//Capturing move
+	)
+		this._halfmoveclock_status = 0;
 
 	//-- Performs the move
 	pNode.piece[8*move_toY+move_toX]     = pNode.piece[8*move_fromY+move_fromX];
@@ -605,6 +807,14 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	return pMove;
 };
 
+/**
+ * The method finds the best move.
+ *
+ * @method getMoveAI
+ * @param {AntiCrux.constants.owner} pPlayer The player.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} The internal representation of the move (to be used for the log for example), else *AntiCrux.constants.move.none* in case of error.
+ */
 AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	var	i,
 		maxDepth, curDepth, limitDepth, reg_x, reg_y, reg_mean_x, reg_mean_y, reg_sxx, reg_sxy, reg_a, reg_b, reg_estimate;
@@ -615,12 +825,12 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	if (pPlayer === undefined)
 		pPlayer = this.getPlayer(pNode);
 	if ((pPlayer != this.constants.owner.black) && (pPlayer != this.constants.owner.white))
-		return null;
+		return this.constants.move.none;
 	this._buffer = '';
 
 	//-- Pre-conditions
 	if (this.hasPendingPromotion(pNode))
-		return null;
+		return this.constants.move.none;
 	if (this.options.ai.maxReply < 1)
 		this.options.ai.maxReply = 1;
 	this._ai_nodeFreeMemory(pNode);				//Should be done by the calling program in any case
@@ -631,7 +841,7 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	//-- End of game ?
 	this._ai_nodeMoves(pNode);
 	if (pNode.moves.length === 0)
-		return null;
+		return this.constants.move.none;
 	limitDepth = (this.options.ai.noStatOnForcedMove && (pNode.moves.length === 1));
 
 	//-- Oyster : you can't lose against this level
@@ -651,6 +861,10 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 		this.options.ai.maxDepth = curDepth;
 		this._ai_nodeRecurseTree(pPlayer, 0, pNode);
 		this._reachedDepth = curDepth;
+
+		//- Callback
+		if (this.callbackExploration !== null)
+			this.callbackExploration(maxDepth, this._reachedDepth, this._numNodes);
 
 		//- Estimates the number of nodes for the next level
 		// The mathematical background is at http://keisan.casio.com/exec/system/14059930754231
@@ -705,8 +919,15 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	return this._ai_nodePick(pPlayer, pNode);
 };
 
+/**
+ * The method predicts the next few moves.
+ *
+ * @method predictMoves
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} String containing the next moves.
+ */
 AntiCrux.prototype.predictMoves = function(pNode) {
-	var subai, move, i, buffer;
+	var move, i, buffer;
 
 	//-- Self
 	if (pNode === undefined)
@@ -716,17 +937,18 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 
 	//-- Duplicates the game
 	this._ai_nodeFreeMemory(pNode);
-	subai = new AntiCrux();
-	subai.options.ai.maxDepth = 3;
-	subai.options.ai.maxNodes = 0;
-	subai.options.ai.wholeNodes = true;
-	subai.options.board.symbols = this.options.board.symbols;
-	if (!subai.loadFen(this.toFen(pNode)))
+	this._initHelper();
+	this._helper.setLevel(20);
+	this._helper.options.ai.maxDepth = 3;
+	this._helper.options.ai.maxNodes = 0;
+	this._helper.options.ai.wholeNodes = true;
+	this._helper.options.board.symbols = this.options.board.symbols;
+	if (!this._helper.loadFen(this.toFen(pNode)))
 		return 'Error : the position cannot be loaded.';
 
 	//-- End of game ?
-	subai._ai_nodeMoves(subai._root_node);
-	if (subai._root_node.moves.length === 0)
+	this._helper._ai_nodeMoves(this._helper._root_node);
+	if (this._helper._root_node.moves.length === 0)
 		return 'The game is over.';
 
 	//-- Builds N levels of data
@@ -734,28 +956,35 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 	for (i=0 ; i<5 ; i++)
 	{
 		//- Gets the move
-		move = subai.getMoveAI();
-		if (move === null)
+		move = this._helper.getMoveAI();
+		if (move === this._helper.constants.move.none)
 		{
-			subai.freeMemory();
+			this._helper.freeMemory();
 			break;
 		}
 		if (buffer.length > 0)
 			buffer += ' ';
-		buffer += subai.moveToString(move);
+		buffer += this._helper.moveToString(move);
 
 		//- Next position
-		subai.freeMemory();
-		if (subai.movePiece(move, true) == subai.constants.move.none)
+		this._helper.freeMemory();
+		if (this._helper.movePiece(move, true) == this._helper.constants.move.none)
 			throw 'Internal error - Report any error (#012)';
 		else
-			subai.switchPlayer();
+			this._helper.switchPlayer();
 	}
 
 	//-- Result
-	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + subai.getScore().valuationSolverPC + '%';
+	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + this._helper.getScore().valuationSolverPC + '%';
 };
 
+/**
+ * The method logs a move to the history log.
+ *
+ * @method logMove
+ * @param {Integer} pMove A valid move fetched from *getMoveAI()* or *movePiece()*.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.logMove = function(pMove) {
 	//-- Checks
 	if ((pMove === undefined) || (pMove === 0))
@@ -771,17 +1000,53 @@ AntiCrux.prototype.logMove = function(pMove) {
 	}
 };
 
+/**
+ * The method returns the current value of the halfmove clock.
+ *
+ * @method getHalfMoveClock
+ * @return {Integer} The current value of the halfmove clock.
+ */
+AntiCrux.prototype.getHalfMoveClock = function() {
+	return this._halfmoveclock;
+};
+
+/**
+ * The method increments the halfmove clock which is not automated.
+ * It often has to be called after *movePiece()*.
+ *
+ * @method updateHalfMoveClock
+ */
+AntiCrux.prototype.updateHalfMoveClock = function() {
+	if (this._halfmoveclock_status == 1)
+		this._halfmoveclock++;
+	else
+		if (this._halfmoveclock_status === 0)
+			this._halfmoveclock = 0;
+	this._halfmoveclock_status = -1;
+};
+
+/**
+ * The method resets the internal statistics of the last exploration of the nodes.
+ *
+ * @method resetStats
+ */
 AntiCrux.prototype.resetStats = function() {
 	this._numNodes = 0;
 	this._reachedDepth = 0;
 };
 
+/**
+ * The method reverts the last move and does the necessary internal updates (history, halfmove clock...).
+ *
+ * @method undoMove
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.undoMove = function() {
 	var i, hist;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
-		return '';
+		return false;
 
 	//-- Prepares the board
 	hist = this._history.slice(0);
@@ -794,20 +1059,44 @@ AntiCrux.prototype.undoMove = function() {
 		if (this.movePiece(hist[i], true, this.constants.owner.none) == this.constants.move.none)
 			throw 'Internal error - Report any error (#004)';
 		else
+		{
+			this.updateHalfMoveClock();
 			this.switchPlayer();
+		}
 	}
 	this._history = hist;
 	return true;
 };
-	
+
+/**
+ * The method returns the number of explored nodes.
+ *
+ * @method undoMove
+ * @return {Integer} Number of explored nodes.
+ */
 AntiCrux.prototype.getNumNodes = function() {
 	return (this.hasOwnProperty('_numNodes') ? this._numNodes : 0);
 };
 
+/**
+ * The method returns the reached depth after the exploration of the nodes.
+ *
+ * @method getReachedDepth
+ * @return {Integer} Reached depth.
+ */
 AntiCrux.prototype.getReachedDepth = function() {
 	return (this.hasOwnProperty('_reachedDepth') ? this._reachedDepth : 0);
 };
 
+/**
+ * The method returns the existence of a pending promotion.
+ * While the promotion is not done, the game cannot continue.
+ * Call the method *promote()* to correct this situation.
+ *
+ * @method hasPendingPromotion
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Boolean} *true* if a promotion is pending, else *false*.
+ */
 AntiCrux.prototype.hasPendingPromotion = function(pNode) {
 	//-- Self
 	if (pNode === undefined)
@@ -817,6 +1106,15 @@ AntiCrux.prototype.hasPendingPromotion = function(pNode) {
 	return pNode.hasOwnProperty('_pendingPromotion');
 };
 
+/**
+ * The method promotes the last pawn with the provided piece.
+ * The promotion is not needed if you provided the promotion in the last move (see *movePiece()*).
+ *
+ * @method promote
+ * @param {String, AntiCrux.constants.piece} pPiece Identifier of the piece (letter or internal code).
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {AntiCrux.constants.piece} Internal identifier of the promoted piece, else *AntiCrux.constants.piece.none* in case of error.
+ */
 AntiCrux.prototype.promote = function(pPiece, pNode) {
 	var piece;
 
@@ -845,6 +1143,15 @@ AntiCrux.prototype.promote = function(pPiece, pNode) {
 	return piece;
 };
 
+/**
+ * The method converts the provided piece into a human-readable output.
+ *
+ * @method getPieceSymbol
+ * @param {AntiCrux.constants.piece} pPiece The piece.
+ * @param {AntiCrux.constants.owner} pPlayer The player.
+ * @param {Boolean} pSymbol Use Unicode.
+ * @return {String} Symbol as a string.
+ */
 AntiCrux.prototype.getPieceSymbol = function(pPiece, pPlayer, pSymbol) {
 	var output;
 	if (!pSymbol)
@@ -881,6 +1188,15 @@ AntiCrux.prototype.getPieceSymbol = function(pPiece, pPlayer, pSymbol) {
 	}
 };
 
+/**
+ * The method formats the move with a modern syntax.
+ * You call this function only before the move is done with *movePiece()*.
+ *
+ * @method moveToString
+ * @param {Integer} pMove The move with an internal representation.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} Move as a string.
+ */
 AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	var move, move_promo, move_fromY, move_fromX, move_toY, move_toX,
 		buffer, taken, output;
@@ -888,7 +1204,7 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
-	if (pMove === null)
+	if ((pMove === null) || (pMove == this.constants.move.none))
 		return '';
 
 	//-- Elements
@@ -908,7 +1224,7 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	//-- Taken piece
 	taken = (pNode.owner[8*move_toY+move_toX] != pNode.owner[8*move_fromY+move_fromX]) &&
 			(pNode.owner[8*move_toY+move_toX] != this.constants.owner.none);
-	if (pNode.hasOwnProperty('enpassant'))
+	if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
 		taken = taken || (	(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&
 							(8*move_toY+move_toX == pNode.enpassant)
 						);
@@ -948,6 +1264,32 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	return output;
 };
 
+/**
+ * The method formats the move according to the requirements of the UCI protocol.
+ *
+ * @method moveToUCI
+ * @param {Integer} pMove The move.
+ * @return {String} Move as a string.
+ */
+AntiCrux.prototype.moveToUCI = function(pMove) {
+	if ((pMove === null) || (typeof pMove !== 'number') || (pMove == this.constants.move.none))
+		return '0000';
+	else
+		return ( 'abcdefgh'[Math.floor(pMove/100) % 10] +
+				 (8-Math.floor(pMove/1000) % 10) +
+				 'abcdefgh'[pMove % 10] +
+				 (8-Math.floor(pMove/10) % 10) +
+				 '  rnbqk'[Math.floor(pMove/10000) % 10]
+				).trim();
+};
+
+/**
+ * The method returns the static and deep (when available) score of the current position.
+ *
+ * @method getScore
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Object} Object with multiple fields.
+ */
 AntiCrux.prototype.getScore = function(pNode) {
 	var score;
 
@@ -966,6 +1308,13 @@ AntiCrux.prototype.getScore = function(pNode) {
 		return score;
 };
 
+/**
+ * The method switches the current player.
+ *
+ * @method switchPlayer
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.switchPlayer = function(pNode) {
 	//-- Self
 	if (pNode === undefined)
@@ -981,6 +1330,13 @@ AntiCrux.prototype.switchPlayer = function(pNode) {
 	return true;
 };
 
+/**
+ * The method determines the winner.
+ *
+ * @method getWinner
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {AntiCrux.constants.owner} Internal identifier of the winner.
+ */
 AntiCrux.prototype.getWinner = function(pNode) {
 	var node = this._ai_nodeCopy((pNode === undefined ? this._root_node : pNode), true);
 
@@ -1000,35 +1356,172 @@ AntiCrux.prototype.getWinner = function(pNode) {
 	return this.constants.owner.none;
 };
 
-AntiCrux.prototype.isDraw = function(pNode) {
+/**
+ * The method determines if the game is a draw. The check is strict based on
+ * the threefold repetition, the halfmove-clock and some known positions.
+ *
+ * @method isDraw
+ * @param {Object} pCriteria If you don't specify it, the check is complete, else you provide an object with boolean values for the fields *halfmoveClock*, *threefoldRepetition* and *position* (a partial list is accepted).
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Boolean} *true* if the game ended in a tie, else *false*.
+ */
+AntiCrux.prototype.isDraw = function(pCriteria, pNode) {
+	var	positions, pivot, fen, white, black,
+		i, e;
+
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
 
-	//-- Checks
+	//-- Defines the parameters to check
+	if (typeof pCriteria !== 'object')
+		pCriteria = {
+			halfmoveClock		: true,
+			threefoldRepetition	: true,
+			position			: true
+		};
+	if (!pCriteria.hasOwnProperty('halfmoveClock'))
+		pCriteria.halfmoveClock = false;
+	if (!pCriteria.hasOwnProperty('threefoldRepetition'))
+		pCriteria.threefoldRepetition = false;
+	if (!pCriteria.hasOwnProperty('position'))
+		pCriteria.position = false;
+
+	//-- Halfmove clock
+	// https://en.wikipedia.org/wiki/Fifty-move_rule
+	if (pCriteria.halfmoveClock && (this._halfmoveclock >= 50))
+	{
+		this._lastDrawReason = 'Halfmove clock';
+		return true;
+	}
+
+	//-- Threefold repetition
+	// https://en.wikipedia.org/wiki/Threefold_repetition
+	if (pCriteria.threefoldRepetition)
+	{
+		this._initHelper();
+		this._helper.copyOptions(this);
+		if (this._helper.loadFen(this._history_fen0))
+		{
+			//- Builds all the positions
+			positions = [this._history_fen0.substring(0, this._history_fen0.indexOf(' '))];
+			for (i=0 ; i<this._history.length ; i++)
+			{
+				if (this._helper.movePiece(this._history[i], true, this._helper.getPlayer()) == this._helper.constants.move.none)
+					throw 'Internal error - Report any error (#017)';
+				else
+				{
+					fen = this._helper.toFen();
+					positions.push(fen.substring(0, fen.indexOf(' ')));
+					this._helper.switchPlayer();
+				}
+			}
+
+			//- Counts the positions
+			pivot = {};
+			positions.forEach(function(pElement) {
+				pivot[pElement] = (pivot[pElement] || 0) + 1;
+			});
+
+			//- Finds a position which occurred 3 times
+			for (e in pivot)
+				if (pivot[e] >= 3)
+				{
+					this._lastDrawReason = 'Threefold repetition';
+					return true;
+				}
+		}
+	}
+
+	//-- Draw by position
+	if (pCriteria.position)
+	{
+		//- Bishop vs. Bishop on different colors
+		if (	(this._ai_nodeCountPiece(this.constants.owner.white) == 1) &&
+				(this._ai_nodeCountPiece(this.constants.owner.black) == 1)
+		) {
+			white = this._ai_nodeLocatePiece(this.constants.owner.white, this.constants.piece.bishop);
+			black = this._ai_nodeLocatePiece(this.constants.owner.black, this.constants.piece.bishop);
+			if ((white !== null) && (black !== null))
+				if ((white.x+white.y)%2 !== (black.x+black.y)%2)
+				{
+					this._lastDrawReason = 'Position';
+					return true;
+				}
+		}
+	}
+
+	//-- Default result
+	this._lastDrawReason = '';
+	return false;
+};
+
+/**
+ * The method determines if the game is potentially a draw.
+ * The check is based on the deep evaluation if it is relevant.
+ *
+ * @method isPossibleDraw
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Boolean} *true* if the game potentially ended in a tie, else *false*.
+ */
+AntiCrux.prototype.isPossibleDraw = function(pNode) {
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Too long history
+	if (this._history.length >= 150)
+		return true;
+
+	//-- Possible draw based on the deep evaluation
 	if (	!this.hasOwnProperty('_reachedDepth') ||
 			!pNode.hasOwnProperty('valuation') ||
 			!pNode.hasOwnProperty('valuationSolver')
 	)
 		return false;
-
-	//-- Possible draw
-	return (	(this._reachedDepth >= 5) &&															//Sufficient depth for the valuation
-				(pNode.valuation === 0) &&																//Equal game on both side
-				(pNode.valuationSolver === 0) &&														//No deep opportunity
-				(this._ai_nodeInventory(this.constants.owner.black, null, undefined, pNode) <= 5) &&	//Few remaining pieces
-				(this._ai_nodeInventory(this.constants.owner.white, null, undefined, pNode) <= 5)		//Few remaining pieces
-			);
+	else
+		return (	(this._reachedDepth >= 5) &&															//Sufficient depth for the valuation
+					(pNode.valuation === 0) &&																//Equal game on both side
+					(pNode.valuationSolver === 0) &&														//No deep opportunity
+					(this._ai_nodeInventory(this.constants.owner.black, null, undefined, pNode) <= 5) &&	//Few remaining pieces
+					(this._ai_nodeInventory(this.constants.owner.white, null, undefined, pNode) <= 5)		//Few remaining pieces
+				);
 };
 
-AntiCrux.prototype.isEndGame = function(pSwitch, pNode) {
+/**
+ * When the draw is strict, you can get the reason with this method.
+ *
+ * @method getDrawReason
+ * @return {String} Reason raised by the last call to *isDraw()*.
+ */
+AntiCrux.prototype.getDrawReason = function() {
+	return this._lastDrawReason;
+};
+
+/**
+ * The method indicates if the game is over. The check is done according to the number of available moves.
+ *
+ * @method isEndGame
+ * @param {Boolean} pSwitchPlayer Will switch the player for the check.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Boolean} *true* if the game has ended, else *false*.
+ */
+AntiCrux.prototype.isEndGame = function(pSwitchPlayer, pNode) {
 	var node = this._ai_nodeCopy(pNode === undefined ? this._root_node : pNode, false);
-	if (pSwitch)
+	if (pSwitchPlayer)
 		this.switchPlayer(node);
 	this._ai_nodeMoves(node);
 	return !this._has(node, 'moves', true);
 };
 
+/**
+ * The method highlights a cell on the board.
+ *
+ * @method highlight
+ * @param {Boolean} pReset Reset the existing highlighted cells of the board.
+ * @param {Array, String, Integer} pPosition The position is an array of internal positions, a coordinate or an internal identifier
+ * @return {Boolean} *true* if successful, else *false*.
+ */
 AntiCrux.prototype.highlight = function(pReset, pPosition) {
 	//-- Clears the highlighted cells
 	if (pPosition === undefined)
@@ -1059,6 +1552,13 @@ AntiCrux.prototype.highlight = function(pReset, pPosition) {
 	return true;
 };
 
+/**
+ * The method highlights a move corresponding to two cells.
+ * The existing highlighted cells are reset.
+ *
+ * @method highlightMove
+ * @param {Integer} pMove The move with an internal representation.
+ */
 AntiCrux.prototype.highlightMove = function(pMove) {
 	var move_fromY, move_fromX, move_toY, move_toX;
 
@@ -1078,6 +1578,12 @@ AntiCrux.prototype.highlightMove = function(pMove) {
 	}
 };
 
+/**
+ * The method highlights the reachable target cells of the board for the current player.
+ *
+ * @method highlightMoves
+ * @param {Boolean} pRefresh Recalculate the moves (*true*) or use the existing ones of the main node (*false*).
+ */
 AntiCrux.prototype.highlightMoves = function(pRefresh) {
 	var node, i, position;
 
@@ -1104,21 +1610,33 @@ AntiCrux.prototype.highlightMoves = function(pRefresh) {
 		}
 };
 
+/**
+ * The method returns the history of the moves in an array containing the moves in their internal representation.
+ *
+ * @method getHistory
+ * @return {Array} All the past moves.
+ */
 AntiCrux.prototype.getHistory = function() {
 	return (this.hasOwnProperty('_history') ? this._history : []);
 };
 
+/**
+ * The method returns the history of the moves in HTML format.
+ *
+ * @method getHistoryHtml
+ * @return {String} HTML content.
+ */
 AntiCrux.prototype.getHistoryHtml = function() {
-	var trace, i, output;
+	var i, output;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
 		return '';
 
 	//-- Initial position
-	trace = new AntiCrux();
-	trace.copyOptions(this);
-	if (!trace.loadFen(this._history_fen0))
+	this._initHelper();
+	this._helper.copyOptions(this);
+	if (!this._helper.loadFen(this._history_fen0))
 		return '';
 
 	//-- Builds the moves
@@ -1127,8 +1645,8 @@ AntiCrux.prototype.getHistoryHtml = function() {
 	{
 		if (i % 2 === 0)
 			output += '<tr><th>' + Math.floor((i+2)/2) + '</th>';
-		output += '<td class="AntiCrux-history-item" data-index="'+i+'" title="Click to review this past move">' + trace.moveToString(this._history[i]) + '</td>';
-		if (trace.movePiece(this._history[i], true, trace.constants.owner.none) == trace.constants.move.none)
+		output += '<td class="AntiCrux-history-item" data-index="'+i+'" title="Click to review this past move">' + this._helper.moveToString(this._history[i]) + '</td>';
+		if (this._helper.movePiece(this._history[i], true, this._helper.constants.owner.none) == this._helper.constants.move.none)
 			throw 'Internal error - Report any error (#010)';
 		if (i % 2 == 1)
 			output += '</tr>';
@@ -1138,6 +1656,13 @@ AntiCrux.prototype.getHistoryHtml = function() {
 	return output + '</table>';
 };
 
+/**
+ * The method returns the decision tree in HTML format.
+ *
+ * @method getDecisionTreeHtml
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} HTML content.
+ */
 AntiCrux.prototype.getDecisionTreeHtml = function(pNode) {
 	//-- Self
 	if (pNode === undefined)
@@ -1162,6 +1687,14 @@ AntiCrux.prototype.getDecisionTreeHtml = function(pNode) {
 			'</table>';
 };
 
+/**
+ * The method returns the possible moves and their valuation in HTML format.
+ *
+ * @method getMovesHtml
+ * @param {AntiCrux.constants.owner} pPlayer The player.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} HTML content.
+ */
 AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 	var i, output, score;
 
@@ -1226,6 +1759,13 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 				'</tbody></table>');
 };
 
+/**
+ * The method renders the board in HTML format.
+ *
+ * @method toHtml
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} HTML content.
+ */
 AntiCrux.prototype.toHtml = function(pNode) {
 	var x, y, rotated, color, abc, owner, output;
 
@@ -1263,7 +1803,7 @@ AntiCrux.prototype.toHtml = function(pNode) {
 						owner = this.constants.owner.none;
 					else
 					{
-						if (Math.floor(100*Math.random()) % 2 == 0)
+						if (Math.floor(100*Math.random()) % 2 === 0)
 							owner = this.constants.owner.black;
 						else
 							owner = this.constants.owner.white;
@@ -1296,6 +1836,13 @@ AntiCrux.prototype.toHtml = function(pNode) {
 	return '<div class="AntiCrux-board">' + output + '</div>';
 };
 
+/**
+ * The method renders the board in FEN format.
+ *
+ * @method toFen
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} FEN string.
+ */
 AntiCrux.prototype.toFen = function(pNode) {
 	// https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
 	// https://www.chessclub.com/user/help/PGN-spec
@@ -1354,13 +1901,13 @@ AntiCrux.prototype.toFen = function(pNode) {
 	output += ' -';
 
 	//-- En passant
-	if (pNode.hasOwnProperty('enpassant'))
+	if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
 		output += ' ' + ('abcdefgh'[pNode.enpassant%8]);
 	else
 		output += ' -';
 
-	//-- Halfmove clock: count of ply since the last pawn advance or capturing move (not supported)
-	output += ' 0';
+	//-- Halfmove clock: count of ply since the last pawn advance or capturing move
+	output += ' ' + this._halfmoveclock;
 
 	//-- Fullmove number
 	if (!this._has(this, '_history', true))
@@ -1372,6 +1919,14 @@ AntiCrux.prototype.toFen = function(pNode) {
 	return output;
 };
 
+/**
+ * The method renders the board in plain text. You need a chess font to see the result
+ * and some of them may be <a href="http://www.enpassant.dk/chess/fonteng.htm">found here</a>.
+ *
+ * @method toFen
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} FEN string.
+ */
 AntiCrux.prototype.toText = function(pNode) {
 	// Use one of the fonts "Chess" available at www.dafont.com
 
@@ -1416,7 +1971,7 @@ AntiCrux.prototype.toText = function(pNode) {
 						owner = this.constants.owner.none;
 					else
 					{
-						if (Math.floor(100*Math.random()) % 2 == 0)
+						if (Math.floor(100*Math.random()) % 2 === 0)
 							owner = this.constants.owner.black;
 						else
 							owner = this.constants.owner.white;
@@ -1457,43 +2012,73 @@ AntiCrux.prototype.toText = function(pNode) {
 			(this.options.board.coordinates ? (rotated?'DïîíìëêéèF':'DèéêëìíîïF') : 'D((((((((F');
 };
 
-AntiCrux.prototype.toPgn = function() {
-	// https://www.chessclub.com/user/help/PGN-spec
-
-	var pgn, trace, i, turn, move, symbols;
+/**
+ * The method exports the game to PGN.
+ * The specification is <a href="https://www.chessclub.com/user/help/PGN-spec">available online</a>.
+ *
+ * @method toPgn
+ * @param {Object} pHeader (Optional) The object is composed of keys and values related to the PGN specification.
+ * @return {String} PGN content.
+ */
+AntiCrux.prototype.toPgn = function(pHeader) {
+	var	lf_setheader, pgn,
+		i, e, turn, moveStr, symbols;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
 		return '';
 
-	//-- Header
-	pgn  = '[Event "Game"]' + "\n";
-	pgn += '[Site "https://github.com/ecrucru/anticrux/"]' + "\n";
-	pgn += '[Date "' + (new Date().toISOString().slice(0, 10)) + '"]' + "\n";
+	//-- Prepares the header
+	if (typeof pHeader !== 'object')
+		pHeader = {};
+	lf_setheader = function (pKey, pValue) {
+		if (!pHeader.hasOwnProperty(pKey))
+			pHeader[pKey] = pValue;
+	};
+
+	lf_setheader('Event', 'Game');
+	lf_setheader('Site', 'https://github.com/ecrucru/anticrux/');
+	lf_setheader('Date', (new Date().toISOString().slice(0, 10)));
 	if (this.options.board.rotated)
-		pgn +=	'[White "AntiCrux '+this.options.ai.version+'"]' + "\n" +
-				'[Black "You"]' + "\n";
+	{
+		lf_setheader('White', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
+		lf_setheader('Black', 'You');
+	}
 	else
-		pgn +=	'[White "You"]' + "\n" +
-				'[Black "AntiCrux '+this.options.ai.version+'"]' + "\n";
-	pgn += '[Result "?"]' + "\n";
+	{
+		lf_setheader('White', 'You');
+		lf_setheader('Black', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
+	}
+	lf_setheader('Termination', 'normal');
+	lf_setheader('Result', '*');
 	if (this.hasSetUp())
 	{
-		pgn += '[SetUp "1"]' + "\n";
-		pgn += '[FEN "' + this._history_fen0 + '"]' + "\n";
+		lf_setheader('SetUp', '1');
+		lf_setheader('FEN', this._history_fen0);
 	}
-	pgn += '[PlyCount "' + (this._history.length) +'"]' + "\n";
-	pgn += '[Variant "antichess"]' + "\n";
-	pgn += '[TimeControl "-"]' + "\n\n";
+	lf_setheader('PlyCount', this._history.length);
+	lf_setheader('Variant', 'antichess');
+	lf_setheader('TimeControl', '-');
+
+	//-- Builds the header
+	pgn = '';
+	for (e in pHeader)
+	{
+		if (typeof pHeader[e] === 'string')
+			pgn += '['+e+' "'+pHeader[e].split('"').join("'")+'"]' + "\n";
+		else
+			pgn += '['+e+' "'+pHeader[e]+'"]' + "\n";
+	}
+	pgn += "\n";
 
 	//-- Deactivates the symbols
 	symbols = this.options.board.symbols;
 	this.options.board.symbols = false;
 
 	//-- Loads the initial position
-	trace = new AntiCrux();
-	trace.copyOptions(this);
-	if (!trace.loadFen(this._history_fen0))
+	this._initHelper();
+	this._helper.copyOptions(this);
+	if (!this._helper.loadFen(this._history_fen0))
 		return '';
 
 	//-- Moves
@@ -1505,28 +2090,40 @@ AntiCrux.prototype.toPgn = function() {
 			pgn += (turn>0 ? ' ' : '') + (++turn) + '.';
 
 		//- Move
-		move = trace.moveToString(this._history[i]);
-		if (trace.movePiece(this._history[i], true, this.constants.owner.none) == trace.constants.move.none)
+		moveStr = this._helper.moveToString(this._history[i]);
+		if (this._helper.movePiece(this._history[i], true, this._helper.getPlayer()) == this._helper.constants.move.none)
 			throw 'Internal error - Report any error (#011)';
 		else
 		{
-			pgn += ' ' + move;
-			trace.switchPlayer();
+			pgn += ' ' + moveStr;
+			this._helper.updateHalfMoveClock();
+			this._helper.logMove(this._history[i]);
+			this._helper.switchPlayer();
 		}
 	}
 
 	//-- Final position
-	switch (trace.getWinner())
-	{
-		case trace.constants.owner.white:
-			pgn += '# 1-0';
-			pgn = pgn.replace('[Result "?"]', '[Result "1-0"]');
-			break;
-		case trace.constants.owner.black:
-			pgn += '# 0-1';
-			pgn = pgn.replace('[Result "?"]', '[Result "0-1"]');
-			break;
-	}
+	if (pHeader.Result != '*')
+		pgn += '# ' + pHeader.Result;
+	else
+		switch (this._helper.getWinner())
+		{
+			case this._helper.constants.owner.white:
+				pgn += '# 1-0';
+				pgn = pgn.replace('[Result "*"]', '[Result "1-0"]');
+				break;
+			case this._helper.constants.owner.black:
+				pgn += '# 0-1';
+				pgn = pgn.replace('[Result "*"]', '[Result "0-1"]');
+				break;
+			case this._helper.constants.owner.none:
+				if (this._helper.isDraw())
+				{
+					pgn += '# 1/2-1/2';
+					pgn = pgn.replace('[Result "*"]', '[Result "1/2-1/2"]');
+				}
+				break;
+		}
 
 	//-- Restores the symbols
 	this.options.board.symbols = symbols;
@@ -1535,6 +2132,14 @@ AntiCrux.prototype.toPgn = function() {
 	return pgn;
 };
 
+/**
+ * The method renders the board in plain text for the console.
+ *
+ * @method toConsole
+ * @param {Boolean} pBorder Include the border.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} Readable text.
+ */
 AntiCrux.prototype.toConsole = function(pBorder, pNode) {
 	var x, y, rotated, i, car, buffer;
 
@@ -1604,6 +2209,13 @@ AntiCrux.prototype.toConsole = function(pBorder, pNode) {
 	return buffer;
 };
 
+/**
+ * The method removes all the known links between the objects to "help" the clearing
+ * of the memory by the garbage collector when it can be called directly.
+ *
+ * @method freeMemory
+ * @return {Integer} Number of processed nodes.
+ */
 AntiCrux.prototype.freeMemory = function() {
 	var count;
 	this._buffer = '';
@@ -1611,6 +2223,19 @@ AntiCrux.prototype.freeMemory = function() {
 	this._ai_gc();
 	return count;
 };
+
+
+//---- Events
+
+/**
+ * The callback is invoked during the exploration of the nodes.
+ *
+ * @method callbackExploration
+ * @param {Integer} pMaxDepth Maximal reachable depth.
+ * @param {Integer} pDepth Current depth.
+ * @param {Integer} pNodes Count of processed nodes.
+ */
+AntiCrux.prototype.callbackExploration = null;
 
 
 //---- Private members
@@ -1670,7 +2295,8 @@ AntiCrux.prototype._init = function() {
 	//-- Options
 	this.options = {
 		ai : {
-			version : '0.2.0',							//Version of AntiCrux
+			version : '0.2.1',							//Version of AntiCrux
+			elo : 1750,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
 			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 100000,							//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
@@ -1687,6 +2313,7 @@ AntiCrux.prototype._init = function() {
 			oyster : false								//TRUE is a full random play
 		},
 		variant : {
+			enPassant : true,							//TRUE activates the move "en passant" (some AI doesn't manage IT)
 			promoteQueen : false,						//TRUE only promotes pawns as queen
 			activePawns : false,						//TRUE makes the pawns stronger for the valuation once they are moved, and are consequently less mobile
 			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
@@ -1711,6 +2338,11 @@ AntiCrux.prototype._init = function() {
 	this.options.ai.valuation[ this.constants.piece.bishop] = 300;
 	this.options.ai.valuation[ this.constants.piece.queen ] = 900;
 	this.options.ai.valuation[ this.constants.piece.king  ] = 250;
+
+	//-- General variables
+	this._helper = null;								//You can't refer to that variable without calling first _initHelper()
+	this._buffer_fischer = [];							//You can't refer to that variable without calling first _initFischer()
+	this._lastLevel = null;
 };
 
 AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
@@ -1737,27 +2369,26 @@ AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
 	return b;
 };
 
-AntiCrux.prototype._discoverFischer = function(pNode) {
-	var f, result, pattern, board;
+AntiCrux.prototype._initHelper = function() {
+	if (this._helper === null)
+		this._helper = new AntiCrux();
+};
 
-	//-- Self
-	if (pNode === undefined)
-		pNode = this._root_node;
+AntiCrux.prototype._initFischer = function() {
+	var id, fen;
 
-	//-- Detects the initial Fischer's position
-	result = null;
-	board = new AntiCrux();
-	pattern = this.toFen(pNode).split(' ')[0];
-	for (f=1 ; f<=960 ; f++)
+	//-- Checks
+	if (this._buffer_fischer.length > 0)
+		return;
+
+	//-- Fischer's positions
+	this._initHelper();
+	for (id=1 ; id<=960 ; id++)
 	{
-		board.defaultBoard(f);
-		if (board.toFen().substring(0, pattern.length) == pattern)
-		{
-			result = f;
-			break;
-		}
+		this._helper.defaultBoard(id);
+		fen = this._helper.toFen();
+		this._buffer_fischer.push(fen.substring(0, fen.indexOf(' ')));
 	}
-	return result;
 };
 
 AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
@@ -1812,6 +2443,20 @@ AntiCrux.prototype._ai_nodeInventory = function(pPlayer, pPiece, pColumn, pNode)
 					continue;
 			counter++;
 		}
+	return counter;
+};
+
+AntiCrux.prototype._ai_nodeCountPiece = function(pPlayer, pNode) {
+	var i, counter;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Counts
+	counter = 0;
+	for (i=0 ; i<64 ; i++)
+		counter += (pNode.owner[i] == pPlayer ? 1 : 0);
 	return counter;
 };
 
@@ -1932,7 +2577,7 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 					moveLegit(y+directionY, x+1, true, true);
 
 					// En passant
-					if (pNode.hasOwnProperty('enpassant'))
+					if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
 					{
 						//Source pawn at y/x
 						//Mid position at epX/epY
@@ -2631,7 +3276,7 @@ AntiCrux.prototype._ai_gc = function() {
 };
 
 
-//---- NodeJS
+//---- Node.js
 
 if ((typeof module !== 'undefined') && module.exports)
 	module.exports = AntiCrux;
