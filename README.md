@@ -114,7 +114,7 @@ apt-get install nodejs nodejs-legacy
 Additional tools may be added globally :
 
 ```bash
-npm install -g uglify-js jshint
+npm install -g uglify-js jshint yuidocjs
 ```
 
 AntiCrux can be built locally with two scripts :
@@ -703,7 +703,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.highlightMove(pMove)
 - AntiCrux.highlightMoves(pRefresh)
 - AntiCrux.isDraw(pCriteria, pNode)
-- AntiCrux.isEndGame(pSwitch, pNode)
+- AntiCrux.isEndGame(pSwitchPlayer, pNode)
 - AntiCrux.isMove(pMove)
 - AntiCrux.isPossibleDraw(pNode)
 - AntiCrux.loadFen(pFen)
@@ -730,6 +730,8 @@ A node is enriched with attributes when you call the API below. Any field or met
 The parameter *pNode* is generally optional. When you omit it, the internal root node is automatically picked.
 
 Your instance is AntiCrux and embeds by default a "root" node representing the current board. The same instance will apply on any node provided in the argument. Consequently : a node is minimalist and an instance of AntiCrux is unique.
+
+To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a webbrowser by using YuiDoc. Run the script "run_yuidoc_server.*" then access to [http://localhost:3000](http://localhost:3000).
 
 
 ### Valuation

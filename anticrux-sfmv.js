@@ -1,5 +1,4 @@
-/**
- * Stockfish Chess version 8 with multi-variant support for Node.js
+/* Stockfish Chess version 8 with multi-variant support for Node.js
  *
  * Copyright (C) 2004-2008 Tord Romstad (Glaurung)
  * Copyright (C) 2008-2014 Marco Costalba, Joona Kiiski, Tord Romstad (Stockfish)        // @ official-stockfish/Stockfish
