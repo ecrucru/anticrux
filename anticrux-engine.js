@@ -73,8 +73,8 @@ pipe = readline.createInterface({
 		output : process.stdout,
 		terminal : true
 	})
-.on('line', function(pLine){
-	var i, j, b, tab, obj, move, movePonder;
+.on('line', function(pLine) {
+	var i, j, b, tab, obj, move, fen, movePonder;
 
 	//-- Simplifies the input string
 	i = pLine.length;
@@ -173,7 +173,18 @@ pipe = readline.createInterface({
 			else if (tab[0] == 'position')
 			{
 				if (tab[1] == 'fen')
-					aceng_engine.loadFen(tab[2] + ' ' + tab[3] + ' - -');		//@todo Half-moves
+				{
+					fen = '';
+					for (j=2 ; j<tab.length ; j++)
+					{
+						if (tab[j] == 'moves')
+							break;
+						fen += (fen.length > 0 ? ' ' : '') + tab[j];
+					}
+					if (!aceng_engine.loadFen(fen))
+						if (aceng_options.debug)
+							aceng_output('info string Invalid FEN ' + fen);
+				}
 				else if (tab[1] == 'startpos')
 					aceng_engine.defaultBoard();
 				else
