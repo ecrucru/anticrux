@@ -66,8 +66,8 @@
 						<select id="acui_player"><!-- Filled by jQuery --></select>
 						<a id="acui_play_ai" href="#" data-role="button">AI plays</a>
 						<a id="acui_play_human" href="#" data-role="button">Player plays</a>
-						<a href="#acui_play_hint_popup" data-role="button" data-rel="popup" data-transition="slideup">Hint</a>
-						<a id="acui_play_undo" href="#" data-role="button">Undo</a>
+						<a href="#acui_hint_popup" data-role="button" data-rel="popup" data-transition="slideup">Hint</a>
+						<a id="acui_undo" href="#" data-role="button">Undo</a>
 					</div>
 
 					<div class="AntiCrux-hSizer">
@@ -110,11 +110,11 @@
 					</div>
 
 					<!-- Menu item for hint -->
-					<div data-role="popup" id="acui_play_hint_popup">
+					<div data-role="popup" id="acui_hint_popup">
 						<ul data-role="listview">
-							<li id="acui_play_hint_soft"><a href="#" data-rel="back">Possible target positions</a></li>
-							<li id="acui_play_hint_hard"><a href="#" data-rel="back">Evaluation of the moves</a></li>
-							<li id="acui_play_hint_irma"><a href="#" data-rel="back">Prediction</a></li>
+							<li id="acui_hint_soft"><a href="#" data-rel="back">Possible target positions</a></li>
+							<li id="acui_hint_hard"><a href="#" data-rel="back">Evaluation of the moves</a></li>
+							<li id="acui_hint_irma"><a href="#" data-rel="back">Prediction</a></li>
 							<li><a href="#" data-rel="back">Exit</a></li>
 						</ul>
 					</div>
@@ -195,7 +195,7 @@
 						<div class="AntiCrux-vSizer AntiCrux-leftMargin">
 							<h2>Board</h2>
 							<p><label for="acui_option_fischer">Fischer :</label> <input class="AntiCrux-ui-option" id="acui_option_fischer" type="number" min="1" max="960" value="519" title="519 is classical. Double-click to generate a new number" /></p>
-							<p><label for="acui_option_pro">Professional mode</label> <input id="acui_option_pro" type="checkbox" /></p>
+							<p><label for="acui_option_pro">Professional mode</label> <input class="AntiCrux-ui-option-refresh" id="acui_option_pro" type="checkbox" /></p>
 							<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
 							<p><label for="acui_option_symbol">Symbols for the pieces</label> <input class="AntiCrux-ui-option" id="acui_option_symbol" type="checkbox" /></p>
 							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_coordinates" type="checkbox" /></p>

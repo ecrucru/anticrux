@@ -1,0 +1,141 @@
+<!--
+	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
+	Copyright (C) 2016-2017, ecrucru
+
+		https://github.com/ecrucru/anticrux/
+		http://ecrucru.free.fr/?page=anticrux
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as
+	published by the Free Software Foundation, either version 3 of the
+	License, or (at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program. If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!-- Header -->
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="msapplication-tap-highlight" content="no" />
+	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>AntiCrux - AI for AntiChess</title>
+
+	<!-- Styles -->
+	<link rel="stylesheet" type="text/css" href="jquery-1.5.0.mobile.min.css" />
+	<link rel="stylesheet" type="text/css" href="anticrux.css" />
+	<link rel="stylesheet" type="text/css" href="anticrux-ui.css" />
+
+	<!-- Scripts -->
+	<script type="text/javascript" src="jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="jquery-1.5.0.mobile.min.js"></script>
+	<script type="text/javascript" src="anticrux.js"></script>
+</head>
+<body>
+	<!-- Content -->
+	<div data-role="page">
+		<div data-role="header">
+			<h1>AntiCrux <span id="acui_version"></span></h1>
+		</div>
+
+		<div data-role="content" id="acui_isMobile">
+
+			<div id="acui_js" class="AntiCrux-notice">&#x26a0; JavaScript must be enabled to allow the website to be loaded correctly.</div>
+
+			<div data-role="controlgroup" data-type="horizontal">
+				<select id="acui_player"><!-- Filled by jQuery --></select>
+				<a href="#acui_game_popup" data-role="button" data-rel="popup" data-transition="slideup">Game</a>
+				<a href="#acui_hint_popup" data-role="button" data-rel="popup" data-transition="slideup">Hint</a>
+				<a href="#acui_action_popup" data-role="button" data-rel="popup" data-transition="slideup">Action</a>
+			</div>
+
+
+			<!-- Collapsible at the bottom -->
+			<div data-role="collapsible" data-mini="true">
+				<h3>Options</h3>
+				<p><label for="acui_option_autoplay">Autoplay for AI</label> <input id="acui_option_autoplay" type="checkbox" checked /></p>
+				<p><label for="acui_option_pro">Professional mode</label> <input class="AntiCrux-ui-option-refresh" id="acui_option_pro" type="checkbox" /></p>
+				<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
+				<p><label for="acui_option_level">Level</label> <input class="AntiCrux-ui-option" id="acui_option_level" type="range" value="0" min="1" max="20" data-highlight="true" /></p>
+			</div>
+
+
+			<!-- Board -->
+			<p id="acui_sect_eval">Score : <span id="acui_score">0</span>% &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span id="acui_lastmove">Last move : -</span></p>
+			<div id="acui_board"></div>
+			&nbsp;
+
+
+			<!-- Menu item for Game -->
+			<div data-role="popup" id="acui_game_popup">
+				<ul data-role="listview">
+					<li id="acui_rematch"><a href="#" data-rel="back">Rematch</a></li>
+					<li id="acui_default"><a href="#" data-rel="back">Classic game</a></li>
+					<li id="acui_fischer_current"><a href="#" data-rel="back">Same Fischer's game</a></li>
+					<li id="acui_fischer_new"><a href="#" data-rel="back">New Fischer's game</a></li>
+				</ul>
+			</div>
+
+
+			<!-- Menu item for Hint -->
+			<div data-role="popup" id="acui_hint_popup">
+				<ul data-role="listview">
+					<li id="acui_hint_soft"><a href="#" data-rel="back">Possible target positions</a></li>
+					<li id="acui_hint_hard"><a href="#" data-rel="back">Evaluation of the moves</a></li>
+					<li id="acui_hint_irma"><a href="#" data-rel="back">Prediction</a></li>
+				</ul>
+			</div>
+
+
+			<!-- Menu item for Action -->
+			<div data-role="popup" id="acui_action_popup">
+				<ul data-role="listview">
+					<li id="acui_play_human"><a href="#" data-rel="back">Play for player</a></li>
+					<li id="acui_play_ai"><a href="#" data-rel="back">Play for AI</a></li>
+					<li id="acui_undo"><a href="#" data-rel="back">Undo</a></li>
+					<li id="acui_pgn"><a href="#" data-rel="back">Export to PGN</a></li>
+					<li id="acui_about"><a href="#" data-rel="back">About</a></li>
+				</ul>
+			</div>
+
+
+			<!-- Promotions -->
+			<div id="acui_promotion" data-role="popup" data-dismissible="false" data-overlay-theme="a" data-theme="a" class="ui-corner-all">
+				<div data-role="header" data-theme="a" class="ui-corner-top">
+					<h1>Promotion of the pawn</h1>
+				</div>
+				<div role="main" class="ui-corner-bottom ui-content">
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="R" title="Rook"  >&#9814;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="N" title="Knight">&#9816;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="B" title="Bishop">&#9815;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="Q" title="Queen" >&#9813;</a>
+					<a class="AntiCrux-board-promotion" href="#" data-role="button" data-inline="true" data-rel="back" data-promotion="K" title="King"  >&#9812;</a>
+				</div>
+			</div>
+
+
+			<!-- Popup -->
+			<div id="acui_popup" data-role="popup" data-overlay-theme="a" data-theme="a" data-transition="slide" class="ui-corner-all">
+				<div data-role="header" data-theme="a" class="ui-corner-top">
+					<h1>Information</h1>
+				</div>
+				<div role="main" class="ui-corner-bottom ui-content">
+					<p id="acui_popup_text"><!-- Filled by jQuery --></p>
+					<a href="#" id="acui_popup_ok" data-role="button" data-inline="true" data-rel="back" data-theme="a">OK</a>
+				</div>
+			</div>
+
+
+			<!-- Scripts -->
+			<script type="text/javascript" src="anticrux-ui.js"></script>
+		</div>
+	</div>
+</body>
+</html>

@@ -12,6 +12,7 @@
 - [Installation](#installation)
 	- [Grab your copy](#grab-your-copy)
 	- [Web-interface](#web-interface)
+	- [Mobile](#mobile)
 	- [Node.js](#nodejs)
 	- [AntiCrux Server](#anticrux-server)
 	- [AntiCrux Engine](#anticrux-engine)
@@ -37,7 +38,7 @@
 
 AntiCrux is a library written in JavaScript which plays a single variant of chess named "AntiChess", "Suicide chess" or also "Loosing chess". You can play against the computer with :
 
-- a mobile web-interface for tablets and desktops
+- a mobile web-interface for tablets, desktops and phones
 - a remote server by using the same commands than the Free Internet Chess Server (FICS)
 - a chess engine to connect with your UCI-compatible desktop application
 
@@ -101,6 +102,13 @@ The options can be set within the tab "Options". You have a reduced set of preco
 - Champion 2 GB : deepest full set of techniques
 
 "Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will probably crash (your game will be lost).
+
+
+### Mobile
+
+The mobile version is a light-weighted version of the [web-interface](#web-interface). It is suitable for a smartphone which screen is often reduced and which performances are sometimes reduced.
+
+The options are set to the minimum and the board fits to the screen.
 
 
 ### Node.js
@@ -351,6 +359,8 @@ It is also interesting to point out that AntiCrux Level 9 is stronger than AntiC
 	- Library: new method AntiCrux.prototype.isPossibleDraw
 	- Library: new parameter for AntiCrux.prototype.isDraw
 	- Library: new method AntiCrux.prototype.getDrawReason
+	- Library: new method AntiCrux.prototype.getLevel
+	- Mobile: new UI for phones
 
 
 ### License
@@ -685,6 +695,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.getHistory()
 - AntiCrux.getHistoryHtml()
 - AntiCrux.getInitialPosition()
+- AntiCrux.getLevel()
 - AntiCrux.getMainNode()
 - AntiCrux.getMoveAI(pPlayer, pNode)
 - AntiCrux.getMovesHtml(pPlayer, pNode)

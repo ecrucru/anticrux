@@ -518,6 +518,16 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 };
 
 /**
+ * The method returns the last level of the AI set with the method *setLevel()*.
+ *
+ * @method getLevel
+ * @return {Integer} Last set level.
+ */
+AntiCrux.prototype.getLevel = function() {
+	return this._lastLevel;
+};
+
+/**
  * The method sets the current player about to play.
  *
  * @method setPlayer

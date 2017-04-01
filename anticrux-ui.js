@@ -23,48 +23,63 @@
 
 var	ai = new AntiCrux(),
 	ai_rewind = new AntiCrux(),
-	ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
+	ui_mobile, ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
 ai.options.board.symbols = true;
 ai.defaultBoard();
 
 function acui_options_load() {
-	//-- AI
-	$('#acui_option_maxdepth').val(ai.options.ai.maxDepth);
-	$('#acui_option_maxnodes').val(ai.options.ai.maxNodes);
-	$('#acui_option_minimizeliberty').prop('checked', ai.options.ai.minimizeLiberty);
-	$('#acui_option_maxreply').val(ai.options.ai.maxReply).slider('refresh');
-	$('#acui_option_nostatonforcedmove').prop('checked', ai.options.ai.noStatOnForcedMove);
-	$('#acui_option_wholenodes').prop('checked', ai.options.ai.wholeNodes);
-	$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
-	$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
-	$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
-	$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
-	$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
-	$('#acui_option_acceleratedendgame').prop('checked', ai.options.ai.acceleratedEndGame);
-	$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
+	var level;
 
-	//-- Board
-	$('#acui_option_fischer').val(ai.options.board.fischer);
+	//-- Common elements
 	$('#acui_option_rotated').prop('checked', ai.options.board.rotated);
-	$('#acui_option_symbol').prop('checked', ai.options.board.symbols);
-	$('#acui_option_coordinates').prop('checked', ai.options.board.coordinates);
-	$('#acui_option_nostatonownmove').prop('checked', ai.options.board.noStatOnOwnMove);
-	$('#acui_option_decisiontree').prop('checked', ai.options.board.decisionTree);
-	$('#acui_option_fulldecisiontree').prop('checked', ai.options.board.fullDecisionTree);
-	$('#acui_option_debugcellid').prop('checked', ai.options.board.debugCellId);
 
-	//-- Variant
-	$('#acui_option_enpassant').prop('checked', ai.options.variant.enPassant);
-	$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
-	$('#acui_option_activepawns').prop('checked', ai.options.variant.activePawns);
-	$('#acui_option_pieces').val(ai.options.variant.pieces).change();
+	//-- Mobile version
+	if (ui_mobile)
+	{
+		level = ai.getLevel();
+		if (level !== null)
+			$('#acui_option_level').val().slider('refresh');
+	}
+	else
+	//-- Desktop version
+	{
+		//- AI
+		$('#acui_option_maxdepth').val(ai.options.ai.maxDepth);
+		$('#acui_option_maxnodes').val(ai.options.ai.maxNodes);
+		$('#acui_option_minimizeliberty').prop('checked', ai.options.ai.minimizeLiberty);
+		$('#acui_option_maxreply').val(ai.options.ai.maxReply).slider('refresh');
+		$('#acui_option_nostatonforcedmove').prop('checked', ai.options.ai.noStatOnForcedMove);
+		$('#acui_option_wholenodes').prop('checked', ai.options.ai.wholeNodes);
+		$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
+		$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
+		$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
+		$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
+		$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
+		$('#acui_option_acceleratedendgame').prop('checked', ai.options.ai.acceleratedEndGame);
+		$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
+
+		//- Board
+		$('#acui_option_fischer').val(ai.options.board.fischer);
+		$('#acui_option_symbol').prop('checked', ai.options.board.symbols);
+		$('#acui_option_coordinates').prop('checked', ai.options.board.coordinates);
+		$('#acui_option_nostatonownmove').prop('checked', ai.options.board.noStatOnOwnMove);
+		$('#acui_option_decisiontree').prop('checked', ai.options.board.decisionTree);
+		$('#acui_option_fulldecisiontree').prop('checked', ai.options.board.fullDecisionTree);
+		$('#acui_option_debugcellid').prop('checked', ai.options.board.debugCellId);
+
+		//- Variant
+		$('#acui_option_enpassant').prop('checked', ai.options.variant.enPassant);
+		$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
+		$('#acui_option_activepawns').prop('checked', ai.options.variant.activePawns);
+		$('#acui_option_pieces').val(ai.options.variant.pieces).change();
+	}
 }
 
 function acui_reset_ui(pResetPlayer) {
 	ui_rewind = false;
 	$('#acui_tab_board_header').trigger('click');
 	$('#acui_valuation').val(0).slider('refresh');
-	$('#acui_lastmove, #acui_nodes, #acui_depth, #acui_moves, #acui_history, #acui_dtree').html('');
+	$('#acui_lastmove, #acui_score, #acui_nodes, #acui_depth, #acui_moves, #acui_history, #acui_dtree').html('');
 	$('#acui_sect_rewind').hide();
 	$('#acui_pgn').addClass('ui-disabled');
 	ai.resetStats();
@@ -149,6 +164,7 @@ function acui_refresh_board() {
 function acui_refresh_moves() {
 	var val, player = parseInt($('#acui_player').val());
 	$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore().valuationSolverPC).slider('refresh');
+	$('#acui_score').html($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore().valuationSolverPC);
 	val = ai.getNumNodes();
 	$('#acui_nodes').html((val === 0 ? '' : 'Nodes : '+val));
 	val = ai.getReachedDepth();
@@ -292,8 +308,41 @@ function acui_popup(pMessage) {
 				}, 750);
 }
 
+function acui_fitBoard() {
+	//-- Determines the best size
+	var w = Math.floor((screen.width * 0.85) / 8);
+
+	//-- Applies the generated CSS
+	if ((w < 50) && ui_mobile)
+	{
+		$('<style>')
+			.prop('type', 'text/css')
+			.html(	'.AntiCrux-board                        { height:'+(20+8*w)+'px; width:'+(20+8*w)+'px; }' +
+					'.AntiCrux-board-coordinates-vertical   { line-height:'+w+'px;             }' +
+					'.AntiCrux-board-coordinates-horizontal { width:'+w+'px;                   }' +
+					'.AntiCrux-board-cell-0                 { width:'+w+'px; height:'+w+'px;   }' +
+					'.AntiCrux-board-cell-1                 { width:'+w+'px; height:'+w+'px;   }' +
+					'.AntiCrux-board-cell-hl                { width:'+w+'px; height:'+w+'px;   }' +
+					'.AntiCrux-board-piece-11               { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-12               { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-13               { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-14               { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-15               { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-16               { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece--11              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece--12              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece--13              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece--14              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece--15              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece--16              { background-size:'+w+'px '+w+'px; }'
+				)
+			.appendTo('head');
+	}
+}
+
 $(document).ready(function() {
 	//-- Initialization
+	ui_mobile = $('#acui_isMobile').length;
 	ui_move = '';
 	ui_move_pending = ai.constants.move.none;
 	ui_possibledraw = false;
@@ -301,10 +350,13 @@ $(document).ready(function() {
 	ui_rematch = ai.constants.owner.white;
 	acui_refresh_board();
 
+	//-- Dynamic content
+	acui_fitBoard();
+
 	//-- Updates the list of players
 	$('#acui_player').find('option').remove().end();
-	$('<option/>').val(ai.constants.owner.white).html('White to play').appendTo('#acui_player');
-	$('<option/>').val(ai.constants.owner.black).html('Black to play').appendTo('#acui_player');
+	$('<option/>').val(ai.constants.owner.white).html('White'+(ui_mobile?'':' to play')).appendTo('#acui_player');
+	$('<option/>').val(ai.constants.owner.black).html('Black'+(ui_mobile?'':' to play')).appendTo('#acui_player');
 	$('#acui_player').val(ai.constants.owner.white).change();
 
 	//-- Events (General)
@@ -393,7 +445,7 @@ $(document).ready(function() {
 		return true;
 	});
 
-	$('#acui_play_hint_soft').click(function() {
+	$('#acui_hint_soft').click(function() {
 		//-- Checks the current mode
 		if (ui_rewind)
 			return false;
@@ -405,7 +457,7 @@ $(document).ready(function() {
 		return true;
 	});
 
-	$('#acui_play_hint_hard').click(function() {
+	$('#acui_hint_hard').click(function() {
 		//-- Checks the current mode
 		if (ui_rewind)
 			return false;
@@ -420,7 +472,7 @@ $(document).ready(function() {
 		return true;
 	});
 
-	$('#acui_play_hint_irma').click(function() {
+	$('#acui_hint_irma').click(function() {
 		//-- Checks the current mode
 		if (ui_rewind)
 			return false;
@@ -430,7 +482,7 @@ $(document).ready(function() {
 		return true;
 	});
 
-	$('#acui_play_undo').click(function() {
+	$('#acui_undo').click(function() {
 		//-- Checks the current mode
 		if (acui_isRewind())
 			return false;
@@ -439,6 +491,8 @@ $(document).ready(function() {
 		var hist;
 		if (ai.undoMove())
 		{
+			if ($('#acui_option_autoplay').prop('checked') && (ai.getHistory().length > 0))
+				ai.undoMove();
 			ui_move = '';
 			ui_possibledraw = false;
 			acui_reset_ui(false);
@@ -634,6 +688,11 @@ $(document).ready(function() {
 		return true;
 	});
 
+	$('#acui_about').click(function() {
+		window.location = 'https://github.com/ecrucru/anticrux/';
+		return true;
+	});
+
 	//-- Events (Options)
 	$('#acui_option_predef').change(function() {
 		var i, d;
@@ -684,41 +743,57 @@ $(document).ready(function() {
 	});
 
 	$('.AntiCrux-ui-option').change(function() {
-		//-- AI
-		ai.options.ai.maxDepth				= parseInt($('#acui_option_maxdepth').val());
-		ai.options.ai.maxNodes				= parseInt($('#acui_option_maxnodes').val());
-		ai.options.ai.minimizeLiberty		= $('#acui_option_minimizeliberty').prop('checked');
-		ai.options.ai.maxReply				= parseInt($('#acui_option_maxreply').val());
-		ai.options.ai.noStatOnForcedMove	= $('#acui_option_nostatonforcedmove').prop('checked');
-		ai.options.ai.wholeNodes			= $('#acui_option_wholenodes').prop('checked');
-		ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
-		ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
-		ai.options.ai.bestStaticScore		= $('#acui_option_beststaticscore').prop('checked');
-		ai.options.ai.opportunistic			= $('#acui_option_opportunistic').prop('checked');
-		ai.options.ai.handicap				= parseInt($('#acui_option_handicap').val());
-		ai.options.ai.acceleratedEndGame	= $('#acui_option_acceleratedendgame').prop('checked');
-		ai.options.ai.oyster				= $('#acui_option_oyster').prop('checked');
+		//-- Common elements
+		ai.options.board.rotated = $('#acui_option_rotated').prop('checked');
 
-		//-- Board
-		ai.options.board.fischer			= parseInt($('#acui_option_fischer').val());
-		ai.options.board.rotated			= $('#acui_option_rotated').prop('checked');
-		ai.options.board.symbols			= $('#acui_option_symbol').prop('checked');
-		ai.options.board.coordinates		= $('#acui_option_coordinates').prop('checked');
-		ai.options.board.noStatOnOwnMove	= $('#acui_option_nostatonownmove').prop('checked');
-		ai.options.board.decisionTree		= $('#acui_option_decisiontree').prop('checked');
-		ai.options.board.fullDecisionTree	= $('#acui_option_fulldecisiontree').prop('checked');
-		ai.options.board.debugCellId		= $('#acui_option_debugcellid').prop('checked');
+		//-- Mobile version
+		if (ui_mobile)
+		{
+			ai.setLevel(parseInt($('#acui_option_level').val()));
+			ai.options.ai.noStatOnForcedMove = true;
+		}
+		else
+		//-- Desktop version
+		{
+			//- AI
+			ai.options.ai.maxDepth				= parseInt($('#acui_option_maxdepth').val());
+			ai.options.ai.maxNodes				= parseInt($('#acui_option_maxnodes').val());
+			ai.options.ai.minimizeLiberty		= $('#acui_option_minimizeliberty').prop('checked');
+			ai.options.ai.maxReply				= parseInt($('#acui_option_maxreply').val());
+			ai.options.ai.noStatOnForcedMove	= $('#acui_option_nostatonforcedmove').prop('checked');
+			ai.options.ai.wholeNodes			= $('#acui_option_wholenodes').prop('checked');
+			ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
+			ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
+			ai.options.ai.bestStaticScore		= $('#acui_option_beststaticscore').prop('checked');
+			ai.options.ai.opportunistic			= $('#acui_option_opportunistic').prop('checked');
+			ai.options.ai.handicap				= parseInt($('#acui_option_handicap').val());
+			ai.options.ai.acceleratedEndGame	= $('#acui_option_acceleratedendgame').prop('checked');
+			ai.options.ai.oyster				= $('#acui_option_oyster').prop('checked');
 
-		//-- Variant
-		ai.options.variant.enPassant		= $('#acui_option_enpassant').prop('checked');
-		ai.options.variant.promoteQueen		= $('#acui_option_promotequeen').prop('checked');
-		ai.options.variant.activePawns		= $('#acui_option_activepawns').prop('checked');
-		ai.options.variant.pieces			= parseInt($('#acui_option_pieces').val());
+			//- Board
+			ai.options.board.fischer			= parseInt($('#acui_option_fischer').val());
+			ai.options.board.symbols			= $('#acui_option_symbol').prop('checked');
+			ai.options.board.coordinates		= $('#acui_option_coordinates').prop('checked');
+			ai.options.board.noStatOnOwnMove	= $('#acui_option_nostatonownmove').prop('checked');
+			ai.options.board.decisionTree		= $('#acui_option_decisiontree').prop('checked');
+			ai.options.board.fullDecisionTree	= $('#acui_option_fulldecisiontree').prop('checked');
+			ai.options.board.debugCellId		= $('#acui_option_debugcellid').prop('checked');
+
+			//- Variant
+			ai.options.variant.enPassant		= $('#acui_option_enpassant').prop('checked');
+			ai.options.variant.promoteQueen		= $('#acui_option_promotequeen').prop('checked');
+			ai.options.variant.activePawns		= $('#acui_option_activepawns').prop('checked');
+			ai.options.variant.pieces			= parseInt($('#acui_option_pieces').val());
+		}
 		return true;
 	});
 
 	$('.AntiCrux-ui-option-refresh').change(function() {
 		acui_refresh_board();
+		if ($('#acui_option_pro').prop('checked'))
+			$('#acui_sect_eval').hide();
+		else
+			$('#acui_sect_eval').show();
 		return true;
 	});
 
