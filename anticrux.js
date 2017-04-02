@@ -521,7 +521,7 @@ AntiCrux.prototype.setLevel = function(pLevel) {
  * The method returns the last level of the AI set with the method *setLevel()*.
  *
  * @method getLevel
- * @return {Integer} Last set level.
+ * @return {Integer} Last set level, equal to null if never changed.
  */
 AntiCrux.prototype.getLevel = function() {
 	return this._lastLevel;
@@ -1081,7 +1081,7 @@ AntiCrux.prototype.undoMove = function() {
 /**
  * The method returns the number of explored nodes.
  *
- * @method undoMove
+ * @method getNumNodes
  * @return {Integer} Number of explored nodes.
  */
 AntiCrux.prototype.getNumNodes = function() {
@@ -1933,7 +1933,7 @@ AntiCrux.prototype.toFen = function(pNode) {
  * The method renders the board in plain text. You need a chess font to see the result
  * and some of them may be <a href="http://www.enpassant.dk/chess/fonteng.htm">found here</a>.
  *
- * @method toFen
+ * @method toText
  * @param {Object} pNode (Optional) Reference node.
  * @return {String} FEN string.
  */
