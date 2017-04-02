@@ -40,12 +40,12 @@
 </head>
 <body>
 	<!-- Content -->
-	<div data-role="page">
+	<div id="acui_page" data-role="page" data-theme="a">
 		<div data-role="header">
 			<h1>AntiCrux <span id="acui_version"></span></h1>
 		</div>
 
-		<div data-role="content" id="acui_isMobile">
+		<div data-role="content" id="acui_ismobile">
 
 			<div id="acui_js" class="AntiCrux-notice">&#x26a0; JavaScript must be enabled to allow the website to be loaded correctly.</div>
 
@@ -62,6 +62,7 @@
 				<h3>Options</h3>
 				<p><label for="acui_option_autoplay">Autoplay for AI</label> <input id="acui_option_autoplay" type="checkbox" checked /></p>
 				<p><label for="acui_option_pro">Professional mode</label> <input class="AntiCrux-ui-option-refresh" id="acui_option_pro" type="checkbox" /></p>
+				<p><label for="acui_option_darktheme">Dark theme</label> <input class="AntiCrux-ui-option" id="acui_option_darktheme" type="checkbox" /></p>
 				<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
 				<p><label for="acui_option_level">Level</label> <input class="AntiCrux-ui-option" id="acui_option_level" type="range" value="0" min="1" max="20" data-highlight="true" /></p>
 			</div>
@@ -100,15 +101,15 @@
 					<li id="acui_play_human"><a href="#" data-rel="back">Play for player</a></li>
 					<li id="acui_play_ai"><a href="#" data-rel="back">Play for AI</a></li>
 					<li id="acui_undo"><a href="#" data-rel="back">Undo</a></li>
-					<li id="acui_pgn"><a href="#" data-rel="back">Export to PGN</a></li>
+					<li id="acui_pgn"><a class="ui-disabled" href="#" data-rel="back">Export to PGN</a></li>
 					<li id="acui_about"><a href="#" data-rel="back">About</a></li>
 				</ul>
 			</div>
 
 
 			<!-- Promotions -->
-			<div id="acui_promotion" data-role="popup" data-dismissible="false" data-overlay-theme="a" data-theme="a" class="ui-corner-all">
-				<div data-role="header" data-theme="a" class="ui-corner-top">
+			<div id="acui_promotion" data-role="popup" data-dismissible="false" class="ui-corner-all">
+				<div data-role="header" class="ui-corner-top">
 					<h1>Promotion of the pawn</h1>
 				</div>
 				<div role="main" class="ui-corner-bottom ui-content">
@@ -122,13 +123,13 @@
 
 
 			<!-- Popup -->
-			<div id="acui_popup" data-role="popup" data-overlay-theme="a" data-theme="a" data-transition="slide" class="ui-corner-all">
-				<div data-role="header" data-theme="a" class="ui-corner-top">
+			<div id="acui_popup" data-role="popup" data-transition="slide" class="ui-corner-all">
+				<div data-role="header" class="ui-corner-top">
 					<h1>Information</h1>
 				</div>
 				<div role="main" class="ui-corner-bottom ui-content">
 					<p id="acui_popup_text"><!-- Filled by jQuery --></p>
-					<a href="#" id="acui_popup_ok" data-role="button" data-inline="true" data-rel="back" data-theme="a">OK</a>
+					<a href="#" id="acui_popup_ok" data-role="button" data-inline="true" data-rel="back">OK</a>
 				</div>
 			</div>
 

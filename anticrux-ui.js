@@ -24,6 +24,8 @@
 var	ai = new AntiCrux(),
 	ai_rewind = new AntiCrux(),
 	ui_mobile, ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
+
+ai.options.ai.noStatOnForcedMove = true;
 ai.options.board.symbols = true;
 ai.defaultBoard();
 
@@ -31,6 +33,7 @@ function acui_options_load() {
 	var level;
 
 	//-- Common elements
+	$('#acui_option_darktheme').prop('checked', ai.options.board.darkTheme);
 	$('#acui_option_rotated').prop('checked', ai.options.board.rotated);
 
 	//-- Mobile version
@@ -342,7 +345,7 @@ function acui_fitBoard() {
 
 $(document).ready(function() {
 	//-- Initialization
-	ui_mobile = $('#acui_isMobile').length;
+	ui_mobile = ($('#acui_ismobile').length > 0);
 	ui_move = '';
 	ui_move_pending = ai.constants.move.none;
 	ui_possibledraw = false;
@@ -689,7 +692,9 @@ $(document).ready(function() {
 	});
 
 	$('#acui_about').click(function() {
-		window.location = 'https://github.com/ecrucru/anticrux/';
+		setTimeout(function() {
+				window.location = 'https://github.com/ecrucru/anticrux/';
+			}, 1000);
 		return true;
 	});
 
@@ -744,6 +749,7 @@ $(document).ready(function() {
 
 	$('.AntiCrux-ui-option').change(function() {
 		//-- Common elements
+		ai.options.board.darkTheme = $('#acui_option_darktheme').prop('checked');
 		ai.options.board.rotated = $('#acui_option_rotated').prop('checked');
 
 		//-- Mobile version
@@ -795,6 +801,12 @@ $(document).ready(function() {
 		else
 			$('#acui_sect_eval').show();
 		return true;
+	});
+
+	$('#acui_option_darktheme').change(function() {
+		$('#acui_page').removeClass('ui-page-theme-a ui-page-theme-b').addClass('ui-page-theme-' + (ai.options.board.darkTheme?'b':'a'));
+		$('#acui_rewind').removeClass('ui-btn-a ui-btn-b').addClass('ui-btn-' + (ai.options.board.darkTheme?'a':'b'));
+		$('#acui_lastmove').html('');
 	});
 
 	//-- Default elements

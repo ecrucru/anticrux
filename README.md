@@ -525,6 +525,10 @@ Mechanically, it deactivates the other options based on the decision tree.
 
 #### For the board
 
+- **AntiCrux.options.board.darkTheme**
+
+The pieces in Unicode are color-dependent and must be rendered independently from the theme used for the user interface. If your interface is dark, the black pieces are normally rendered in white. So this option cancels this effect.
+
 - **AntiCrux.options.board.rotated**
 
 When you play Black, the board must be rotated at 180°.

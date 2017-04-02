@@ -40,7 +40,7 @@
 </head>
 <body>
 	<!-- Content -->
-	<div data-role="page">
+	<div id="acui_page" data-role="page">
 		<div data-role="header">
 			<h1>AntiCrux - AI for AntiChess</h1>
 		</div>
@@ -99,7 +99,7 @@
 								</div>
 
 								<div id="acui_tab_board_history" class="ui-body-d ui-content">
-									<div id="acui_sect_rewind"><a id="acui_rewind" href="#" data-role="button" data-theme="b">Leave the review</a></div>
+									<div id="acui_sect_rewind"><a id="acui_rewind" href="#" data-role="button">Leave the review</a></div>
 									<div id="acui_history_scrollbox">
 										<div id="acui_history"></div>
 									</div>
@@ -196,6 +196,7 @@
 							<h2>Board</h2>
 							<p><label for="acui_option_fischer">Fischer :</label> <input class="AntiCrux-ui-option" id="acui_option_fischer" type="number" min="1" max="960" value="519" title="519 is classical. Double-click to generate a new number" /></p>
 							<p><label for="acui_option_pro">Professional mode</label> <input class="AntiCrux-ui-option-refresh" id="acui_option_pro" type="checkbox" /></p>
+							<p><label for="acui_option_darktheme">Dark theme</label> <input class="AntiCrux-ui-option" id="acui_option_darktheme" type="checkbox" /></p>
 							<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
 							<p><label for="acui_option_symbol">Symbols for the pieces</label> <input class="AntiCrux-ui-option" id="acui_option_symbol" type="checkbox" /></p>
 							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_coordinates" type="checkbox" /></p>
@@ -247,8 +248,8 @@
 
 
 			<!-- Promotions -->
-			<div id="acui_promotion" data-role="popup" data-dismissible="false" data-overlay-theme="a" data-theme="a" class="ui-corner-all">
-				<div data-role="header" data-theme="a" class="ui-corner-top">
+			<div id="acui_promotion" data-role="popup" data-dismissible="false" class="ui-corner-all">
+				<div data-role="header" class="ui-corner-top">
 					<h1>Promotion of the pawn</h1>
 				</div>
 				<div role="main" class="ui-corner-bottom ui-content">
@@ -262,13 +263,13 @@
 
 
 			<!-- Popup -->
-			<div id="acui_popup" data-role="popup" data-overlay-theme="a" data-theme="a" data-transition="slide" class="ui-corner-all">
-				<div data-role="header" data-theme="a" class="ui-corner-top">
+			<div id="acui_popup" data-role="popup" data-transition="slide" class="ui-corner-all">
+				<div data-role="header" class="ui-corner-top">
 					<h1>Information</h1>
 				</div>
 				<div role="main" class="ui-corner-bottom ui-content">
 					<p id="acui_popup_text"><!-- Filled by jQuery --></p>
-					<a href="#" id="acui_popup_ok" data-role="button" data-inline="true" data-rel="back" data-theme="a">OK</a>
+					<a href="#" id="acui_popup_ok" data-role="button" data-inline="true" data-rel="back">OK</a>
 				</div>
 			</div>
 

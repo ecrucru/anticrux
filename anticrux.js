@@ -1168,7 +1168,8 @@ AntiCrux.prototype.getPieceSymbol = function(pPiece, pPlayer, pSymbol) {
 		return (pPiece == this.constants.piece.pawn ? '' : this.constants.piece.mapping_rev[pPiece].toUpperCase());
 	else
 	{
-		if (pPlayer == this.constants.owner.white)
+		if (((pPlayer == this.constants.owner.white) && !this.options.board.darkTheme) ||
+			((pPlayer == this.constants.owner.black) &&  this.options.board.darkTheme))
 		{
 			switch (pPiece)
 			{
@@ -2329,6 +2330,7 @@ AntiCrux.prototype._init = function() {
 			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
 		},
 		board : {
+			darkTheme : false,							//A dark theme may be rendered in reverse video, so it impacts the real colors of the displayed pieces in Unicode
 			rotated : false,							//TRUE rotates the board at 180°
 			symbols : false,							//Symbols in Unicode for the display
 			fischer : this.getNewFischerId(),			//Default layout (519=classical)
@@ -2382,6 +2384,7 @@ AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
 AntiCrux.prototype._initHelper = function() {
 	if (this._helper === null)
 		this._helper = new AntiCrux();
+	this._helper.options.board.darkTheme = this.options.board.darkTheme;
 };
 
 AntiCrux.prototype._initFischer = function() {
