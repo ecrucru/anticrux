@@ -362,6 +362,7 @@ It is also interesting to point out that AntiCrux Level 9 is stronger than AntiC
 	- Library: new method AntiCrux.prototype.getLevel
 	- Mobile: new UI for phones
 	- Library: new weights for the valuation
+	- UI: favicon
 
 
 ### License
