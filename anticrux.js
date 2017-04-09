@@ -1939,8 +1939,6 @@ AntiCrux.prototype.toFen = function(pNode) {
  * @return {String} FEN string.
  */
 AntiCrux.prototype.toText = function(pNode) {
-	// Use one of the fonts "Chess" available at www.dafont.com
-
 	var x, y, rotated, i, b, car, buffer, owner;
 
 	//-- Self
@@ -2326,7 +2324,6 @@ AntiCrux.prototype._init = function() {
 		variant : {
 			enPassant : true,							//TRUE activates the move "en passant" (some AI doesn't manage IT)
 			promoteQueen : false,						//TRUE only promotes pawns as queen
-			activePawns : false,						//TRUE makes the pawns stronger for the valuation once they are moved, and are consequently less mobile
 			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
 		},
 		board : {
@@ -2342,14 +2339,16 @@ AntiCrux.prototype._init = function() {
 			debugCellId : false							//TRUE display the internal identifier of every cell of the board when there is no piece on it
 		}
 	};
-	this.options.ai.valuation[ this.constants.piece.none  ] =   0;
-	this.options.ai.valuation[ this.constants.piece.pawn  ] = 100;
-	this.options.ai.valuation[-this.constants.piece.pawn  ] = 180;	//A pawn is more active when it is released
-	this.options.ai.valuation[ this.constants.piece.rook  ] = 500;
-	this.options.ai.valuation[ this.constants.piece.knight] = 300;
-	this.options.ai.valuation[ this.constants.piece.bishop] = 300;
-	this.options.ai.valuation[ this.constants.piece.queen ] = 900;
-	this.options.ai.valuation[ this.constants.piece.king  ] = 250;
+
+	//-- Valuations
+	//Documentation : http://www.ke.tu-darmstadt.de/publications/papers/ICGA-ChessVariants.pdf
+	this.options.ai.valuation[this.constants.piece.none  ] =   0;
+	this.options.ai.valuation[this.constants.piece.pawn  ] = 240;
+	this.options.ai.valuation[this.constants.piece.rook  ] = 500;
+	this.options.ai.valuation[this.constants.piece.knight] = 320;
+	this.options.ai.valuation[this.constants.piece.bishop] = 440;
+	this.options.ai.valuation[this.constants.piece.queen ] = 480;
+	this.options.ai.valuation[this.constants.piece.king  ] = 300;
 
 	//-- General variables
 	this._helper = null;								//You can't refer to that variable without calling first _initHelper()
@@ -2809,15 +2808,7 @@ AntiCrux.prototype._ai_nodeValuate = function(pNode) {
 	for (i=0 ; i<64 ; i++)
 	{
 		//- Determines the value of the piece
-		if	(	this.options.variant.activePawns &&
-				(pNode.piece[i] == this.constants.piece.pawn) &&
-				(	((pNode.owner[i] == this.constants.owner.black) && (Math.floor(i/8) != 1)) ||
-					((pNode.owner[i] == this.constants.owner.white) && (Math.floor(i/8) != 6))
-				)
-		)
-			val = this.options.ai.valuation[-pNode.piece[i]];
-		else
-			val = this.options.ai.valuation[pNode.piece[i]];
+		val = this.options.ai.valuation[pNode.piece[i]];
 
 		//- Assigns the value to the right player
 		switch (pNode.owner[i])

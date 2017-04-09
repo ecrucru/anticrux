@@ -73,7 +73,6 @@ function acui_options_load() {
 		//- Variant
 		$('#acui_option_enpassant').prop('checked', ai.options.variant.enPassant);
 		$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
-		$('#acui_option_activepawns').prop('checked', ai.options.variant.activePawns);
 		$('#acui_option_pieces').val(ai.options.variant.pieces).change();
 	}
 }
@@ -788,7 +787,6 @@ $(document).ready(function() {
 			//- Variant
 			ai.options.variant.enPassant		= $('#acui_option_enpassant').prop('checked');
 			ai.options.variant.promoteQueen		= $('#acui_option_promotequeen').prop('checked');
-			ai.options.variant.activePawns		= $('#acui_option_activepawns').prop('checked');
 			ai.options.variant.pieces			= parseInt($('#acui_option_pieces').val());
 		}
 		return true;

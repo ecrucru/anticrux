@@ -361,6 +361,7 @@ It is also interesting to point out that AntiCrux Level 9 is stronger than AntiC
 	- Library: new method AntiCrux.prototype.getDrawReason
 	- Library: new method AntiCrux.prototype.getLevel
 	- Mobile: new UI for phones
+	- Library: new weights for the valuation
 
 
 ### License
@@ -426,8 +427,6 @@ The maximal depth is the number of half-moves which can be explored. The value i
 The value can be increased drastically if you enable *minimizeLiberty*. But the game will always play the forced moves even if it is not the best move. This is especially true at the beginning of the game.
 
 If you don't want that, you should reach the maximal depth dynamically at any moment. So you can set the maximal depth to 99, define a maximal number of nodes relevant with the size of your memory (*maxNodes*) and ask to reach this limit all the time (*wholeNodes*).
-
-If you play at depth 1, it is advised to deactivate AntiCrux.options.variant.activePawns because the pawns are stronger once they moved.
 
 - **AntiCrux.options.ai.maxNodes**
 
@@ -591,12 +590,6 @@ Some engines don't accept the rule "[en passant](https://en.wikipedia.org/wiki/E
 - **AntiCrux.options.variant.promoteQueen**
 
 With this option, you immediately promote paws as queen. You cannot choose for another piece.
-
-- **AntiCrux.options.variant.activePawns**
-
-The option gives the pawn a higher static valuation when it has left its initial position.
-
-The impact is on the valuation, not on the performances.
 
 - **AntiCrux.options.variant.pieces**
 
