@@ -312,7 +312,7 @@ function acui_popup(pMessage) {
 
 function acui_fitBoard() {
 	//-- Determines the best size
-	var w = Math.floor((screen.width * 0.85) / 8);
+	var w = Math.floor(Math.min(screen.width, screen.height) * 0.85 / 8);
 
 	//-- Applies the generated CSS
 	if ((w < 50) && ui_mobile)
@@ -342,6 +342,10 @@ function acui_fitBoard() {
 	}
 }
 
+function acui_isphone() {
+	return (Math.min(screen.width, screen.height) < 768);
+}
+
 $(document).ready(function() {
 	//-- Initialization
 	ui_mobile = ($('#acui_ismobile').length > 0);
@@ -365,6 +369,14 @@ $(document).ready(function() {
 	$("input[type='text']").on('click', function () {
 		$(this).select();
 		return true;
+	});
+
+	//-- Title bar
+	$('#acui_switch_ui').click(function() {
+		if (ui_mobile)
+			window.location = 'index.html';
+		else
+			window.location = 'mobile.html';
 	});
 
 	//-- Events (Board)
@@ -803,12 +815,14 @@ $(document).ready(function() {
 
 	$('#acui_option_darktheme').change(function() {
 		$('#acui_page').removeClass('ui-page-theme-a ui-page-theme-b').addClass('ui-page-theme-' + (ai.options.board.darkTheme?'b':'a'));
-		$('#acui_rewind').removeClass('ui-btn-a ui-btn-b').addClass('ui-btn-' + (ai.options.board.darkTheme?'a':'b'));
+		$('#acui_rewind, #acui_switch_ui').removeClass('ui-btn-a ui-btn-b').addClass('ui-btn-' + (ai.options.board.darkTheme?'a':'b'));
 		$('#acui_lastmove').html('');
 	});
 
 	//-- Default elements
 	$('#acui_js, #acui_sect_rewind').hide();
+	if ((ui_mobile && acui_isphone()) || (!ui_mobile && !acui_isphone()))
+		$('#acui_switch_ui').hide();
 	$('#acui_option_predef').val(5).change();
 	$('#acui_version').html(ai.options.ai.version);
 	$(document).on('selectstart', false);				//No text selection to avoid moving the pieces on the screen (not supported)

@@ -372,6 +372,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Mobile: new UI for phones
 	- Library: new weights for the valuation
 	- UI: favicon
+	- UI/Mobile: switch view depending on the connected device
 
 
 ### License
