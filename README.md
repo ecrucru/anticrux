@@ -11,6 +11,8 @@
 - [Presentation](#presentation)
 - [Installation](#installation)
 	- [Grab your copy](#grab-your-copy)
+		- [Stable](#stable)
+		- [Work in progress](#work-in-progress)
 	- [Web-interface](#web-interface)
 	- [Mobile](#mobile)
 	- [Node.js](#nodejs)
@@ -42,7 +44,7 @@ AntiCrux is a library written in JavaScript which plays a single variant of ches
 - a remote server by using the same commands than the Free Internet Chess Server (FICS)
 - a chess engine to connect with your UCI-compatible desktop application
 
-For technical reasons inherited from JavaScript and its design, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *(normal)[#anticrux-helo-world]* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills with fun.
+For technical reasons inherited from JavaScript and its design, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *[normal](#anticrux-helo-world)* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills with fun.
 
 About the variant AntiChess, the objective consists in losing all your own pieces or reaching a stalemate. For that, you will probably have to force the moves. The rules are very simple :
 
@@ -65,24 +67,29 @@ AntiCrux is delivered via [Github](https://github.com/ecrucru/anticrux/) and [NP
 
 ### Grab your copy
 
-You can download a stable release as a ZIP file from the public releases :
+#### Stable
+
+The stable releases are displayed on Github :
 
 - [https://github.com/ecrucru/anticrux/releases](https://github.com/ecrucru/anticrux/releases)
 
-You can download a work in progress as a ZIP file which includes new and unstable functionalities :
-
-- [https://github.com/ecrucru/anticrux/archive/dev.zip](https://github.com/ecrucru/anticrux/archive/dev.zip)
-
-You can replicate the repository if you own Git :
-
-```bash
-git clone https://github.com/ecrucru/anticrux.git
-```
-
-The stable release is available through the NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" :
+The NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" is equivalent :
 
 ```bash
 npm install anticrux
+```
+
+#### Work in progress
+
+You generally have 2 branches which can be downloaded as an archive :
+
+- Master : [https://github.com/ecrucru/anticrux/archive/master.zip](https://github.com/ecrucru/anticrux/archive/master.zip)
+- Dev (if available) : [https://github.com/ecrucru/anticrux/archive/dev.zip](https://github.com/ecrucru/anticrux/archive/dev.zip)
+
+You can also replicate the repository if you own Git :
+
+```bash
+git clone https://github.com/ecrucru/anticrux.git
 ```
 
 
@@ -113,7 +120,7 @@ The options are set to the minimum and the board fits to the screen.
 
 ### Node.js
 
-To use the different modules of AntiCrux out of a web-browser, you need to install [Node.js](https://nodejs.org). With a packet manager under Linux, you can type :
+To use the different modules of AntiCrux out of a web-browser, you must install [Node.js](https://nodejs.org). With a packet manager under Linux, you can type :
 
 ```bash
 apt-get install nodejs nodejs-legacy
@@ -127,8 +134,8 @@ npm install -g uglify-js jshint yuidocjs
 
 AntiCrux can be built locally with two scripts :
 
-- "build_min.bat" (Windows) or "build_min.sh" (Linux) creates the minimized version of the library for the HTML user interface
-- "build_nodejs.bat"(Windows) or "build_nodejs.sh" (Linux) copies the right files into the sub-directory "node_modules"
+- "build_min.bat" (Windows) or "build_min.sh" (Linux) creates the minimized version of the library (if needed by the HTML user interface)
+- "build_nodejs.bat" (Windows) or "build_nodejs.sh" (Linux) copies the right files into the sub-directory "node_modules"
 
 To test if your installation is working, you can run the following test :
 
@@ -143,7 +150,7 @@ Remark : if you don't install the package "nodejs-legacy", replace the command "
 
 You need first to install [Node.js](#nodejs).
 
-To access the engine remotely, you can execute AntiCrux as a chess server. By default, it listens to local connections on the port 5000 and you can't create more than one instance on the same port.
+To access the engine remotely over a network, you can execute AntiCrux as a chess server. By default, it listens to local connections on the port 5000 and you can't create more than one instance on the same port.
 
 Start the server by double-clicking on the script "run_server.bat" (Windows) or "run_server.sh" (Linux).
 
@@ -235,12 +242,14 @@ You can now play from the menu "Game > New game > Suicide chess". If the engine 
   ],
 ```
 
+This procedure is expected to change with the upcoming release of pyChess 0.12.5.
+
 
 ## AntiCrux hELO world
 
 This tool generates a [PGN file](https://en.wikipedia.org/wiki/Portable_Game_Notation) to estimate the level of AntiCrux in regard of other UCI-compatible chess engines. For now, only AntiCrux and the special Stockfish-based engine developed by @ddugovic and compiled by @niklasf are considered because they are related to JavaScript.
 
-To get reliable games, the processing will take hours (or days !). To accelerate the generation, you may launch in parallel with the script "run_elo.*" as many processes as your computer has CPU.
+To get reliable games, the processing will take hours (or days !). To accelerate the generation, you may launch in parallel with the scripts "run_elo.bat" (Windows) or "run_elo.sh" (Linux) as many processes as your computer has CPU.
 
 The script has 3 main changeable parameters :
 
@@ -291,7 +300,7 @@ ResultSet>x
 
 The ELO is shown relatively to an offset equal to 0 by default. If the offset is equal to 1500, you add that offset to the displayed ELO to get the estimation. However, if we assume that the lowest level is 900 ELO, the offset becomes 1683. So depending on the considered offset, the rank of AntiCrux may vary from 1650 to 1850.
 
-It is also interesting to point out that AntiCrux Level 9 is stronger than AntiCrux Level 15. This is due to the implemented tactical rules which don't rely "linearly" on the depth and the time to get a competitive advantage.
+It is also interesting to point out that the ELO rating of AntiCrux is not "proportional" to the chosen level. This is due to the implemented tactical rules which don't rely on the depth and the time to get a competitive advantage.
 
 
 ## Information
@@ -409,7 +418,7 @@ Playing one piece is an *half-move* generating a new position called *node*. Thi
 
 The positions are valuated from the bottom. Then by rules of aggregation, the upper levels are weighted based on the number of moves, the strength of the remaining pieces, etc... Once the top level is reached, AntiCrux can pick the move with the best score. It is your job to beat the AI !
 
-The algorithm adopts some randomness to never play the same game. With the level "Champion", the randomness is rather reduced.
+The algorithm adopts some randomness to never play the same game. With high levels, the randomness is rather reduced.
 
 
 ### Options
@@ -680,7 +689,7 @@ node = {
 };
 ```
 
-A node is enriched with attributes when you call the API below. Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application.
+A node is enriched with attributes when you call the API below. Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application, unless you know exactly what you are doing.
 
 - AntiCrux.callbackExploration(pMaxDepth, pDepth, pNodes)
 - AntiCrux.clearBoard()
@@ -738,9 +747,9 @@ A node is enriched with attributes when you call the API below. Any field or met
 
 The parameter *pNode* is generally optional. When you omit it, the internal root node is automatically picked.
 
-Your instance is AntiCrux and embeds by default a "root" node representing the current board. The same instance will apply on any node provided in the argument. Consequently : a node is minimalist and an instance of AntiCrux is unique.
+Your instance is AntiCrux and embeds by default a "root node" representing the current board. The same instance will apply on any node provided in the argument. Consequently : a node is minimalist and an instance of AntiCrux is unique.
 
-To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a webbrowser by using YuiDoc. Run the script "run_yuidoc_server.*" then access to [http://localhost:3000](http://localhost:3000).
+To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script "run_yuidoc_server.bat" (Windows) or "run_yuidoc_server.sh" (Linux), then access to [http://localhost:3000](http://localhost:3000).
 
 
 ### Valuation
