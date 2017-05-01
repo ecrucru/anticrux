@@ -13,8 +13,9 @@
 	- [Grab your copy](#grab-your-copy)
 		- [Stable](#stable)
 		- [Work in progress](#work-in-progress)
-	- [Web-interface](#web-interface)
-	- [Mobile](#mobile)
+	- [Web interface](#web-interface)
+	- [Mobile interface](#mobile-interface)
+	- [Mobile application](#mobile-application)
 	- [Node.js](#nodejs)
 	- [AntiCrux Server](#anticrux-server)
 	- [AntiCrux Engine](#anticrux-engine)
@@ -93,7 +94,7 @@ git clone https://github.com/ecrucru/anticrux.git
 ```
 
 
-### Web-interface
+### Web interface
 
 As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface.
 
@@ -111,11 +112,33 @@ The options can be set within the tab "Options". You have a reduced set of preco
 "Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will probably crash (your game will be lost).
 
 
-### Mobile
+### Mobile interface
 
 The mobile version is a light-weighted version of the [web-interface](#web-interface). It is suitable for a smartphone which screen is often reduced and which performances are sometimes reduced.
 
 The options are set to the minimum and the board fits to the screen.
+
+
+### Mobile application
+
+By using the technologies behind Adobe PhoneGap and Apache Cordova, it is possible to create a standalone, multi-platform and authorization-free application for your smartphone.
+
+The application is periodically compiled online by Adobe PhoneGap Build from the freshest code of the master branch hosted on Github :
+
+- [https://build.phonegap.com/apps/2597052/share](https://build.phonegap.com/apps/2597052/share)
+
+For **Android 4+**, follow these steps :
+
+- Go to the menu "Settings" of your phone, category "Security", and activate the "Unsafe sources" to allow the installation
+- Download the APK file from the link above
+- Click on the downloaded file
+- Validate the installation
+- Go back to the settings to deativate the unsafe sources
+- Run the application
+
+For **Windows Phone**, the application is made available from a technical perspective. It has not been tested with a real device.
+
+For **iOS**, you will not get any copy because the project team has no development key for that platform.
 
 
 ### Node.js
@@ -373,6 +396,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: new weights for the valuation
 	- UI: favicon
 	- UI/Mobile: switch view depending on the connected device
+	- App: mobile application for Android and WinPhones
 
 
 ### License
