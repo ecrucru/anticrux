@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0" id="com.github.ecrucru.anticrux" version="0.2.1">
+	<name>AntiCrux</name>
+	<description>Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js</description>
+	<author href="http://github.com/ecrucru/anticrux/">ecrucru</author>
+
+	<!-- https://cordova.apache.org/docs/fr/latest/config_ref/index.html -->
+	<!-- http://docs.phonegap.com/phonegap-build/configuring/ -->
+
+	<preference name="target-device" value="handset" />
+	<preference name="androidlaunchmode" value="singleInstance" />
+	<preference name="permissions" value="none"/>
+	<preference name="orientation" value="portrait" />
+	<preference name="enableviewportscale" value="false" />
+	<preference name="fullscreen" value="false" />
+	<preference name="suppresseslongpressgesture" value="true" />
+	<preference name="keeprunning" value="true" />
+
+	<icon src="images/mobicon.png" />
+	<content src="mobile.html" />
+	<access origin="https://github.com" />
+
+	<platform name="android" />
+	<platform name="winphone" />
+</widget>

@@ -312,7 +312,7 @@ function acui_popup(pMessage) {
 
 function acui_fitBoard() {
 	//-- Determines the best size
-	var w = Math.floor(Math.min(screen.width, screen.height) * 0.85 / 8);
+	var w = Math.floor(Math.min(screen.width, screen.height) / window.devicePixelRatio * 0.85 / 8);
 
 	//-- Applies the generated CSS
 	if ((w < 50) && ui_mobile)
@@ -373,10 +373,7 @@ $(document).ready(function() {
 
 	//-- Title bar
 	$('#acui_switch_ui').click(function() {
-		if (ui_mobile)
-			window.location = 'index.html';
-		else
-			window.location = 'mobile.html';
+		window.location = (ui_mobile ? 'index.html' : 'mobile.html');
 	});
 
 	//-- Events (Board)
