@@ -816,8 +816,15 @@ $(document).ready(function() {
 		$('#acui_lastmove').html('');
 	});
 
+	$('#acui_option_level').change(function() {
+		if ($('#acui_option_level').val() >= 13)
+			$('#acui_sect_level_notice').show();
+		else
+			$('#acui_sect_level_notice').hide();
+	});
+
 	//-- Default elements
-	$('#acui_js, #acui_sect_rewind').hide();
+	$('#acui_js, #acui_sect_rewind, #acui_sect_level_notice').hide();
 	if ((ui_mobile && acui_isphone()) || (!ui_mobile && !acui_isphone()))
 		$('#acui_switch_ui').hide();
 	$('#acui_option_predef').val(5).change();
