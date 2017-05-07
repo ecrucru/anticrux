@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<widget xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0" id="com.github.ecrucru.anticrux" version="0.2.1">
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0" id="com.github.ecrucru.anticrux" version="0.3.0">
 	<name>AntiCrux</name>
 	<description>Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js</description>
 	<author href="http://github.com/ecrucru/anticrux/">ecrucru</author>

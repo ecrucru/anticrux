@@ -371,7 +371,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: new parameter for AntiCrux.prototype.isEndGame
 	- Library: the minimal search depth is now 1 (previously 3)
 	- UI: blind and random modes
-- In progress - Version 0.2.1
+- In progress - Version 0.3.0
 	- Server: new server based on Node.js
 	- Readme: update
 	- UI: button "Rematch"

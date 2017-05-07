@@ -2304,7 +2304,7 @@ AntiCrux.prototype._init = function() {
 	//-- Options
 	this.options = {
 		ai : {
-			version : '0.2.1',							//Version of AntiCrux
+			version : '0.3.0',							//Version of AntiCrux
 			elo : 1750,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
 			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
