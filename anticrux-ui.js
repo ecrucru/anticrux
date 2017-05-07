@@ -23,7 +23,7 @@
 
 var	ai = new AntiCrux(),
 	ai_rewind = new AntiCrux(),
-	ui_mobile, ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
+	ui_mobile, ui_cordova, ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
 
 ai.options.ai.noStatOnForcedMove = true;
 ai.options.board.symbols = true;
@@ -312,10 +312,10 @@ function acui_popup(pMessage) {
 
 function acui_fitBoard() {
 	//-- Determines the best size
-	var w = Math.floor(Math.min(screen.width, screen.height) / window.devicePixelRatio * 0.85 / 8);
+	var w = Math.floor(Math.min(screen.width, screen.height) / (ui_cordova ? window.devicePixelRatio : 1) * 0.85 / 8);
 
 	//-- Applies the generated CSS
-	if ((w < 50) && ui_mobile)
+	if ((w < 50) && (ui_mobile || ui_cordova))
 	{
 		$('<style>')
 			.prop('type', 'text/css')
@@ -343,12 +343,13 @@ function acui_fitBoard() {
 }
 
 function acui_isphone() {
-	return (Math.min(screen.width, screen.height) < 768);
+	return (ui_cordova || (Math.min(screen.width, screen.height) < 768));
 }
 
 $(document).ready(function() {
 	//-- Initialization
 	ui_mobile = ($('#acui_ismobile').length > 0);
+	ui_cordova = (window.cordova !== undefined);
 	ui_move = '';
 	ui_move_pending = ai.constants.move.none;
 	ui_possibledraw = false;
