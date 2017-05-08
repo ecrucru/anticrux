@@ -32,9 +32,9 @@ var fs        = require('fs'),							// https://nodejs.org/api/fs.html
 //======== Definitions
 
 var enginePool = [
-		{ ai:null, type:'AC', selfDuel:false, enPassant:true,  level:0, levelMin:1, levelMax:15, owner:null, name:'' },	//Up to 20
-		{ ai:null, type:'SF', selfDuel:true,  enPassant:false, level:0, levelMin:1, levelMax:8,  owner:null, name:'' },	//Up to 8
-		{ ai:null, type:'SF', selfDuel:true,  enPassant:false, level:0, levelMin:1, levelMax:8,  owner:null, name:'' }	//Up to 8
+		{ ai:null, type:'AC', selfDuel:false, enPassant:true, level:0, levelMin:1, levelMax:15, owner:null, name:'' },	//Up to 20
+		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  owner:null, name:'' },	//Up to 8
+		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  owner:null, name:'' }	//Up to 8
 	],
 
 	sfmv_levels = [
