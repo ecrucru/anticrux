@@ -2319,18 +2319,18 @@ AntiCrux.prototype._init = function() {
 			version : '0.3.0',							//Version of AntiCrux
 			elo : 1750,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
-			maxDepth : 12,								//Maximal depth for the search dependant on the simplification of the tree
-			maxNodes : 100000,							//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
-			minimizeLiberty : true,						//TRUE allows a deeper inspection by forcing the moves, FALSE does a complete evaluation
-			maxReply : 1,								//Number >=1 corresponding to the maximal number of moves that a player is allowed in return when minimizeLiberty is enabled
+			maxDepth : 0,								//Maximal depth for the search dependant on the simplification of the tree
+			maxNodes : 0,								//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
+			minimizeLiberty : false,					//TRUE allows a deeper inspection by forcing the moves, FALSE does a complete evaluation
+			maxReply : 0,								//Number >=1 corresponding to the maximal number of moves that a player is allowed in return when minimizeLiberty is enabled
 			noStatOnForcedMove : false,					//TRUE plays faster but the player won't be able to check the situation
-			wholeNodes : true,							//TRUE evaluates the depths until the limit is reached and makes the analysis stronger
-			randomizedSearch : true,					//TRUE helps the game to not played the same pieces
-			pessimisticScenario : true,					//TRUE makes the algorithm stronger, FALSE is more random
-			bestStaticScore : true,						//TRUE makes the algorithm stronger, FALSE is more random for low determined situations
+			wholeNodes : false,							//TRUE evaluates the depths until the limit is reached and makes the analysis stronger
+			randomizedSearch : false,					//TRUE helps the game to not played the same pieces
+			pessimisticScenario : false,				//TRUE makes the algorithm stronger, FALSE is more random
+			bestStaticScore : false,					//TRUE makes the algorithm stronger, FALSE is more random for low determined situations
 			opportunistic : false,						//TRUE helps to find a winning position
 			handicap : 0,								//To weaken the algorithm, remove between 0% and 100% of the moves above a fixed number of moves
-			acceleratedEndGame : true,					//TRUE makes more direct kills but doesn't change the output
+			acceleratedEndGame : false,					//TRUE makes more direct kills but doesn't change the output
 			oyster : false								//TRUE is a full random play
 		},
 		variant : {
@@ -2351,6 +2351,7 @@ AntiCrux.prototype._init = function() {
 			debugCellId : false							//TRUE display the internal identifier of every cell of the board when there is no piece on it
 		}
 	};
+	this.setLevel(9);									//Default level to initialize "this.options.ai"
 
 	//-- Valuations
 	//Documentation : http://www.ke.tu-darmstadt.de/publications/papers/ICGA-ChessVariants.pdf
