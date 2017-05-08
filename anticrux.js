@@ -2255,6 +2255,12 @@ AntiCrux.prototype.callbackExploration = null;
 
 //---- Private members
 
+/**
+ * The method, implicitly called by the constructor, initializes the internal data.
+ *
+ * @private
+ * @method _init
+ */
 AntiCrux.prototype._init = function() {
 	//-- Constants
 	this.constants = {
@@ -2362,6 +2368,19 @@ AntiCrux.prototype._init = function() {
 	this._lastLevel = null;
 };
 
+/**
+ * The method does a detailed check of the attribute of an object in terms of existence, type and content.
+ *
+ * @private
+ * @method _has
+ * @param {Object} pObject The object must be valid. An array is not an object.
+ * @param {String} pField Name of the attribute. If object[attribute] is null, the method will return *false*.
+ * @param {Undefined, String, Boolean} pLengthCheckOrString The type defines the check to be done :
+ * - Undefined : it checks whether the attribute is equal to *true*.
+ * - String : it checks whether the attribute is equal to the provided value.
+ * - Boolean : if *true*, it checks if the attribute assumed to be an array has a content whatever its nature.
+ * @return {Boolean} Result of the check.
+ */
 AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
 	var b = ((pObject !== undefined) && (pObject !== null));
 	if (b)
@@ -2386,12 +2405,25 @@ AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
 	return b;
 };
 
+/**
+ * The method initializes on demand some internal objects.
+ *
+ * @private
+ * @method _initHelper
+ */
 AntiCrux.prototype._initHelper = function() {
 	if (this._helper === null)
 		this._helper = new AntiCrux();
 	this._helper.options.board.darkTheme = this.options.board.darkTheme;
 };
 
+/**
+ * The method initializes the 960 start positions of AntiChess960. This operation is
+ * time consuming, that's why it is put apart and called internally on demand.
+ *
+ * @private
+ * @method _initFischer
+ */
 AntiCrux.prototype._initFischer = function() {
 	var id, fen;
 
@@ -2409,6 +2441,15 @@ AntiCrux.prototype._initFischer = function() {
 	}
 };
 
+/**
+ * The method duplicates a node. Only the basic fields are copied.
+ *
+ * @private
+ * @method _ai_nodeCopy
+ * @param {Object} pNode Node to copy.
+ * @param {Boolean} pFull Copy all the necessary nodes.
+ * @return {Object} New copied node.
+ */
 AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 	//-- Clones the node
 	var	newNode = {
@@ -2436,6 +2477,13 @@ AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 	return newNode;
 };
 
+/**
+ * The method removes the unwanted fields within an existing node.
+ *
+ * @private
+ * @method _ai_nodeShrink
+ * @param {Object} pNode Node to shrink.
+ */
 AntiCrux.prototype._ai_nodeShrink = function(pNode) {
 	var f;
 	for (f in pNode)
@@ -2443,6 +2491,17 @@ AntiCrux.prototype._ai_nodeShrink = function(pNode) {
 			delete pNode[f];
 };
 
+/**
+ * The method counts the pieces corresponding to some criteria.
+ *
+ * @private
+ * @method _ai_nodeInventory
+ * @param {AntiCrux.constants.owner} pPlayer Player or null if not relevant.
+ * @param {AntiCrux.constants.piece} pPiece Piece or null if not relevant.
+ * @param {Integer} pColumn (Optional) Column to check between 0 and 7.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} Number of pieces.
+ */
 AntiCrux.prototype._ai_nodeInventory = function(pPlayer, pPiece, pColumn, pNode) {
 	var i, counter;
 
@@ -2464,6 +2523,15 @@ AntiCrux.prototype._ai_nodeInventory = function(pPlayer, pPiece, pColumn, pNode)
 	return counter;
 };
 
+/**
+ * The method counts the pieces of a player.
+ *
+ * @private
+ * @method _ai_nodeCountPiece
+ * @param {AntiCrux.constants.owner} pPlayer Player.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} Number of pieces.
+ */
 AntiCrux.prototype._ai_nodeCountPiece = function(pPlayer, pNode) {
 	var i, counter;
 
@@ -2478,6 +2546,16 @@ AntiCrux.prototype._ai_nodeCountPiece = function(pPlayer, pNode) {
 	return counter;
 };
 
+/**
+ * The method finds the first occurrence of a piece given by its player and/or identifier.
+ *
+ * @private
+ * @method _ai_nodeLocatePiece
+ * @param {AntiCrux.constants.owner} pPlayer Player or null if not relevant.
+ * @param {AntiCrux.constants.piece} pPiece Piece or null if not relevant.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Object} Coordinates {x=0..7, y=0..7} of the located piece, or *null* if nothing has been found.
+ */
 AntiCrux.prototype._ai_nodeLocatePiece = function(pPlayer, pPiece, pNode) {
 	var x, y;
 
@@ -2495,6 +2573,13 @@ AntiCrux.prototype._ai_nodeLocatePiece = function(pPlayer, pPiece, pNode) {
 	return null;
 };
 
+/**
+ * The method determines the possible moves and stores them in the provided node.
+ *
+ * @private
+ * @method _ai_nodeMoves
+ * @param {Object} pNode Reference node.
+ */
 AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 	var i, x, y, t, epX, epY, tX, tY,
 		move_base, moves, forced,
@@ -2701,6 +2786,13 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 	pNode.moves = moves;
 };
 
+/**
+ * The method creates the sub-nodes corresponding to the moves stored in the provided node.
+ *
+ * @private
+ * @method _ai_nodeCreateNodes
+ * @param {Object} pNode Reference node.
+ */
 AntiCrux.prototype._ai_nodeCreateNodes = function(pNode) {
 	var i, node;
 
@@ -2721,6 +2813,15 @@ AntiCrux.prototype._ai_nodeCreateNodes = function(pNode) {
 	}
 };
 
+/**
+ * The method explores the tree.
+ *
+ * @private
+ * @method _ai_nodeRecurseTree
+ * @param {AntiCrux.constants.owner} pPlayer Player.
+ * @param {Integer} pDepth Depth of the browsed level.
+ * @param {Object} pNode Reference node.
+ */
 AntiCrux.prototype._ai_nodeRecurseTree = function(pPlayer, pDepth, pNode) {
 	var	i, p, min_moves;
 
@@ -2780,6 +2881,14 @@ AntiCrux.prototype._ai_nodeRecurseTree = function(pPlayer, pDepth, pNode) {
 	}
 };
 
+/**
+ * The method determines the strength of the node by giving it a score.
+ *
+ * @private
+ * @method _ai_nodeValuate
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Object} Result of the valuation.
+ */
 AntiCrux.prototype._ai_nodeValuate = function(pNode) {
 	var i, val, result;
 
@@ -2873,6 +2982,17 @@ AntiCrux.prototype._ai_nodeValuate = function(pNode) {
 	return result;
 };
 
+/**
+ * The method determines the best moves by browsing the decision tree.
+ *
+ * @private
+ * @method _ai_nodeSolve
+ * @param {AntiCrux.constants.owner} pPlayer Player.
+ * @param {Integer} pDepth Depth of the browsed level.
+ * @param {String} pPath Moves as string.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Object} Result of the valuation.
+ */
 AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pPath, pNode) {
 	var i, has, hasNode, allForced, hasForced, condition, threshold, val, counter;
 
@@ -3052,6 +3172,15 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pPath, pNode) {
 	}
 };
 
+/**
+ * The method selects the best move for the player.
+ *
+ * @private
+ * @method _ai_nodePick
+ * @param {AntiCrux.constants.owner} pPlayer Player.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} The internal representation of the move, or an exception if no move is found.
+ */
 AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	var	i, threshold, status, val,
 		mixedStatic, mixedDeep,
@@ -3191,6 +3320,15 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	}
 };
 
+/**
+ * The method prepares the output which shows the tree.
+ * The output is collected into an internal variable for further processing.
+ *
+ * @private
+ * @method _ai_nodeTreeHtml
+ * @param {Integer} pDepth Depth of the browsed level.
+ * @param {Object} pNode (Optional) Reference node.
+ */
 AntiCrux.prototype._ai_nodeTreeHtml = function(pDepth, pNode) {
 	var that, fLimitDepth, fAbsScoreFormat, i, j, writeMode;
 
@@ -3257,6 +3395,14 @@ AntiCrux.prototype._ai_nodeTreeHtml = function(pDepth, pNode) {
 	}
 };
 
+/**
+ * The method reduces the maximal number of nodes to destroy the links between them.
+ *
+ * @private
+ * @method _ai_nodeFreeMemory
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Integer} Count of released nodes.
+ */
 AntiCrux.prototype._ai_nodeFreeMemory = function(pNode) {
 	var i, count;
 
@@ -3279,6 +3425,12 @@ AntiCrux.prototype._ai_nodeFreeMemory = function(pNode) {
 	return count;
 };
 
+/**
+ * The method calls the garbage collector (if available).
+ *
+ * @private
+ * @method _ai_gc
+ */
 AntiCrux.prototype._ai_gc = function() {
 	//-- Garbage collector for V8 if run with the right option
 	if ((typeof global == 'object') && (typeof global.gc == 'function'))
