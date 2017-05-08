@@ -323,9 +323,15 @@ AntiCrux.prototype.loadFen = function(pFen) {
 	//-- En passant
 	if (this.options.variant.enPassant && (list[3] !== undefined) && (list[3] !== '-'))
 	{
-		i = 'abcdefgh'.indexOf(list[3]);
-		if (i !== -1)
-			this._root_node.enpassant = 8*(this._root_node.player == this.constants.owner.white ? 2 : 5) + i;
+		i = list[3].substring(1, 2);
+		if ((list[3].length === 1) ||
+			((i == '3') && (this._root_node.player == this.constants.owner.black)) ||
+			((i == '6') && (this._root_node.player == this.constants.owner.white))
+		) {
+			i = 'abcdefgh'.indexOf(list[3].substring(0, 1));
+			if (i !== -1)
+				this._root_node.enpassant = 8*(this._root_node.player == this.constants.owner.white ? 2 : 5) + i;
+		}
 	}
 
 	//-- Halfmove clock
@@ -1913,7 +1919,7 @@ AntiCrux.prototype.toFen = function(pNode) {
 
 	//-- En passant
 	if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
-		output += ' ' + ('abcdefgh'[pNode.enpassant%8]);
+		output += ' ' + ('abcdefgh'[pNode.enpassant%8]) + (pNode.player == this.constants.owner.black ? '3' : '6');
 	else
 		output += ' -';
 
