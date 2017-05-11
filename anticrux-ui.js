@@ -347,6 +347,8 @@ function acui_isphone() {
 }
 
 $(document).ready(function() {
+	var i;
+
 	//-- Initialization
 	ui_mobile = ($('#acui_ismobile').length > 0);
 	ui_cordova = (window.cordova !== undefined);
@@ -365,6 +367,11 @@ $(document).ready(function() {
 	$('<option/>').val(ai.constants.owner.white).html('White'+(ui_mobile?'':' to play')).appendTo('#acui_player');
 	$('<option/>').val(ai.constants.owner.black).html('Black'+(ui_mobile?'':' to play')).appendTo('#acui_player');
 	$('#acui_player').val(ai.constants.owner.white).change();
+
+	//-- Updates the levels
+	$('#acui_option_predef').find('option').remove().end();
+	for (i=1 ; i<=20 ; i++)
+		$('<option/>').val(i).html('Level ' + i).appendTo('#acui_option_predef');
 
 	//-- Events (General)
 	$("input[type='text']").on('click', function () {
@@ -709,32 +716,7 @@ $(document).ready(function() {
 
 	//-- Events (Options)
 	$('#acui_option_predef').change(function() {
-		var i, d;
-
-		//-- Predefined levels
-		var levels = [
-				//Champion
-				{ maxDepth:50,	maxNodes:1000000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:2,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
-				{ maxDepth:40,	maxNodes: 500000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:2,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
-				{ maxDepth:30,	maxNodes: 200000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:2,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:true,	opportunistic:true,		handicap:0,		acceleratedEndGame:true		},
-				//Tactical player
-				{ maxDepth:10,	maxNodes:  90000,	wholeNodes:true,	minimizeLiberty:true,	maxReply:1,	noStatOnForcedMove:true,	randomizedSearch:true,	oyster:false,	pessimisticScenario:true,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
-				//Advanced classical player
-				{ maxDepth: 7,	maxNodes:  75000,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
-				//Classical player
-				{ maxDepth: 3,	maxNodes:  15000,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:true		},
-				//Handicaped player
-				{ maxDepth: 7,	maxNodes:  50000,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:false,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:70,	acceleratedEndGame:true		},
-				//Oyster
-				{ maxDepth: 3,	maxNodes:    100,	wholeNodes:false,	minimizeLiberty:false,	maxReply:1,	noStatOnForcedMove:false,	randomizedSearch:true,	oyster:true,	pessimisticScenario:false,	bestStaticScore:false,	opportunistic:false,	handicap:0,		acceleratedEndGame:false	}
-			];
-
-		//-- Applies the configuration
-		i = parseInt($('#acui_option_predef').val());
-		if (levels[i] === undefined)
-			return false;
-		for (d in levels[i])
-			ai.options.ai[d] = levels[i][d];
+		ai.setLevel(parseInt($('#acui_option_predef').val()));
 		acui_options_load();
 		$("input[type='checkbox']").checkboxradio('refresh');
 		return true;

@@ -96,20 +96,17 @@ git clone https://github.com/ecrucru/anticrux.git
 
 ### Web interface
 
-As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface.
+As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface in your default browser.
 
-The options can be set within the tab "Options". You have a reduced set of preconfigured levels :
+The tab "Board" offers the general features to move the pieces. You can't drag and drop a piece, but use 2 separate clicks.
 
-- Oyster : random play
-- Handicaped player : restricted classical play
-- Classical player : average damage at low depth
-- Advanced classical player : deeper average damage
-- Tactical player : set of techniques
-- Champion 512 MB : full set of techniques
-- Champion 1 GB : deeper full set of techniques
-- Champion 2 GB : deepest full set of techniques
+The tab "Actions" handles the generation of a new game. By putting aside the buttons to start a game, you will not click unexpectedly on them while you are playing.
 
-"Champion" is a very relative term as it has never won any competition at all and will certainly never succeed in that task. It just means that AntiCrux will use its maximal optimized capabilities. The number followed by MB or GB is the recommended memory to be available else the browser will probably crash (your game will be lost).
+The tab "Options" is where you refine the settings of the game. Each level is assigned some changeable features and you have to know that a higher level is not necessarily stronger. You can refer to the [dedicated paragraph](#anticrux-helo-world) to understand why.
+
+The tab "Tree" is a way to view the decision tree used by the library. The activation requires more memory, so it is disabled by default.
+
+The tab "About" provides the legal information about AntiCrux.
 
 
 ### Mobile interface
@@ -397,6 +394,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- UI: favicon
 	- UI/Mobile: switch view depending on the connected device
 	- App: mobile application for Android and WinPhones
+	- UI: use of the embedded levels
 
 
 ### License
