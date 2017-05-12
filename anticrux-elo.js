@@ -97,7 +97,8 @@ function acelo_welcome() {
 }
 
 function acelo_newjob() {
-	var lf_random = function(pMin, pMax) {
+	var	n1, n2,
+		lf_random = function(pMin, pMax) {
 						return (Math.floor(32768*Math.random()) % (pMax - pMin + 1)) + pMin;
 					};
 
@@ -113,8 +114,12 @@ function acelo_newjob() {
 	//-- Picks the engines
 	while (true)
 	{
-		job.engineOne = enginePool[lf_random(0, enginePool.length-1)];
-		job.engineTwo = enginePool[lf_random(0, enginePool.length-1)];
+		n1 = lf_random(0, enginePool.length-1);
+		n2 = lf_random(0, enginePool.length-1);
+		if (n1 == n2)
+			continue;
+		job.engineOne = enginePool[n1];
+		job.engineTwo = enginePool[n2];
 		if ((!job.engineOne.selfDuel || !job.engineTwo.selfDuel) && (job.engineOne.type == job.engineTwo.type))
 			continue;
 		else
@@ -130,10 +135,16 @@ function acelo_newjob() {
 	{
 		job.engineOne.level = lf_random(job.engineOne.levelMin, job.engineOne.levelMax);
 		if (job.engineOne.type == 'AC')
+		{
 			job.engineOne.ai.setLevel(job.engineOne.level);
+			job.engineOne.ai.options.ai.noStatOnForcedMove = true;
+		}
 		job.engineTwo.level = lf_random(job.engineTwo.levelMin, job.engineTwo.levelMax);
 		if (job.engineTwo.type == 'AC')
+		{
 			job.engineTwo.ai.setLevel(job.engineTwo.level);
+			job.engineTwo.ai.options.ai.noStatOnForcedMove = true;
+		}
 
 		//- Avoids an auto-match
 		if ((job.engineOne.type == job.engineTwo.type) && (job.engineOne.level == job.engineTwo.level))
