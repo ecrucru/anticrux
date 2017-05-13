@@ -395,6 +395,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- UI/Mobile: switch view depending on the connected device
 	- App: mobile application for Android and WinPhones
 	- UI: use of the embedded levels
+	- Library: level-dependent ELO rating
 
 
 ### License

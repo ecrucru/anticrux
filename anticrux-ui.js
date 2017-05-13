@@ -371,7 +371,10 @@ $(document).ready(function() {
 	//-- Updates the levels
 	$('#acui_option_predef').find('option').remove().end();
 	for (i=1 ; i<=20 ; i++)
-		$('<option/>').val(i).html('Level ' + i).appendTo('#acui_option_predef');
+	{
+		ai.setLevel(i);
+		$('<option/>').val(i).html('Level '+i + (ai.options.ai.elo>0 ? ' ('+ai.options.ai.elo+')' : '')).appendTo('#acui_option_predef');
+	}
 
 	//-- Events (General)
 	$("input[type='text']").on('click', function () {
@@ -800,6 +803,10 @@ $(document).ready(function() {
 	});
 
 	$('#acui_option_level').change(function() {
+		//-- ELO rating
+		$('#acui_sect_level_header').html('Level' + (ai.options.ai.elo>0 ? ' ('+ai.options.ai.elo+')' : ''));
+
+		//-- Warning
 		if ($('#acui_option_level').val() >= 13)
 			$('#acui_sect_level_notice').show();
 		else

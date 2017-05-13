@@ -501,11 +501,14 @@ AntiCrux.prototype.getOppositePlayer = function(pNode) {
  * @return {Boolean} *true* if successful, else *false*.
  */
 AntiCrux.prototype.setLevel = function(pLevel) {
+	const eloOffset = 1500;
+
 	//-- Checks
 	if ((pLevel < 1) || (pLevel > 20))
 		return false;
 
 	//-- Applies the new settings
+	this.options.ai.elo					= eloOffset + [-1004, -325, -299, -154, -90, -42, -24, -70, -140, 153, 128, 212, 182, 175, 151, -eloOffset, -eloOffset, -eloOffset, -eloOffset, -eloOffset][pLevel-1];
 	this.options.ai.maxDepth			= [3, 8, 8, 8, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 30, 30, 40, 40, 45, 50][pLevel-1];
 	this.options.ai.maxNodes			= [100, 50000, 50000, 50000, 15000, 30000, 50000, 75000, 80000, 85000, 90000, 120000, 150000, 200000, 300000, 400000, 500000, 750000, 1000000, 2000000][pLevel-1];
 	this.options.ai.minimizeLiberty		= (pLevel >= 8);
@@ -2317,7 +2320,7 @@ AntiCrux.prototype._init = function() {
 	this.options = {
 		ai : {
 			version : '0.3.0',							//Version of AntiCrux
-			elo : 1750,									//Approximative strength of the algorithm
+			elo : 0,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
 			maxDepth : 0,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 0,								//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
