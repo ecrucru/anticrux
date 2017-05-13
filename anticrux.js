@@ -78,7 +78,7 @@
  * @module AntiCrux
  * @submodule main
  */
- 
+
 
 //======== Main class
 /**
@@ -664,7 +664,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 			node.player = pPlayerIndication;
 			this._ai_nodeMoves(node);
 		}
-		moves = [];
+		moves.splice(0, moves.length);
 
 		//- Move from : validates the originating positions
 		for (i=0 ; i<node.moves.length ; i++)
@@ -752,7 +752,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 		}
 		if (!valid)
 		{
-			this._highlight = [];
+			this._highlight.splice(0, this._highlight.length);
 			return this.constants.move.none;
 		}
 	}
@@ -819,7 +819,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	}
 
 	//-- Result
-	this._highlight = [];
+	this._highlight.splice(0, this._highlight.length);
 	return pMove;
 };
 
@@ -827,7 +827,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
  * The method finds the best move.
  *
  * @method getMoveAI
- * @param {AntiCrux.constants.owner} pPlayer The player.
+ * @param {AntiCrux.constants.owner} pPlayer (Optional) Player.
  * @param {Object} pNode (Optional) Reference node.
  * @return {Integer} The internal representation of the move (to be used for the log for example), else *AntiCrux.constants.move.none* in case of error.
  */
@@ -2582,191 +2582,334 @@ AntiCrux.prototype._ai_nodeLocatePiece = function(pPlayer, pPiece, pNode) {
  * @param {Object} pNode Reference node.
  */
 AntiCrux.prototype._ai_nodeMoves = function(pNode) {
-	var i, x, y, t, epX, epY, tX, tY,
-		move_base, moves, forced,
-		directionX, directionY, directionXY;
-
-	//-- Local functions (macros)
-	var that = this;
-	var moveLegit = function(pY, pX, pKill, pRestricted) {
-		var target_type, opponent, promo_move, promoted;
-
-		//- Boundaries
-		if ((pX<0) || (pX>7) || (pY<0) || (pY>7))
-			return false;
-
-		//- Validity
-		target_type = pNode.owner[8*pY+pX];
-		opponent =	(target_type != pNode.player) &&
-					(target_type != that.constants.owner.none);			//Target is opponent
-		if ((target_type == pNode.player) || (opponent && !pKill))		//Impossible move
-			return false;
-
-		//- Forced move
-		if (opponent && !forced)
-		{
-			moves = [];
-			forced = true;
-		}
-
-		//- Logs the move
-		if (opponent || (!opponent && !forced && !pRestricted))
-		{
-			//Promotes a pawn
-			promoted = false;
-			if (pNode.piece[8*y+x] == that.constants.piece.pawn)
-			{
-				if (	((pY === 0) && (pNode.owner[8*y+x] == that.constants.owner.white)) ||
-						((pY === 7) && (pNode.owner[8*y+x] == that.constants.owner.black))
-				  )
-				{
-					promo_move = move_base + 10*pY + pX;
-					moves.push(promo_move + 10000*that.constants.piece.queen);		//All the promotions will be analyzed later to eliminate the wrong one
-					if (!that.options.variant.promoteQueen)
-					{
-						moves.push(promo_move + 10000*that.constants.piece.rook);
-						moves.push(promo_move + 10000*that.constants.piece.knight);
-						moves.push(promo_move + 10000*that.constants.piece.bishop);
-						moves.push(promo_move + 10000*that.constants.piece.king);
-					}
-					promoted = true;
-				}
-			}
-
-			//Normal move
-			if (!promoted)
-				moves.push(move_base + 10*pY + pX);
-		}
-
-		//- Result
-		return !opponent;
-	};
+	var	that, save_move,
+		board, moves, forced, move_base, move_promo,
+		i, ip, x, xp, xpp, y, yp, ypp, d, t, ep, epv;
 
 	//-- Checks
 	if ((pNode === undefined) || (pNode === null))
 		return;
+	that = this;
+
+	//-- Board of the opponents
+	board = [	0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0
+			];
+	for (i=0 ; i<64 ; i++)
+	{
+		if (pNode.owner[i] == this.constants.owner.none)
+			board[i] = 1;
+		else
+			if (pNode.owner[i] == pNode.player)
+				board[i] = 2;
+			else
+				if ((pNode.owner[i] != pNode.player) && (pNode.owner[i] != this.constants.owner.none))
+					board[i] = 4;
+	}
+	ep = (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant);
+	epv = (ep ? board[pNode.enpassant] : null);
+
+	//-- Macro
+	save_move = function(pX, pY, pI, pPawn) {
+		var take = (board[pI] == 4);
+		if (take && !forced)
+		{
+			moves.splice(0, moves.length);
+			forced = true;
+		}
+		if (!forced || (/* (same effect) forced &&*/ take))
+		{
+			if (pPawn && ((pY===0) || (pY==7)))
+			{
+				move_promo = move_base + 10*pY + pX;
+				moves.push(move_promo + 10000*that.constants.piece.queen);
+				if (!that.options.variant.promoteQueen)
+				{
+					moves.push(move_promo + 10000*that.constants.piece.rook);
+					moves.push(move_promo + 10000*that.constants.piece.knight);
+					moves.push(move_promo + 10000*that.constants.piece.bishop);
+					moves.push(move_promo + 10000*that.constants.piece.king);
+				}
+			}
+			else
+				moves.push(move_base + pY*10 + pX);
+		}
+		return take;
+	};
 
 	//-- Scans every position
-	forced = false;
 	moves = [];
-	for (y=0 ; y<8 ; y++)
+	forced = false;
+	for (i=0 ; i<64 ; i++)
 	{
-		for (x=0 ; x<8 ; x++)
+		//- Checks if the cell is relevant
+		if (board[i] != 2)
+			continue;
+
+		//- Conversion
+		x = i % 8;
+		y = Math.floor(i / 8);
+		move_base = y*1000 + x*100;
+
+		//- Processing of the piece
+		switch (pNode.piece[i])
 		{
-			i = 8*y + x;
-
-			//- Initialization for the piece
-			if (pNode.owner[i] != pNode.player)
-				continue;
-			move_base = y*1000 + x*100;
-
-			//- Processing of the piece
-			switch (pNode.piece[i])
+			case this.constants.piece.pawn:
 			{
-				case this.constants.piece.none:
-					continue;
-
-				case this.constants.piece.pawn:
-					directionY = -pNode.player;
-
-					// Straight and by side
-					if (moveLegit(y+directionY, x, false, false))
+				if (ep)											//En passant is only relevant for the pawns
+					board[pNode.enpassant] = 4;
+				if (pNode.player == this.constants.owner.white)
+				{
+					// Move
+					if ((y > 0) && (board[i-8] == 1))
 					{
-						if (((directionY==-1) && (y==6)) ||
-							((directionY== 1) && (y==1))
-						)
-							moveLegit(y+2*directionY, x, false, false);
+						save_move(x, y-1, i-8, true);
+						if ((y == 6) && (board[i-16] == 1))
+							save_move(x, y-2, i-16, true);
 					}
-					moveLegit(y+directionY, x-1, true, true);
-					moveLegit(y+directionY, x+1, true, true);
-
+					// Take the opponent
+					if ((x > 0) && (board[i-9] == 4))
+						save_move(x-1, y-1, i-9, true);
+					if ((x < 7) && (board[i-7] == 4))
+						save_move(x+1, y-1, i-7, true);
 					// En passant
 					if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
 					{
-						//Source pawn at y/x
-						//Mid position at epX/epY
-						epX = pNode.enpassant % 8;
-						epY = Math.floor(pNode.enpassant / 8);
-						//Target pawn at tY/tX
-						tX = epX;
-						tY = epY-directionY;
-						//Check
-						if ((epX>=0) && (epX<=7) && (epY>=0) && (epY<=7) &&				//Assumed to be always true
-							( tX>=0) && ( tX<=7) && ( tY>=0) && ( tY<=7) &&				//Assumed to be always true
-							(Math.abs(epX-x) == 1) && (epY-y == directionY) &&			//Right distance
-							(pNode.piece[i        ] == this.constants.piece.pawn) &&	//Right exchanged pieces
-							(pNode.piece[8*epY+epX] == this.constants.piece.none) &&
-							(pNode.piece[8* tY+ tX] == this.constants.piece.pawn) &&
-							(pNode.owner[8*epY+epX] != pNode.owner[8*tY+tX])
-						) {
-							if (!forced)
-								moves = [];
-							forced = true;
-							moves.push(move_base + 10*epY + epX);
-						}
+						if ((x > 0) && (pNode.enpassant == i-9))
+							save_move(x-1, y-1, i-9, true);
+						if ((x < 7) && (pNode.enpassant == i-7))
+							save_move(x+1, y-1, i-7, true);
 					}
-					break;
-
-				case this.constants.piece.queen:
-				case this.constants.piece.rook:
-					// Moves
-					for (directionX=1 ; directionX<8 ; directionX++)
-						if (!moveLegit(y, x+directionX, true, false))
-							break;
-					for (directionX=1 ; directionX<8 ; directionX++)
-						if (!moveLegit(y, x-directionX, true, false))
-							break;
-					for (directionY=1 ; directionY<8 ; directionY++)
-						if (!moveLegit(y+directionY, x, true, false))
-							break;
-					for (directionY=1 ; directionY<8 ; directionY++)
-						if (!moveLegit(y-directionY, x, true, false))
-							break;
-					if (pNode.piece[i] == this.constants.piece.rook)		// Queen = Rook + Bishop
-						break;
-					//else no break, yes !
-
-				case this.constants.piece.bishop:
-					for (directionXY=1 ; directionXY<8 ; directionXY++)
-						if (!moveLegit(y+directionXY, x+directionXY, true, false))
-							break;
-					for (directionXY=1 ; directionXY<8 ; directionXY++)
-						if (!moveLegit(y+directionXY, x-directionXY, true, false))
-							break;
-					for (directionXY=1 ; directionXY<8 ; directionXY++)
-						if (!moveLegit(y-directionXY, x+directionXY, true, false))
-							break;
-					for (directionXY=1 ; directionXY<8 ; directionXY++)
-						if (!moveLegit(y-directionXY, x-directionXY, true, false))
-							break;
-					break;
-
-				case this.constants.piece.king:
-					for (directionX=-1 ; directionX<=1 ; directionX++)
+				}
+				else
+				{
+					// Move
+					if ((y < 7) && (board[i+8] == 1))
 					{
-						for (directionY=-1 ; directionY<=1 ; directionY++)
-						{
-							if ((directionX === 0) && (directionY === 0))
-								continue;
-							moveLegit(y+directionY, x+directionX, true, false);
-						}
+						save_move(x, y+1, i+8, true);
+						if ((y == 1) && (board[i+16] == 1))
+							save_move(x, y+2, i+16, true);
 					}
-					break;
-
-				case this.constants.piece.knight:
-					moveLegit(y-2, x-1, true, false);
-					moveLegit(y-2, x+1, true, false);
-					moveLegit(y+2, x-1, true, false);
-					moveLegit(y+2, x+1, true, false);
-					moveLegit(y-1, x-2, true, false);
-					moveLegit(y-1, x+2, true, false);
-					moveLegit(y+1, x-2, true, false);
-					moveLegit(y+1, x+2, true, false);
-					break;
-
-				default:
-					throw 'Internal error - Report any error (#003)';
+					// Take the opponent
+					if ((x > 0) && (board[i+7] == 4))
+						save_move(x-1, y+1, i+7, true);
+					if ((x < 7) && (board[i+9] == 4))
+						save_move(x+1, y+1, i+9, true);
+					// En passant
+					if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
+					{
+						if ((x > 0) && (pNode.enpassant == i+7))
+							save_move(x-1, y+1, i+7, true);
+						if ((x < 7) && (pNode.enpassant == i+9))
+							save_move(x+1, y+1, i+9, true);
+					}
+				}
+				if (ep)
+					board[pNode.enpassant] = epv;
+				break;
 			}
+
+			case this.constants.piece.queen:
+			case this.constants.piece.rook:
+			{
+				if (x > 0) //West
+				{
+					ip = i;
+					for (xp=x-1 ; xp>=0 ; xp--)
+					{
+						ip--;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(xp, y, ip, false))
+								break;
+					}
+				}
+				if (x < 7) //East
+				{
+					ip = i;
+					for (xp=x+1 ; xp<=7 ; xp++)
+					{
+						ip++;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(xp, y, ip, false))
+								break;
+					}
+				}
+				if (y > 0) //North
+				{
+					ip = i;
+					for (yp=y-1 ; yp>=0 ; yp--)
+					{
+						ip -= 8;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(x, yp, ip, false))
+								break;
+					}
+				}
+				if (y < 7) //South
+				{
+					ip = i;
+					for (yp=y+1 ; yp<=7 ; yp++)
+					{
+						ip += 8;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(x, yp, ip, false))
+								break;
+					}
+				}
+				if (pNode.piece[i] == this.constants.piece.rook)		// Queen = Rook + Bishop
+					break;
+				//else no break, yes !
+			}
+
+			case this.constants.piece.bishop:
+			{
+				//North-West
+				d = Math.min(x, y);
+				if (d > 0)
+				{
+					ip = i;
+					xp = x;
+					yp = y;
+					for ( ; d>0 ; d--)
+					{
+						ip -= 9;
+						xp--;
+						yp--;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(xp, yp, ip, false))
+								break;
+					}
+				}
+				//North-East
+				d = Math.min(7-x, y);
+				if (d > 0)
+				{
+					ip = i;
+					xp = x;
+					yp = y;
+					for ( ; d>0 ; d--)
+					{
+						ip -= 7;
+						xp++;
+						yp--;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(xp, yp, ip, false))
+								break;
+					}
+				}
+				//South-West
+				d = Math.min(x, 7-y);
+				if (d > 0)
+				{
+					ip = i;
+					xp = x;
+					yp = y;
+					for ( ; d>0 ; d--)
+					{
+						ip += 7;
+						xp--;
+						yp++;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(xp, yp, ip, false))
+								break;
+					}
+				}
+				//South-East
+				d = Math.min(7-x, 7-y);
+				if (d > 0)
+				{
+					ip = i;
+					xp = x;
+					yp = y;
+					for ( ; d>0 ; d--)
+					{
+						ip += 9;
+						xp++;
+						yp++;
+						if (board[ip] == 2)
+							break;
+						else
+							if (save_move(xp, yp, ip, false))
+								break;
+					}
+				}
+				break;
+			}
+
+			case this.constants.piece.knight:
+			{
+				if (y >= 2)
+				{
+					if ((x >= 1) && (board[i-17] != 2))
+						save_move(x-1, y-2, i-17, false);
+					if ((x <= 6) && (board[i-15] != 2))
+						save_move(x+1, y-2, i-15, false);
+				}
+				if (y <= 5)
+				{
+					if ((x >= 1) && (board[i+15] != 2))
+						save_move(x-1, y+2, i+15, false);
+					if ((x <= 6) && (board[i+17] != 2))
+						save_move(x+1, y+2, i+17, false);
+				}
+				if (y >= 1)
+				{
+					if ((x >= 2) && (board[i-10] != 2))
+						save_move(x-2, y-1, i-10, false);
+					if ((x <= 5) && (board[i-6] != 2))
+						save_move(x+2, y-1, i-6, false);
+				}
+				if (y <= 6)
+				{
+					if ((x >= 2) && (board[i+6] != 2))
+						save_move(x-2, y+1, i+6, false);
+					if ((x <= 5) && (board[i+10] != 2))
+						save_move(x+2, y+1, i+10, false);
+				}
+				break;
+			}
+
+			case this.constants.piece.king:
+			{
+				for (xp=-1 ; xp<=1 ; xp++)
+				{
+					xpp = x + xp;
+					if ((xpp < 0) || (xpp > 7))
+						continue;
+					for (yp=-1 ; yp<=1 ; yp+=(xp===0?2:1))
+					{
+						ypp = y + yp;
+						ip = 8 * ypp + xpp;
+						if ((ypp < 0) || (ypp > 7) || (board[ip] == 2))
+							continue;
+						save_move(xpp, ypp, ip, false);
+					}
+				}
+				break;
+			}
+
+			default:
+				throw 'Internal error - Report any error (#003)';
 		}
 	}
 
