@@ -68,10 +68,10 @@ var enginePool = [
 		disqualified	: null,
 		running			: false,
 		//- Options
-		debugLevel		: 1,		//0=none, 1=activity, 2=trace, 3=detailed trace
+		debugLevel		: 1,							//0=none, 1=activity, 2=trace, 3=detailed trace
 		file			: 'anticrux-elo.pgn',
 		genGames    	: true,
-		numGames		: 75,
+		numGames		: 225,							//For 4 CPU
 		genStats    	: true
 	};
 
@@ -354,7 +354,7 @@ function acelo_elo() {
 	if (!fs.existsSync(job.file))
 	{
 		console.log('Error : no PGN file to analyze');
-		return;
+		return false;
 	}
 	pgn = fs.readFileSync(job.file, 'utf8');
 	pgn = pgn.split("\r").join('').split("\n");
@@ -436,11 +436,14 @@ function acelo_elo() {
 			continue;
 		}
 
-		//- Proceeds with the read game
+		//- Proceeds with the reading of the games
 		if (pgn[i].length === 0)
 		{
-			if (game.variant && ((game.white == 'AC') || (game.black == 'AC')) && (game.level > 0))
-			{
+			if (	game.variant &&
+					((game.white == 'AC') || (game.black == 'AC')) &&
+					(game.level > 0) &&
+					!((game.white == 'AC') && (game.black == 'AC'))
+			) {
 				// Initializes the statistics
 				if (levelStat[game.level] === undefined)
 				{
@@ -451,6 +454,12 @@ function acelo_elo() {
 						opponents	: {}
 					};
 				}
+
+				// Resets the unexpected values
+				if (game.white == 'AC')
+					game.whiteElo = 0;
+				if (game.black == 'AC')
+					game.blackElo = 0;
 
 				// Updates the statistics
 				if (((game.white != 'AC') && (game.whiteElo > 0)) ||
@@ -519,6 +528,7 @@ function acelo_elo() {
 		//- Result
 		console.log('   - AntiCrux Level '+level+' is ranked '+ra+' after '+levelStat[level].games+' games (+'+levelStat[level].win+'/='+levelStat[level].draw+'/-'+levelStat[level].loss+').');
 	}
+	return true;
 }
 
 

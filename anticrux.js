@@ -501,7 +501,7 @@ AntiCrux.prototype.getOppositePlayer = function(pNode) {
  * @return {Boolean} *true* if successful, else *false*.
  */
 AntiCrux.prototype.setLevel = function(pLevel) {
-	const eloOffset = 1500;
+	var eloOffset = 1500;
 
 	//-- Checks
 	if ((pLevel < 1) || (pLevel > 20))
@@ -2060,12 +2060,18 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	if (this.options.board.rotated)
 	{
 		lf_setheader('White', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
+		if (this.options.ai.elo > 0)
+			lf_setheader('WhiteElo', this.options.ai.elo);
 		lf_setheader('Black', 'You');
+		lf_setheader('BlackElo', '-');
 	}
 	else
 	{
 		lf_setheader('White', 'You');
+		lf_setheader('WhiteElo', '-');
 		lf_setheader('Black', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
+		if (this.options.ai.elo > 0)
+			lf_setheader('BlackElo', this.options.ai.elo);
 	}
 	lf_setheader('Termination', 'normal');
 	lf_setheader('Result', '*');
