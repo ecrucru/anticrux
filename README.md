@@ -380,7 +380,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Engine: new UCI-compatible chess engine based on Node.js
 	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.move.none
 	- Library: scripts for Linux
-	- ELO: new tool to create games between computers
+	- ELO: new tool to create games between computers and to estimate ELO rankings
 	- Library: deactivable move "en passant"
 	- Library: support for the halfmove clock
 	- Library: new method AntiCrux.prototype.updateHalfMoveClock
@@ -396,6 +396,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- App: mobile application for Android and WinPhones
 	- UI: use of the embedded levels
 	- Library: level-dependent ELO rating
+	- Library: improved export to PGN
 
 
 ### License
