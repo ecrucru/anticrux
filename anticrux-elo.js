@@ -484,9 +484,9 @@ function acelo_elo() {
 		}
 	}
 
-	//-- Analyzes the ELO ranking for every level
+	//-- Analyzes the ELO rating for every level
 	console.log('');
-	console.log('>> Based on the declared rankings of Stockfish 8 with multi-variants support on lichess.org :');
+	console.log('>> Based on the declared ratings of Stockfish 8 with multi-variants support on lichess.org :');
 	for (level in levelStat)
 	{
 		//- Checks
@@ -495,7 +495,7 @@ function acelo_elo() {
 			continue;
 		levelStat[level].points = levelStat[level].win + levelStat[level].draw/2;
 
-		//- Calculates the ranking
+		//- Calculates the rating
 		if (levelStat[level].points === 0)
 			ra = 'as indeterminate';
 		else
@@ -526,7 +526,7 @@ function acelo_elo() {
 		}
 
 		//- Result
-		console.log('   - AntiCrux Level '+level+' is ranked '+ra+' after '+levelStat[level].games+' games (+'+levelStat[level].win+'/='+levelStat[level].draw+'/-'+levelStat[level].loss+').');
+		console.log('   - AntiCrux Level '+level+' is rated '+ra+' after '+levelStat[level].games+' games (+'+levelStat[level].win+'/='+levelStat[level].draw+'/-'+levelStat[level].loss+').');
 	}
 	return true;
 }

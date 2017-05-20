@@ -291,8 +291,8 @@ The following rules apply to make the determination possible :
 You will read such an output at the end :
 
 ```
->> Based on the declared rankings of Stockfish 8 with multi-variants support on lichess.org :
-   - AntiCrux Level 14 is ranked 1727 after 124 games (+50/=4/-70).
+>> Based on the declared ratings of Stockfish 8 with multi-variants support on lichess.org :
+   - AntiCrux Level 14 is rated 1727 after 124 games (+50/=4/-70).
 ```
 
 If you don't have enough data, you can rely on another statistical method with the tool named "[BayesElo](https://www.remi-coulom.fr/Bayesian-Elo/)". Download it and type the following commands :
@@ -380,7 +380,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Engine: new UCI-compatible chess engine based on Node.js
 	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.move.none
 	- Library: scripts for Linux
-	- ELO: new tool to create games between computers and to estimate ELO rankings
+	- ELO: new tool to create games between computers and to estimate ELO ratings
 	- Library: deactivable move "en passant"
 	- Library: support for the halfmove clock
 	- Library: new method AntiCrux.prototype.updateHalfMoveClock
