@@ -2046,17 +2046,22 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
 		return '';
 
-	//-- Prepares the header
+	//-- Prepares the header with the ordered seven tag roster (STR)
 	if (typeof pHeader !== 'object')
 		pHeader = {};
 	lf_setheader = function (pKey, pValue) {
-		if (!pHeader.hasOwnProperty(pKey))
+		if (!pHeader.hasOwnProperty(pKey) || (pHeader[pKey] === ''))
 			pHeader[pKey] = pValue;
 	};
+	lf_setheader('Event',  'Game');
+	lf_setheader('Site',   'https://github.com/ecrucru/anticrux/');
+	lf_setheader('Date',   (new Date().toISOString().slice(0, 10)));
+	lf_setheader('Round',  '?');
+	lf_setheader('White',  '');
+	lf_setheader('Black',  '');
+	lf_setheader('Result', '*');
 
-	lf_setheader('Event', 'Game');
-	lf_setheader('Site', 'https://github.com/ecrucru/anticrux/');
-	lf_setheader('Date', (new Date().toISOString().slice(0, 10)));
+	//-- Fills the fields
 	if (this.options.board.rotated)
 	{
 		lf_setheader('White', 'AntiCrux ' + this.options.ai.version + (this._lastLevel===null?'':' - Level '+this._lastLevel));
@@ -2074,14 +2079,13 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 			lf_setheader('BlackElo', this.options.ai.elo);
 	}
 	lf_setheader('Termination', 'normal');
-	lf_setheader('Result', '*');
 	if (this.hasSetUp())
 	{
 		lf_setheader('SetUp', '1');
 		lf_setheader('FEN', this._history_fen0);
 	}
 	lf_setheader('PlyCount', this._history.length);
-	lf_setheader('Variant', 'antichess');
+	lf_setheader('Variant', 'suicide');
 	lf_setheader('TimeControl', '-');
 
 	//-- Builds the header
@@ -2089,7 +2093,7 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	for (e in pHeader)
 	{
 		if (typeof pHeader[e] === 'string')
-			pgn += '['+e+' "'+pHeader[e].split('"').join("'")+'"]' + "\n";
+			pgn += '['+e+' "'+pHeader[e].split('\\').join("\\\\").split('"').join('\\"')+'"]' + "\n";
 		else
 			pgn += '['+e+' "'+pHeader[e]+'"]' + "\n";
 	}
