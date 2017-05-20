@@ -2379,7 +2379,6 @@ AntiCrux.prototype._init = function() {
 	//-- General variables
 	this._helper = null;								//You can't refer to that variable without calling first _initHelper()
 	this._buffer_fischer = [];							//You can't refer to that variable without calling first _initFischer()
-	this._lastLevel = null;
 };
 
 /**

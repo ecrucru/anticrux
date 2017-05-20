@@ -347,7 +347,7 @@ function acui_isphone() {
 }
 
 $(document).ready(function() {
-	var i;
+	var i, defaultLevel;
 
 	//-- Initialization
 	ui_mobile = ($('#acui_ismobile').length > 0);
@@ -370,11 +370,13 @@ $(document).ready(function() {
 
 	//-- Updates the levels
 	$('#acui_option_predef').find('option').remove().end();
+	defaultLevel = ai.getLevel();
 	for (i=1 ; i<=20 ; i++)
 	{
 		ai.setLevel(i);
 		$('<option/>').val(i).html('Level '+i + (ai.options.ai.elo>0 ? ' ('+ai.options.ai.elo+')' : '')).appendTo('#acui_option_predef');
 	}
+	ai.setLevel(defaultLevel);
 
 	//-- Events (General)
 	$("input[type='text']").on('click', function () {

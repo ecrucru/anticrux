@@ -130,7 +130,7 @@ For **Android 4+**, follow these steps :
 - Download the APK file from the link above
 - Click on the downloaded file
 - Validate the installation
-- Go back to the settings to deativate the unsafe sources
+- Go back to the settings to deactivate the unsafe sources
 - Run the application
 
 For **Windows Phone**, the application is made available from a technical perspective. It has not been tested with a real device.
