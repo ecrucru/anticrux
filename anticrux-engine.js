@@ -62,7 +62,10 @@ aceng_options = {
 //-- Main engine
 aceng_engine = new AntiCrux();
 if (aceng_engine.setLevel(aceng_options.defaultLevel))
-	aceng_engine.options.ai.noStatOnForcedMove = true;
+{
+	aceng_engine.options.board.noStatOnForcedMove = true;	//Faster
+	aceng_engine.options.board.assistance = true;			//Ponder
+}
 aceng_engine.callbackExploration = function(pMaxDepth, pDepth, pNodes) {
 		aceng_output('info depth '+pMaxDepth+' seldepth '+pDepth+' nodes '+pNodes+' pv 0000');
 	};
@@ -152,8 +155,7 @@ pipe = readline.createInterface({
 
 				// Applies the option
 				if (obj.name == 'level')
-					if (aceng_engine.setLevel(parseInt(obj.value)))
-						aceng_engine.options.ai.noStatOnForcedMove = true;
+					aceng_engine.setLevel(parseInt(obj.value));
 				if (obj.name == 'debug')
 					aceng_options.debug = (obj.value.toLowerCase() == 'true');
 			}
@@ -219,35 +221,20 @@ pipe = readline.createInterface({
 				// Mapping of the level
 				if (tab[1] == 'depth')
 					if (aceng_engine.setLevel(parseInt(tab[2])))
-					{
-						aceng_engine.options.ai.noStatOnForcedMove = true;
 						aceng_output("info string 'go depth N' defines the level N but it doesn\'t restrict the explored depth");
-					}
 
-				// Gets the right move to play
+				// Gets the right move to play and extra information
 				move = aceng_engine.getMoveAI();
-
-				// Gets the quick reply of the opponent
-				movePonder = aceng_engine.getMainNode();
-				if (!aceng_engine._has(movePonder, 'moves', true) || !aceng_engine._has(movePonder, 'nodes', true))
-					movePonder = aceng_engine.constants.move.none;
-				else
-				{
-					movePonder = movePonder.nodes[movePonder.moves.indexOf(move)];
-					if (!aceng_engine._has(movePonder, 'moves', true))
-						movePonder = aceng_engine.constants.move.none;
-					else
-						movePonder = movePonder.moves[Math.floor(Math.random() * movePonder.moves.length)];
-				}
+				movePonder = aceng_engine.getAssistance(false, true);
 
 				// Transmits the score
 				aceng_output('info score cp '+aceng_engine.getScore().valuationSolver+' depth '+aceng_engine._reachedDepth+' nodes '+aceng_engine._numNodes+' pv '+aceng_engine.moveToUCI(move));
 
 				// Transmits the moves
-				if (movePonder == aceng_engine.constants.move.none)
+				if (movePonder.length === 0)
 					aceng_output('bestmove '+aceng_engine.moveToUCI(move));
 				else
-					aceng_output('bestmove '+aceng_engine.moveToUCI(move)+' ponder '+aceng_engine.moveToUCI(movePonder));
+					aceng_output('bestmove '+aceng_engine.moveToUCI(move)+' ponder '+movePonder);
 
 				// Releases the memory
 				aceng_engine.freeMemory();

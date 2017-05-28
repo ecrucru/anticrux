@@ -62,7 +62,6 @@ var server = net.createServer(function(pSocket) {
 		//-- New AI
 		pSocket.acsrv_ai = new AntiCrux();
 		pSocket.acsrv_ai.setLevel(pSocket.acsrv_options.level);
-		pSocket.acsrv_ai.options.ai.noStatOnForcedMove = true;
 		pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.none;
 
 		//-- Welcome screen
@@ -389,7 +388,6 @@ server.acsrv_process = function(pSocket) {
 						i = Math.max(1, Math.min(parseInt(tab[2]), pSocket.acsrv_options._maxLevel, 20));
 						if (pSocket.acsrv_ai.setLevel(i))
 						{
-							pSocket.acsrv_ai.options.ai.noStatOnForcedMove = true;
 							pSocket.acsrv_options.level = i;
 							pSocket.write("Level "+i+" set.\r\nfics% ");
 						}

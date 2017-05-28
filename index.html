@@ -59,7 +59,6 @@
 						<li><a href="#acui_tab_board" id="acui_tab_board_header" class="ui-btn-active">Board</a></li>
 						<li><a href="#acui_tab_action">Actions</a></li>
 						<li><a href="#acui_tab_options">Options</a></li>
-						<li><a href="#acui_tab_tree">Tree</a></li>
 						<li><a href="#acui_tab_about">About</a></li>
 					</ul>
 				</div>
@@ -96,6 +95,7 @@
 								<div id="acui_tab_board_evaluation" class="ui-body-d ui-content">
 									<div id="acui_sect_eval">
 										<span id="acui_lastmove"></span>
+										<br/><span id="acui_assistance"></span>
 										<br/><span id="acui_nodes"></span>
 										<br/><span id="acui_depth"></span>
 									</div>
@@ -176,7 +176,6 @@
 							<p><label for="acui_option_wholenodes">Maximize the nodes</label> <input class="AntiCrux-ui-option" id="acui_option_wholenodes" type="checkbox" /></p>
 							<p><label for="acui_option_minimizeliberty">Minimize the liberty</label> <input class="AntiCrux-ui-option" id="acui_option_minimizeliberty" type="checkbox" /></p>
 							<p><label for="acui_option_maxreply">Maximal number of replies :</label> <input class="AntiCrux-ui-option" id="acui_option_maxreply" type="range" value="1" min="1" max="10" /></p>
-							<p><label for="acui_option_nostatonforcedmove">No statistic on forced moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonforcedmove" type="checkbox" /></p>
 							<p><label for="acui_option_randomizedsearch">Randomized search</label> <input class="AntiCrux-ui-option" id="acui_option_randomizedsearch" type="checkbox" /></p>
 							<p><label for="acui_option_pessimisticscenario">Pessimistic scenario</label> <input class="AntiCrux-ui-option" id="acui_option_pessimisticscenario" type="checkbox" /></p>
 							<p><label for="acui_option_beststaticscore">Best static score</label> <input class="AntiCrux-ui-option" id="acui_option_beststaticscore" type="checkbox" /></p>
@@ -190,13 +189,13 @@
 							<h2>Board</h2>
 							<p><label for="acui_option_fischer">Fischer :</label> <input class="AntiCrux-ui-option" id="acui_option_fischer" type="number" min="1" max="960" value="519" title="519 is classical. Double-click to generate a new number" /></p>
 							<p><label for="acui_option_pro">Professional mode</label> <input class="AntiCrux-ui-option-refresh" id="acui_option_pro" type="checkbox" /></p>
+							<p><label for="acui_option_assistance">Assistance</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_assistance" type="checkbox" /></p>
 							<p><label for="acui_option_darktheme">Dark theme</label> <input class="AntiCrux-ui-option" id="acui_option_darktheme" type="checkbox" /></p>
 							<p><label for="acui_option_rotated">Rotated board</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_rotated" type="checkbox" /></p>
 							<p><label for="acui_option_symbol">Symbols for the pieces</label> <input class="AntiCrux-ui-option" id="acui_option_symbol" type="checkbox" /></p>
 							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_coordinates" type="checkbox" /></p>
+							<p><label for="acui_option_nostatonforcedmove">No statistic on forced moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonforcedmove" type="checkbox" /></p>
 							<p><label for="acui_option_nostatonownmove">No statistic on own moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonownmove" type="checkbox" /></p>
-							<p><label for="acui_option_decisiontree">Decision tree</label> <input class="AntiCrux-ui-option" id="acui_option_decisiontree" type="checkbox" /></p>
-							<p><label for="acui_option_fulldecisiontree">Full decision tree</label> <input class="AntiCrux-ui-option" id="acui_option_fulldecisiontree" type="checkbox" checked="checked" /></p>
 							<p><label for="acui_option_debugcellid">Internal identifier</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_debugcellid" type="checkbox" /></p>
 						</div>
 
@@ -215,11 +214,6 @@
 							</p>
 						</div>
 					</div>
-				</div>
-
-				<!-- Tab - Tree -->
-				<div id="acui_tab_tree" class="ui-body-d ui-content">
-					<div id="acui_dtree"></div>
 				</div>
 
 				<!-- Tab - About -->

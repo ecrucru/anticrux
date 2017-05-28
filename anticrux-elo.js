@@ -135,16 +135,10 @@ function acelo_newjob() {
 	{
 		job.engineOne.level = lf_random(job.engineOne.levelMin, job.engineOne.levelMax);
 		if (job.engineOne.type == 'AC')
-		{
 			job.engineOne.ai.setLevel(job.engineOne.level);
-			job.engineOne.ai.options.ai.noStatOnForcedMove = true;
-		}
 		job.engineTwo.level = lf_random(job.engineTwo.levelMin, job.engineTwo.levelMax);
 		if (job.engineTwo.type == 'AC')
-		{
 			job.engineTwo.ai.setLevel(job.engineTwo.level);
-			job.engineTwo.ai.options.ai.noStatOnForcedMove = true;
-		}
 
 		//- Avoids an auto-match
 		if ((job.engineOne.type == job.engineTwo.type) && (job.engineOne.level == job.engineTwo.level))

@@ -217,10 +217,11 @@ To verify that AntiCrux Engine reacts correctly, you can create the following fi
 
 ```
 uci
+setoption name level value 12
 isready
 ucinewgame
 position startpos moves a3
-go depth 5
+go infinite
 ```
 
 Then run the command :
@@ -361,7 +362,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: deep technical remodelling of the library for speed and lower impact on the memory
 	- Library: new method AntiCrux.prototype.copyOptions
 	- Library: new method AntiCrux.prototype.resetStats
-	- Library: bug fix in the processing of the option AntiCrux.options.ai.noStatOnForcedMove
+	- Library: bug fix in the processing of the option AntiCrux.options.board.noStatOnForcedMove
 	- Library: new method AntiCrux.prototype.getOppositePlayer
 	- UI: improved layout for the history of the moves
 	- Library: improvement of the deep analysis
@@ -397,6 +398,13 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- UI: use of the embedded levels
 	- Library: level-dependent ELO rating
 	- Library: improved export to PGN
+	- Library: reworked decision tree
+	- Library: removed method AntiCrux.prototype.getDecisionTreeHtml
+	- Library: removed option AntiCrux.options.board.decisionTree
+	- Library: removed option AntiCrux.options.board.fullDecisionTree
+	- Library: new method AntiCrux.prototype.getAssistance
+	- Library: option AntiCrux.options.board.analysisDepth renamed as AntiCrux.options.board.assistanceDepth
+	- Library: option AntiCrux.options.ai.noStatOnForcedMove renamed as AntiCrux.options.board.noStatOnForcedMove
 
 
 ### License
@@ -498,12 +506,6 @@ The minimization of the liberty of your opponent doesn't necessarily pick the ri
 
 This option is relevant when AntiCrux.options.ai.minimizeLiberty is activated. The higher the figure, the higher the nodes and the lower the depth. The recommended values are 1 (forced moves where possible) or 2 (tolerable liberty without forced moves).
 
-- **AntiCrux.options.ai.noStatOnForcedMove**
-
-To play faster when the moves are forced, you can choose to not perform a deep analysis to evaluate the position of the artificial intelligence.
-
-The statistics will be updated the next time several moves are possible. So this option accelerates the game play.
-
 - **AntiCrux.options.ai.wholeNodes**
 
 The exploration is done depth by depth to permit an homogeneous evaluation of all the possible moves. When you reach a next depth, the number of nodes increases exponentially. Their number is approximately given by the relation "Nodes=A\*exp(B\*Depth)" where A and B are two constants to be determined with an [exponential regression](http://keisan.casio.com/exec/system/14059930754231).
@@ -591,25 +593,23 @@ The option activates the coordinates all around the board.
 
 When the option is disabled, the board is more compact.
 
+- **AntiCrux.options.board.noStatOnForcedMove**
+
+To play faster when the moves are forced, you can choose to not perform a deep analysis to evaluate the position of the artificial intelligence.
+
+The statistics will be updated the next time several moves are possible. So this option accelerates the game play.
+
 - **AntiCrux.options.board.noStatOnOwnMove**
 
 To not interfere with your thinking, the statistics are not generated when you play. You can use a hint on demand from the general user interface.
 
-- **AntiCrux.options.board.decisionTree**
+- **AntiCrux.options.board.assistance**
 
-The decision tree is the basic structure of nodes helping to find the best move. When this option is activated, some memory is allocated to represent the moves in a human-readable way.
+The option allows the next moves to be anticipated for informational purposes.
 
-- **AntiCrux.options.board.fullDecisionTree**
+- **AntiCrux.options.board.assistanceDepth**
 
-In practice, the player needs to read the deepest level, not every level.
-
-For debugging purposes, you can ask to show all the levels within a certain limit. The memory is then impacted.
-
-- **AntiCrux.options.board.analysisDepth**
-
-This depth applies on the analysis of the moves. The deeper, the more anticipation you can expect.
-
-This information consumes the memory and is less relevant at deep levels.
+An higher depth for the assistant implies the anticipation of more moves and an higher reliability of the suggested moves at low depth.
 
 - **AntiCrux.options.board.debugCellId**
 
@@ -651,7 +651,6 @@ Please note that the web-interface offers all the options individually and fewer
 | maxNodes            | 100 | 50k | 50k | 50k | 15k | 30k | 50k | 75k | 80k | 85k | 90k | 120k | 150k | 200k | 300k | 400k | 500k | 750k | 1M | 2M |
 | minimizeLiberty     | -   | -   | -   | -   | -   | -   | -   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | maxReply            | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 3   | 2   | 1   | 1   | 1    | 1    | 2    | 2    | 2    | 2    | 2    | 2  | 2  |
-| noStatOnForcedMove  | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | wholeNodes          | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | pessimisticScenario | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
@@ -721,7 +720,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.copyOptions(pObject)
 - AntiCrux.defaultBoard(pFischer)
 - AntiCrux.freeMemory()
-- AntiCrux.getDecisionTreeHtml(pNode)
+- AntiCrux.getAssistance(pSymbols, pUCI)
 - AntiCrux.getDrawReason()
 - AntiCrux.getHalfMoveClock()
 - AntiCrux.getHistory()
@@ -735,7 +734,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.getNumNodes()
 - AntiCrux.getOppositePlayer(pNode)
 - AntiCrux.getPieceByCoordinate(pCoordinate, pNode)
-- AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbol)
+- AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbols)
 - AntiCrux.getPlayer(pNode)
 - AntiCrux.getReachedDepth()
 - AntiCrux.getScore(pNode)

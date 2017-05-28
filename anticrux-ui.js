@@ -25,7 +25,6 @@ var	ai = new AntiCrux(),
 	ai_rewind = new AntiCrux(),
 	ui_mobile, ui_cordova, ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
 
-ai.options.ai.noStatOnForcedMove = true;
 ai.options.board.symbols = true;
 ai.defaultBoard();
 
@@ -51,7 +50,6 @@ function acui_options_load() {
 		$('#acui_option_maxnodes').val(ai.options.ai.maxNodes);
 		$('#acui_option_minimizeliberty').prop('checked', ai.options.ai.minimizeLiberty);
 		$('#acui_option_maxreply').val(ai.options.ai.maxReply).slider('refresh');
-		$('#acui_option_nostatonforcedmove').prop('checked', ai.options.ai.noStatOnForcedMove);
 		$('#acui_option_wholenodes').prop('checked', ai.options.ai.wholeNodes);
 		$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
 		$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
@@ -63,11 +61,11 @@ function acui_options_load() {
 
 		//- Board
 		$('#acui_option_fischer').val(ai.options.board.fischer);
+		$('#acui_option_assistance').prop('checked', ai.options.board.assistance);
 		$('#acui_option_symbol').prop('checked', ai.options.board.symbols);
 		$('#acui_option_coordinates').prop('checked', ai.options.board.coordinates);
+		$('#acui_option_nostatonforcedmove').prop('checked', ai.options.board.noStatOnForcedMove);
 		$('#acui_option_nostatonownmove').prop('checked', ai.options.board.noStatOnOwnMove);
-		$('#acui_option_decisiontree').prop('checked', ai.options.board.decisionTree);
-		$('#acui_option_fulldecisiontree').prop('checked', ai.options.board.fullDecisionTree);
 		$('#acui_option_debugcellid').prop('checked', ai.options.board.debugCellId);
 
 		//- Variant
@@ -81,7 +79,7 @@ function acui_reset_ui(pResetPlayer) {
 	ui_rewind = false;
 	$('#acui_tab_board_header').trigger('click');
 	$('#acui_valuation').val(0).slider('refresh');
-	$('#acui_lastmove, #acui_score, #acui_nodes, #acui_depth, #acui_moves, #acui_history, #acui_dtree').html('');
+	$('#acui_score, #acui_lastmove, #acui_assistance, #acui_nodes, #acui_depth, #acui_moves, #acui_history').html('');
 	$('#acui_sect_rewind').hide();
 	$('#acui_pgn').addClass('ui-disabled');
 	ai.resetStats();
@@ -171,9 +169,7 @@ function acui_refresh_moves() {
 	$('#acui_nodes').html((val === 0 ? '' : 'Nodes : '+val));
 	val = ai.getReachedDepth();
 	$('#acui_depth').html((val === 0 ? '' : 'Depth : '+val));
-	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistic with the professional mode.</div>' : ai.getMovesHtml(player));
-	if (ai.options.board.decisionTree)
-		$('#acui_dtree').html(ai.getDecisionTreeHtml());
+	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistical data with the professional mode.</div>' : ai.getMovesHtml(player));
 }
 
 function acui_refresh_history(pScroll) {
@@ -415,6 +411,7 @@ $(document).ready(function() {
 
 		//-- Moves
 		$('#acui_lastmove').html('Last move : ' + ai.moveToString(move));
+		$('#acui_assistance').html('Assistance : ' + ($('#acui_option_pro').prop('checked') || !ai.options.board.assistance ? '-' : ai.getAssistance(true, false)));
 		acui_refresh_moves();
 		if (ai.movePiece(move, true, player) != ai.constants.move.none)
 		{
@@ -737,9 +734,9 @@ $(document).ready(function() {
 		return true;
 	});
 
-	$('#acui_option_fulldecisiontree').change(function() {
-		if ($('#acui_option_fulldecisiontree').prop('checked'))
-			$('#acui_option_decisiontree').prop('checked', true).checkboxradio('refresh');
+	$('#acui_option_pro').change(function() {
+		if ($('#acui_option_pro').prop('checked'))
+			$('#acui_option_assistance').prop('checked', false).checkboxradio('refresh');
 		return true;
 	});
 
@@ -750,10 +747,7 @@ $(document).ready(function() {
 
 		//-- Mobile version
 		if (ui_mobile)
-		{
 			ai.setLevel(parseInt($('#acui_option_level').val()));
-			ai.options.ai.noStatOnForcedMove = true;
-		}
 		else
 		//-- Desktop version
 		{
@@ -762,7 +756,6 @@ $(document).ready(function() {
 			ai.options.ai.maxNodes				= parseInt($('#acui_option_maxnodes').val());
 			ai.options.ai.minimizeLiberty		= $('#acui_option_minimizeliberty').prop('checked');
 			ai.options.ai.maxReply				= parseInt($('#acui_option_maxreply').val());
-			ai.options.ai.noStatOnForcedMove	= $('#acui_option_nostatonforcedmove').prop('checked');
 			ai.options.ai.wholeNodes			= $('#acui_option_wholenodes').prop('checked');
 			ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
 			ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
@@ -774,11 +767,11 @@ $(document).ready(function() {
 
 			//- Board
 			ai.options.board.fischer			= parseInt($('#acui_option_fischer').val());
+			ai.options.board.assistance			= $('#acui_option_assistance').prop('checked');
 			ai.options.board.symbols			= $('#acui_option_symbol').prop('checked');
 			ai.options.board.coordinates		= $('#acui_option_coordinates').prop('checked');
+			ai.options.board.noStatOnForcedMove	= $('#acui_option_nostatonforcedmove').prop('checked');
 			ai.options.board.noStatOnOwnMove	= $('#acui_option_nostatonownmove').prop('checked');
-			ai.options.board.decisionTree		= $('#acui_option_decisiontree').prop('checked');
-			ai.options.board.fullDecisionTree	= $('#acui_option_fulldecisiontree').prop('checked');
 			ai.options.board.debugCellId		= $('#acui_option_debugcellid').prop('checked');
 
 			//- Variant
@@ -801,7 +794,7 @@ $(document).ready(function() {
 	$('#acui_option_darktheme').change(function() {
 		$('#acui_page').removeClass('ui-page-theme-a ui-page-theme-b').addClass('ui-page-theme-' + (ai.options.board.darkTheme?'b':'a'));
 		$('#acui_rewind, #acui_switch_ui').removeClass('ui-btn-a ui-btn-b').addClass('ui-btn-' + (ai.options.board.darkTheme?'a':'b'));
-		$('#acui_lastmove').html('');
+		$('#acui_lastmove, #acui_assistance').html('');
 	});
 
 	$('#acui_option_level').change(function() {

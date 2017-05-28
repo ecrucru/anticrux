@@ -37,6 +37,7 @@
 //		rn2k2r/ppp2p1p/5p2/8/8/N6P/PPPKPP1P/R1B2BNR b - -			Mate in 11 to be found (b5)
 //		6n1/p7/2B2p2/8/8/4K3/P1P2PPR/RN6 w - -						Mate in 12 to be found (Rh6)
 //		rnb4K/pppp1k1p/5p2/2b5/4n3/8/8/8 b - -						Mate in 13 to be found
+//		1brqkn2/p1pppBp1/8/1p6/8/2P5/PP1PPP1r/B1RQKNNb w - -		Mate in 13 to be found in AntiChess 689 (Nh2)
 //		rnb1kb1r/p1pp1ppp/7n/4P3/1p5R/1P6/P1P1PPP1/RNBQKBN1 w - -	Mate in 15 to be found (Bh6)
 //		4k2r/pppn2pp/4p3/8/8/N3PN2/PPP1K1P1/R1B5 w - -				Mate to find g4 and Nb5 (Ne5-g4)
 
@@ -513,7 +514,6 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 	this.options.ai.maxNodes			= [100, 50000, 50000, 50000, 15000, 30000, 50000, 75000, 80000, 85000, 90000, 120000, 150000, 200000, 300000, 400000, 500000, 750000, 1000000, 2000000][pLevel-1];
 	this.options.ai.minimizeLiberty		= (pLevel >= 8);
 	this.options.ai.maxReply			= [1, 1, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2][pLevel-1];
-	this.options.ai.noStatOnForcedMove	= (pLevel >= 6);
 	this.options.ai.wholeNodes			= (pLevel >= 11);
 	this.options.ai.randomizedSearch	= true;
 	this.options.ai.pessimisticScenario	= (pLevel >= 10);
@@ -861,7 +861,7 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	this._ai_nodeMoves(pNode);
 	if (pNode.moves.length === 0)
 		return this.constants.move.none;
-	limitDepth = (this.options.ai.noStatOnForcedMove && (pNode.moves.length === 1));
+	limitDepth = (this.options.board.noStatOnForcedMove && (pNode.moves.length === 1));
 
 	//-- Oyster : you can't lose against this level
 	if (this.options.ai.oyster)
@@ -934,12 +934,14 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 
 	//-- Valuates the decision tree entirely
 	this._ai_gc();
-	this._ai_nodeSolve(pPlayer, 0, '', pNode);
-	return this._ai_nodePick(pPlayer, pNode);
+	this._ai_nodeSolve(pPlayer, 0, pNode);
+	pNode._bestMove = this._ai_nodePick(pPlayer, pNode);
+	return pNode._bestMove;
 };
 
 /**
- * The method predicts the next few moves.
+ * The method predicts the next few moves for the provided node.
+ * It is assumed that the node has not been evaluated yet.
  *
  * @method predictMoves
  * @param {Object} pNode (Optional) Reference node.
@@ -961,7 +963,6 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 	this._helper.options.ai.maxDepth = 3;
 	this._helper.options.ai.maxNodes = 0;
 	this._helper.options.ai.wholeNodes = true;
-	this._helper.options.board.symbols = this.options.board.symbols;
 	if (!this._helper.loadFen(this.toFen(pNode)))
 		return 'Error : the position cannot be loaded.';
 
@@ -995,6 +996,38 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 
 	//-- Result
 	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + this._helper.getScore().valuationSolverPC + '%';
+};
+
+/**
+ * The method returns the expected deep sequence of moves.
+ *
+ * @method getAssistance
+ * @param {Boolean} pSymbols Use Unicode symbols. The option is ignored if pUCI is equal to *true*.
+ * @param {Boolean} pUCI UCI notation.
+ * @return {String} String of the moves.
+ */
+AntiCrux.prototype.getAssistance = function(pSymbols, pUCI) {
+	var pNode;
+
+	//-- Checks the options
+	if (!this.options.board.assistance)
+		return '';
+
+	//-- Self
+	pNode = this._root_node;
+	if (!this._has(pNode, '_bestMove', false))
+		return '';
+
+	//-- Initializes the basic position
+	this._buffer = '';
+	this._initHelper();
+	this.options.board.symbols = pSymbols;
+	if (!this._helper.loadFen(this.toFen()))
+		return '';
+
+	//-- Gets the calculated sequence of moves
+	this._ai_nodeAssistance(pNode, pUCI, 1);
+	return this._buffer;
 };
 
 /**
@@ -1168,12 +1201,12 @@ AntiCrux.prototype.promote = function(pPiece, pNode) {
  * @method getPieceSymbol
  * @param {AntiCrux.constants.piece} pPiece The piece.
  * @param {AntiCrux.constants.owner} pPlayer The player.
- * @param {Boolean} pSymbol Use Unicode.
+ * @param {Boolean} pSymbols Use Unicode symbols.
  * @return {String} Symbol as a string.
  */
-AntiCrux.prototype.getPieceSymbol = function(pPiece, pPlayer, pSymbol) {
+AntiCrux.prototype.getPieceSymbol = function(pPiece, pPlayer, pSymbols) {
 	var output;
-	if (!pSymbol)
+	if (!pSymbols)
 		return (pPiece == this.constants.piece.pawn ? '' : this.constants.piece.mapping_rev[pPiece].toUpperCase());
 	else
 	{
@@ -1420,7 +1453,6 @@ AntiCrux.prototype.isDraw = function(pCriteria, pNode) {
 	if (pCriteria.threefoldRepetition)
 	{
 		this._initHelper();
-		this._helper.copyOptions(this);
 		if (this._helper.loadFen(this._history_fen0))
 		{
 			//- Builds all the positions
@@ -1655,7 +1687,6 @@ AntiCrux.prototype.getHistoryHtml = function() {
 
 	//-- Initial position
 	this._initHelper();
-	this._helper.copyOptions(this);
 	if (!this._helper.loadFen(this._history_fen0))
 		return '';
 
@@ -1674,37 +1705,6 @@ AntiCrux.prototype.getHistoryHtml = function() {
 	if (i % 2 == 1)
 		output += '</tr>';
 	return output + '</table>';
-};
-
-/**
- * The method returns the decision tree in HTML format.
- *
- * @method getDecisionTreeHtml
- * @param {Object} pNode (Optional) Reference node.
- * @return {String} HTML content.
- */
-AntiCrux.prototype.getDecisionTreeHtml = function(pNode) {
-	//-- Self
-	if (pNode === undefined)
-		pNode = this._root_node;
-
-	//-- Extracts the data
-	this._buffer = '';
-	this._ai_nodeTreeHtml(0, pNode);
-	if (this._buffer.length === 0)
-		this._buffer = '<tr><td colspan="7">No data</td></tr>';
-	return	'<table class="ui-table AntiCrux-table" data-role="table">' +
-			'	<thead>' +
-			'		<tr>' +
-			'			<th>Static</th>' +
-			'			<th>Deep</th>' +
-			'			<th colspan="5">Moves</th>' +
-			'		</tr>' +
-			'	</thead>' +
-			'	<tbody>' + "\n" +
-					this._buffer +
-			'	</tbody>' +
-			'</table>';
 };
 
 /**
@@ -2105,7 +2105,6 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 
 	//-- Loads the initial position
 	this._initHelper();
-	this._helper.copyOptions(this);
 	if (!this._helper.loadFen(this._history_fen0))
 		return '';
 
@@ -2336,7 +2335,6 @@ AntiCrux.prototype._init = function() {
 			maxNodes : 0,								//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
 			minimizeLiberty : false,					//TRUE allows a deeper inspection by forcing the moves, FALSE does a complete evaluation
 			maxReply : 0,								//Number >=1 corresponding to the maximal number of moves that a player is allowed in return when minimizeLiberty is enabled
-			noStatOnForcedMove : false,					//TRUE plays faster but the player won't be able to check the situation
 			wholeNodes : false,							//TRUE evaluates the depths until the limit is reached and makes the analysis stronger
 			randomizedSearch : false,					//TRUE helps the game to not played the same pieces
 			pessimisticScenario : false,				//TRUE makes the algorithm stronger, FALSE is more random
@@ -2352,15 +2350,15 @@ AntiCrux.prototype._init = function() {
 			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
 		},
 		board : {
+			fischer : this.getNewFischerId(),			//Default layout (519=classical)
+			assistance : false,							//TRUE suggests the upcoming moves based on a unique analysis from the root node. The deeper, the less accurate
+			assistanceDepth : 5,						//Depth for the analysis of the possible moves by the assistant
 			darkTheme : false,							//A dark theme may be rendered in reverse video, so it impacts the real colors of the displayed pieces in Unicode
 			rotated : false,							//TRUE rotates the board at 180°
 			symbols : false,							//Symbols in Unicode for the display
-			fischer : this.getNewFischerId(),			//Default layout (519=classical)
 			coordinates : true,							//TRUE displays the coordinates around the board
+			noStatOnForcedMove : true,					//TRUE plays faster but the player won't be able to check the situation
 			noStatOnOwnMove : true,						//TRUE plays faster but the player won't be able to know if he played the right wove
-			decisionTree : false,						//TRUE activates the visualization of the decision tree at the cost of memory
-			fullDecisionTree : false,					//TRUE displays the full decision tree in the user interface and this may represent too much data. The option is essentially used for debugging purposes
-			analysisDepth : 5,							//Depth for the analysis of the possible moves
 			debugCellId : false							//TRUE display the internal identifier of every cell of the board when there is no piece on it
 		}
 	};
@@ -2427,6 +2425,7 @@ AntiCrux.prototype._has = function(pObject, pField, pLengthCheckOrString) {
 AntiCrux.prototype._initHelper = function() {
 	if (this._helper === null)
 		this._helper = new AntiCrux();
+	this._helper.copyOptions(this);
 	this._helper.options.board.darkTheme = this.options.board.darkTheme;
 };
 
@@ -3145,33 +3144,16 @@ AntiCrux.prototype._ai_nodeValuate = function(pNode) {
  * @method _ai_nodeSolve
  * @param {AntiCrux.constants.owner} pPlayer Player.
  * @param {Integer} pDepth Depth of the browsed level.
- * @param {String} pPath Moves as string.
  * @param {Object} pNode (Optional) Reference node.
  * @return {Object} Result of the valuation.
  */
-AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pPath, pNode) {
+AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 	var i, has, hasNode, allForced, hasForced, condition, threshold, val, counter;
 
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
 	hasNode = this._has(pNode, 'nodes', true);
-
-	//-- Path of the moves
-	if (	this.options.board.decisionTree &&
-			hasNode &&
-			(pDepth <= this.options.board.analysisDepth)
-	) {
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			//- Path of the moves
-			if (!pNode.nodes[i].hasOwnProperty('path'))
-				pNode.nodes[i].path = pPath;
-			if (pNode.nodes[i].path.length > 0)
-				pNode.nodes[i].path += '¦';
-			pNode.nodes[i].path += this.moveToString(pNode.moves[i], pNode);
-		}
-	}
 
 	//-- Checks the maximal depth
 	if (!hasNode)
@@ -3202,7 +3184,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pPath, pNode) {
 	for (i=0 ; i<pNode.nodes.length ; i++)
 	{
 		//- Valuation
-		this._ai_nodeSolve(pPlayer, pDepth+1, pNode.nodes[i].path, pNode.nodes[i]);
+		this._ai_nodeSolve(pPlayer, pDepth+1, pNode.nodes[i]);
 
 		//- Forced moves
 		has = pNode.nodes[i].hasOwnProperty('_forced');
@@ -3259,7 +3241,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pPath, pNode) {
 	}
 
 	//-- Evaluates the current node by using an average (default calculation)
-	// Remark: for forced moves, it should keep the same value
+	// Remark: for the forced moves, it should keep the same value
 	condition = ((pNode.player == pPlayer) || !this.options.ai.pessimisticScenario);
 	if (condition)
 	{
@@ -3326,6 +3308,10 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pPath, pNode) {
 		if (val != this.constants.score.infinite)
 			pNode._sequence = val+1;
 	}
+
+	//-- Flag the best move
+	if (hasNode && this.options.board.assistance && (pDepth <= this.options.board.assistanceDepth))
+		pNode._bestMove = this._ai_nodePick(pNode.player, pNode);
 };
 
 /**
@@ -3370,7 +3356,7 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	if (pNode === undefined)
 		pNode = this._root_node;
 
-	//-- Keeps the moves which lead to fast end of game
+	//-- Keeps the moves which lead to a fast end of game
 	if (this.options.ai.acceleratedEndGame && this._has(pNode, '_forced') && (pNode.valuationSolver == pNode.player * -this.constants.score.infinite))
 	{
 		threshold = this.constants.score.infinite;
@@ -3379,15 +3365,16 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 			if (this._has(pNode.nodes[i], '_forced') && (pNode.nodes[i]._sequence > 0) && (pNode.nodes[i]._sequence < threshold))
 				threshold = pNode.nodes[i]._sequence;
 		}
-		if (threshold == this.constants.score.infinite)
-			throw 'Internal error - Report any error (#006)';
-		for (i=pNode.nodes.length-1 ; i>=0 ; i--)
+		if (threshold != this.constants.score.infinite)
 		{
-			if (pNode.nodes[i]._sequence != threshold)
+			for (i=pNode.nodes.length-1 ; i>=0 ; i--)
 			{
-				pNode.moves.splice(i, 1);
-				this._ai_nodeFreeMemory(pNode.nodes[i]);
-				pNode.nodes.splice(i, 1);
+				if (pNode.nodes[i]._sequence != threshold)
+				{
+					pNode.moves.splice(i, 1);
+					this._ai_nodeFreeMemory(pNode.nodes[i]);
+					pNode.nodes.splice(i, 1);
+				}
 			}
 		}
 	}
@@ -3477,78 +3464,39 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 };
 
 /**
- * The method prepares the output which shows the tree.
- * The output is collected into an internal variable for further processing.
+ * The method recurses the decision tree to build the expected sequence of moves.
+ * The output is stored in a buffer.
  *
  * @private
- * @method _ai_nodeTreeHtml
- * @param {Integer} pDepth Depth of the browsed level.
- * @param {Object} pNode (Optional) Reference node.
+ * @method _ai_nodeAssistance
+ * @param {Object} pNode Reference node.
+ * @param {Boolean} pUCI UCI notation.
+ * @param {Integer}} pDepth Browsed depth (1=root).
  */
-AntiCrux.prototype._ai_nodeTreeHtml = function(pDepth, pNode) {
-	var that, fLimitDepth, fAbsScoreFormat, i, j, writeMode;
-
-	//-- Self
-	if (pNode === undefined)
-		pNode = this._root_node;
-
+AntiCrux.prototype._ai_nodeAssistance = function(pNode, pUCI, pDepth) {
 	//-- Checks
-	if (!this.options.board.decisionTree)
-		return;
-	if (!this._has(pNode, 'nodes', true))
+	if (!this._has(pNode, '_bestMove', false))
 		return;
 
-	//-- Library
-	that = this;
-	fLimitDepth = function(pNodeToCheck) {
-		var i;
-		for (i=0 ; i<pNodeToCheck.nodes.length ; i++)
-			if (!pNodeToCheck.nodes[i].hasOwnProperty('path'))
-				return true;
-		return false;
-	};
-	fAbsScoreFormat = function(pValuation) {
-		if (pValuation === null)
-			return '-';
-		else if (pValuation == that.constants.owner.black*that.constants.score.infinite)
-			return '<img src="images/mate_'+that.constants.owner.white+'.png" title="White wins" alt="-&#8734;" />';
-		else if (pValuation == that.constants.owner.white*that.constants.score.infinite)
-			return '<img src="images/mate_'+that.constants.owner.black+'.png" title="Black wins" alt="+&#8734;" />';
-		else
-			return pValuation;
-	};
-
-	//-- Formats
-	for (i=0 ; i<pNode.nodes.length ; i++)
+	//-- Adds the move
+	if (pDepth > 1)
 	{
-		if (!pNode.nodes[i].hasOwnProperty('path'))
-			continue;
-		writeMode = (	(this.options.board.fullDecisionTree) ||
-						(pDepth === 0) ||
-						(pDepth === this.options.board.analysisDepth) ||
-						!this._has(pNode.nodes[i], 'nodes', true) ||
-						fLimitDepth(pNode)
-					);
-
-		//-- Line
-		if (writeMode)
-		{
-			//- Valuation
-			this._buffer += '<tr data-depth="'+pDepth+'">';
-			this._buffer += '<td>' + fAbsScoreFormat(pNode.nodes[i].valuation) + '</td>';
-			this._buffer += '<td>' + fAbsScoreFormat(pNode.nodes[i].valuationSolver) + '</td>';
-
-			//- New move
-			this._buffer += '<td>' + pNode.nodes[i].path.split('¦').join('</td><td>') + '</td>';
-			for (j=pDepth+1 ; j<this.options.board.analysisDepth ; j++)
-				this._buffer += '<td>&nbsp;</td>';
-			this._buffer += '</tr>' + "\n";
-		}
-
-		//- Next level
-		if (pNode.nodes[i].hasOwnProperty('nodes') && (pDepth+1 < this.options.board.analysisDepth))
-			this._ai_nodeTreeHtml(pDepth+1, pNode.nodes[i]);
+		if (this._buffer.length > 0)
+			this._buffer += ' ';
+		if (pUCI)
+			this._buffer += this._helper.moveToUCI(pNode._bestMove);
+		else
+			this._buffer += this._helper.moveToString(pNode._bestMove);
 	}
+
+	//-- Moves the piece for the next level
+	if (this._helper.movePiece(pNode._bestMove, true) == this.constants.move.none)
+		throw 'Internal error - Report any error (#018)';
+	this._helper.switchPlayer();
+
+	//-- Recursive search
+	if (this._has(pNode, 'nodes', true) && this._has(pNode, 'moves', true))
+		this._ai_nodeAssistance(pNode.nodes[pNode.moves.indexOf(pNode._bestMove)], pUCI, pDepth+1);
 };
 
 /**
