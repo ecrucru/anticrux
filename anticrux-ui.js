@@ -40,7 +40,7 @@ function acui_options_load() {
 	{
 		level = ai.getLevel();
 		if (level !== null)
-			$('#acui_option_level').val().slider('refresh');
+			$('#acui_option_level').val(level).slider('refresh');
 	}
 	else
 	//-- Desktop version
@@ -812,7 +812,10 @@ $(document).ready(function() {
 	$('#acui_js, #acui_sect_rewind, #acui_sect_level_notice').hide();
 	if ((ui_mobile && acui_isphone()) || (!ui_mobile && !acui_isphone()))
 		$('#acui_switch_ui').hide();
-	$('#acui_option_predef').val(5).change();
+	if (ui_mobile)
+		acui_options_load();
+	else
+		$('#acui_option_predef').val(5).change();
 	$('#acui_version').html(ai.options.ai.version);
 	$(document).on('selectstart', false);				//No text selection to avoid moving the pieces on the screen (not supported)
 });
