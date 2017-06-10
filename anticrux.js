@@ -365,7 +365,7 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 
 	//References :
 	//	https://github.com/ornicar/lila#http-api
-	//	https://en.lichess.org/api/game/oPUvsggeDeTg?with_fens=1&with_moves=1
+	//	https://lichess.org/api/game/oPUvsggeDeTg?with_fens=1&with_moves=1
 
 	//-- Checks
 	if (!pKey.match(/^[a-zA-Z0-9]{8}$/) && !pKey.match(/^[a-zA-Z0-9]{12}$/))
@@ -374,7 +374,7 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 	//-- Gets the JSON
 	that = this;
 	$.ajaxSetup({ cache: false });
-	$.get(	'https://en.lichess.org/api/game/'+pKey+'?with_fens=1&with_moves=1',
+	$.get(	'https://lichess.org/api/game/'+pKey+'?with_fens=1&with_moves=1',
 			function(data) {
 			})
 		.fail(function(data) {
