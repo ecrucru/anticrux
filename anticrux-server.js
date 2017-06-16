@@ -1124,13 +1124,13 @@ server.acsrv_board = function(pSocket) {
 			for (x=0 ; x<8 ; x++)
 			{
 				i = 8*y+x;
-				switch (node.owner[i])
+				switch (node.board[i] & pSocket.acsrv_ai.constants.bitmask.owner)
 				{
 					case pSocket.acsrv_ai.constants.owner.black:
-						buffer += pSocket.acsrv_ai.constants.piece.mapping_rev[node.piece[i]].toLowerCase();
+						buffer += pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toLowerCase();
 						break;
 					case pSocket.acsrv_ai.constants.owner.white:
-						buffer += pSocket.acsrv_ai.constants.piece.mapping_rev[node.piece[i]].toUpperCase();
+						buffer += pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toUpperCase();
 						break;
 					default:
 						buffer += '-';
@@ -1200,7 +1200,7 @@ server.acsrv_board = function(pSocket) {
 			move_toY   = Math.floor(move/10  ) % 10;
 			move_toX   =            move       % 10;
 			buffer +=	' ' +
-						pSocket.acsrv_ai.constants.piece.mapping_rev[node.piece[8*move_toY+move_toX]] +
+						pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[8*move_toY+move_toX] & pSocket.acsrv_ai.constants.bitmask.piece] +
 						'/' +
 						'abcdefgh'[move_fromX] +
 						(8-move_fromY) +
@@ -1243,13 +1243,13 @@ server.acsrv_board = function(pSocket) {
 					buffer += '    ' + ('12345678'[7-y]) + '  |';
 
 				//- Nature of the position
-				switch (node.owner[i])
+				switch (node.board[i] & pSocket.acsrv_ai.constants.bitmask.owner)
 				{
 					case pSocket.acsrv_ai.constants.owner.white:
-						buffer += ' ' + pSocket.acsrv_ai.constants.piece.mapping_rev[node.piece[i]].toUpperCase() + ' |';
+						buffer += ' ' + pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toUpperCase() + ' |';
 						break;
 					case pSocket.acsrv_ai.constants.owner.black:
-						buffer += ' *' + pSocket.acsrv_ai.constants.piece.mapping_rev[node.piece[i]].toUpperCase() + '|';
+						buffer += ' *' + pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toUpperCase() + '|';
 						break;
 					case pSocket.acsrv_ai.constants.owner.none:
 						buffer += '   |';

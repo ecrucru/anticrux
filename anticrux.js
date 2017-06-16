@@ -125,7 +125,7 @@ AntiCrux.prototype.copyOptions = function(pObject) {
 	if (!pObject.hasOwnProperty('options'))
 		return false;
 
-	//-- Proceeds to the copy
+	//-- Proceeds with the copy
 	this.options = JSON.parse(JSON.stringify(pObject.options));
 	return true;
 };
@@ -160,15 +160,11 @@ AntiCrux.prototype.clearBoard = function() {
 	this._halfmoveclock = 0;
 	this._halfmoveclock_status = -1;		//-1=undef, 0=reset, 1=increment
 	this._root_node = {
-		piece  : [],
-		owner  : [],
+		board  : [],
 		player : this.constants.owner.white
 	};
 	for (i=0 ; i<64 ; i++)
-	{
-		this._root_node.piece[i] = this.constants.piece.none;
-		this._root_node.owner[i] = this.constants.owner.none;
-	}
+		this._root_node.board[i] = this.constants.owner.none | this.constants.piece.none;
 	this.fischer = null;
 };
 
@@ -248,15 +244,10 @@ AntiCrux.prototype.defaultBoard = function(pFischer) {
 	//-- Sets the pieces
 	for (i=0 ; i<8 ; i++)
 	{
-		this._root_node.piece[8*0+i] = pieces[i];
-		this._root_node.piece[8*1+i] = this.constants.piece.pawn;
-		this._root_node.piece[8*6+i] = this.constants.piece.pawn;
-		this._root_node.piece[8*7+i] = pieces[i];
-
-		this._root_node.owner[8*0+i] = this.constants.owner.black;
-		this._root_node.owner[8*1+i] = this.constants.owner.black;
-		this._root_node.owner[8*6+i] = this.constants.owner.white;
-		this._root_node.owner[8*7+i] = this.constants.owner.white;
+		this._root_node.board[8*0+i] = this.constants.owner.black | pieces[i];
+		this._root_node.board[8*1+i] = this.constants.owner.black | this.constants.piece.pawn;
+		this._root_node.board[8*6+i] = this.constants.owner.white | this.constants.piece.pawn;
+		this._root_node.board[8*7+i] = this.constants.owner.white | pieces[i];
 	}
 	this._history_fen0 = this.toFen();
 	return true;
@@ -304,8 +295,7 @@ AntiCrux.prototype.loadFen = function(pFen) {
 		}
 		else if ('prnbqk'.indexOf(car.toLowerCase()) != -1)
 		{
-			this._root_node.piece[8*y+x] = this.constants.piece.mapping[car];
-			this._root_node.owner[8*y+x] = (car == car.toLowerCase() ? this.constants.owner.black : this.constants.owner.white);
+			this._root_node.board[8*y+x] = (car == car.toLowerCase() ? this.constants.owner.black : this.constants.owner.white) | this.constants.piece.mapping[car];
 			x++;
 		}
 		else
@@ -477,7 +467,7 @@ AntiCrux.prototype.getPlayer = function(pNode) {
  *
  * @method getOppositePlayer
  * @param {Object} pNode (Optional) Reference node.
- * @return {Integer} A value from AntiCrux.constants.owner.
+ * @return {Integer} A value from AntiCrux.constants.owner, or *null* if incorrect.
  */
 AntiCrux.prototype.getOppositePlayer = function(pNode) {
 	switch (this.getPlayer(pNode))
@@ -571,7 +561,7 @@ AntiCrux.prototype.getPieceByCoordinate = function(pCoordinate, pNode) {
 	var index;
 
 	//-- Checks
-	if (!pCoordinate.match(/^[a-h][1-8]$/))
+	if (!pCoordinate.match(/^[a-h][1-8]$/i))
 		return { owner: this.constants.owner.none,
 				 piece: this.constants.piece.none
 			};
@@ -582,8 +572,8 @@ AntiCrux.prototype.getPieceByCoordinate = function(pCoordinate, pNode) {
 
 	//-- Information
 	index = (8-parseInt(pCoordinate.charAt(1)))*8 + 'abcdefgh'.indexOf(pCoordinate.toLowerCase().charAt(0));
-	return { owner: pNode.owner[index],
-			 piece: pNode.piece[index]
+	return { owner: (pNode.board[index] & this.constants.bitmask.owner),
+			 piece: (pNode.board[index] & this.constants.bitmask.piece)
 		};
 };
 
@@ -680,7 +670,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 				if ((move_promotion != this.constants.piece.none) && (Math.floor(node.moves[i]/10000)%10 != move_promotion))
 					continue;
 				// Checks the originating owner
-				if ((pPlayerIndication != this.constants.owner.none) && (node.owner[8*y+x] != pPlayerIndication))
+				if ((pPlayerIndication != this.constants.owner.none) && ((node.board[8*y+x] & this.constants.bitmask.owner) != pPlayerIndication))
 					continue;
 				// Checks the originating partial coordinate
 				if ((regex[2].length == 1) && (regex[2] != 'abcdefgh'.charAt(x)))
@@ -693,9 +683,9 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 				)
 					continue;
 				// Checks the originating piece
-				if ((regex[1].length == 1) && (this.constants.piece.mapping[regex[1]] != node.piece[8*y+x])) //Is it the described piece ?
+				if ((regex[1].length == 1) && (this.constants.piece.mapping[regex[1]] != (node.board[8*y+x] & this.constants.bitmask.piece))) //Is it the described piece ?
 					continue;
-				if ((regex[1].length === 0) && (regex[2].length != 2) && (node.piece[8*y+x] != this.constants.piece.pawn)) //Is it a partially identified pawn ?
+				if ((regex[1].length === 0) && (regex[2].length != 2) && ((node.board[8*y+x] & this.constants.bitmask.piece) != this.constants.piece.pawn)) //Is it a partially identified pawn ?
 					continue;
 				// Validates the move
 				if (moves.indexOf(node.moves[i]%10000) == -1)
@@ -732,7 +722,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	pMove = move_promotion*10000 + move_fromY*1000 + move_fromX*100 + move_toY*10 + move_toX;
 
 	//-- Finds the player
-	player = pNode.owner[8*move_fromY+move_fromX];
+	player = (pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner);
 	if (player == this.constants.owner.none)
 		return this.constants.move.none;
 	pNode.player = player;
@@ -764,26 +754,25 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	//- Executes the move
 	if (	this.options.variant.enPassant &&
 			pNode.hasOwnProperty('enpassant') &&
-			(8*move_toY+move_toX == pNode.enpassant) &&									//Target cell is identified as "en passant"
-			(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&		//Source piece is a pawn
-			(pNode.piece[8*move_toY+move_toX] == this.constants.piece.none)				//Target piece is blank
+			(8*move_toY+move_toX == pNode.enpassant) &&																	//Target cell is identified as "en passant"
+			((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn) &&		//Source piece is a pawn
+			((pNode.board[8*move_toY+move_toX] & this.constants.bitmask.piece) == this.constants.piece.none)			//Target piece is blank
 		)
 	{
 		// Locates the target pawn
 		tX = move_toX;
 		tY = move_toY + pNode.player;
 		// Removes the target pawn
-		if ((tX>=0) && (tX<=7) && (tY>=0) && (tY<=7) &&									//Assumed to be always true
-			(pNode.piece[8*tY+tX] == this.constants.piece.pawn) &&						//Kill an en passant pawn
-			(pNode.owner[8*tY+tX] != pNode.owner[8*move_fromY+move_fromX])				//Black vs. White
+		if ((tX>=0) && (tX<=7) && (tY>=0) && (tY<=7) &&																							//Assumed to be always true
+			((pNode.board[8*tY+tX] & this.constants.bitmask.piece) == this.constants.piece.pawn) &&												//Kill an en passant pawn
+			((pNode.board[8*tY+tX] & this.constants.bitmask.owner) != (pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner))	//Black vs. White
 		) {
-			pNode.piece[8*tY+tX] = this.constants.piece.none;
-			pNode.owner[8*tY+tX] = this.constants.owner.none;
+			pNode.board[8*tY+tX] = this.constants.owner.none | this.constants.piece.none;
 			delete pNode.enpassant;
 		}
 	}
 	//- Marks the cell
-	else if (	(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&
+	else if (	((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn) &&
 				(Math.abs(move_toY-move_fromY) == 2)
 	)
 		pNode.enpassant = 4*(move_toY+move_fromY) + move_toX;
@@ -793,21 +782,19 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 
 	//-- Updates the status to change the halfmove clock later
 	this._halfmoveclock_status = 1;
-	if ((pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) ||		//Pawn advance
-		(pNode.piece[8*move_toY+move_toX] != this.constants.piece.none)				//Capturing move
+	if (((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn) ||		//Pawn advance
+		((pNode.board[8*move_toY+move_toX] & this.constants.bitmask.piece) != this.constants.piece.none)			//Capturing move
 	)
 		this._halfmoveclock_status = 0;
 
 	//-- Performs the move
-	pNode.piece[8*move_toY+move_toX]     = pNode.piece[8*move_fromY+move_fromX];
-	pNode.piece[8*move_fromY+move_fromX] = this.constants.piece.none;
-	pNode.owner[8*move_toY+move_toX]     = pNode.owner[8*move_fromY+move_fromX];
-	pNode.owner[8*move_fromY+move_fromX] = this.constants.owner.none;
+	pNode.board[8*move_toY+move_toX] = (pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner) | (pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece);
+	pNode.board[8*move_fromY+move_fromX] = this.constants.owner.none | this.constants.piece.none;
 
 	//-- Promotes the pawn immediately or not
 	if ((move_toY === 0) || (move_toY === 7))
 	{
-		if (pNode.piece[8*move_toY+move_toX] == this.constants.piece.pawn)
+		if ((pNode.board[8*move_toY+move_toX] & this.constants.bitmask.piece) == this.constants.piece.pawn)
 		{
 			//- Forced promotion
 			if (this.options.variant.promoteQueen)
@@ -815,7 +802,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 
 			//- Effective promotion
 			if (move_promotion != this.constants.piece.none)
-				pNode.piece[8*move_toY+move_toX] = move_promotion;
+				pNode.board[8*move_toY+move_toX] = (pNode.board[8*move_toY+move_toX] & ~this.constants.bitmask.piece) | move_promotion;
 			else
 				pNode._pendingPromotion = 8*move_toY+move_toX;
 		}
@@ -1190,7 +1177,7 @@ AntiCrux.prototype.promote = function(pPiece, pNode) {
 	//-- Promotes the piece
 	if (this.options.variant.promoteQueen)
 		piece = this.options.piece.queen;
-	pNode.piece[pNode._pendingPromotion] = piece;
+	pNode.board[pNode._pendingPromotion] = (pNode.board[pNode._pendingPromotion] & ~this.constants.bitmask.piece) | piece;
 	delete pNode._pendingPromotion;
 	return piece;
 };
@@ -1269,34 +1256,46 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	move_toX   =            move        % 10;
 
 	//-- Piece
-	output = this.getPieceSymbol(	pNode.piece[8*move_fromY+move_fromX],
-									pNode.owner[8*move_fromY+move_fromX],
+	output = this.getPieceSymbol(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+									(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner),
 									this.options.board.symbols
 								);
 
 	//-- Taken piece
-	taken = (pNode.owner[8*move_toY+move_toX] != pNode.owner[8*move_fromY+move_fromX]) &&
-			(pNode.owner[8*move_toY+move_toX] != this.constants.owner.none);
+	taken = ((pNode.board[8*move_toY+move_toX] & this.constants.bitmask.owner) != (pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner)) &&
+			((pNode.board[8*move_toY+move_toX] & this.constants.bitmask.owner) != this.constants.owner.none);
 	if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
-		taken = taken || (	(pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) &&
+		taken = taken || (	((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn) &&
 							(8*move_toY+move_toX == pNode.enpassant)
 						);
 
 	//-- Initial position
-	if ((this._ai_nodeInventory(pNode.owner[8*move_fromY+move_fromX], pNode.piece[8*move_fromY+move_fromX], undefined, pNode) > 1) ||
-		(taken && (pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn))
+	if ((this._ai_nodeInventory(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner),
+									(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+									undefined,
+									pNode
+								) > 1) ||
+		(taken && ((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn))
 	) {
 		buffer = 'abcdefgh'.charAt(move_fromX);
-		if (this._ai_nodeInventory(pNode.owner[8*move_fromY+move_fromX], pNode.piece[8*move_fromY+move_fromX], move_fromX, pNode) > 1)
+		if (this._ai_nodeInventory(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner),
+									(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+									move_fromX,
+									pNode
+								) > 1)
 			buffer += 8-move_fromY;
 	}
 	else
 		buffer = '';
 
 	//-- Simplified notation
-	if (!taken && (pNode.piece[8*move_fromY+move_fromX] == this.constants.piece.pawn) && (move_fromX == move_toX))
+	if (!taken && ((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn) && (move_fromX == move_toX))
 		buffer = '';
-	if (!taken && (this._ai_nodeInventory(pNode.owner[8*move_fromY+move_fromX], pNode.piece[8*move_fromY+move_fromX], undefined, pNode) == 1))
+	if (!taken && (this._ai_nodeInventory(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner),
+											(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+											undefined,
+											pNode
+										) == 1))
 		buffer = '';
 	if (taken)
 	   buffer += 'x';
@@ -1309,7 +1308,7 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	//-- Promotion
 	if (move_promo != this.constants.piece.none)
 		output += '=' + this.getPieceSymbol(	move_promo,
-												pNode.owner[8*move_fromY+move_fromX],
+												(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.owner),
 												this.options.board.symbols
 											);
 
@@ -1321,7 +1320,7 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
  * The method formats the move according to the requirements of the UCI protocol.
  *
  * @method moveToUCI
- * @param {Integer} pMove The move.
+ * @param {Integer} pMove The move in the internal representation.
  * @return {String} Move as a string.
  */
 AntiCrux.prototype.moveToUCI = function(pMove) {
@@ -1559,7 +1558,7 @@ AntiCrux.prototype.getDrawReason = function() {
  * @return {Boolean} *true* if the game has ended, else *false*.
  */
 AntiCrux.prototype.isEndGame = function(pSwitchPlayer, pNode) {
-	var node = this._ai_nodeCopy(pNode === undefined ? this._root_node : pNode, false);
+	var node = this._ai_nodeCopy((pNode===undefined ? this._root_node : pNode), false);
 	if (pSwitchPlayer)
 		this.switchPlayer(node);
 	this._ai_nodeMoves(node);
@@ -1615,7 +1614,7 @@ AntiCrux.prototype.highlightMove = function(pMove) {
 	var move_fromY, move_fromX, move_toY, move_toX;
 
 	//-- No move resets the highlight
-	if (pMove === 0)
+	if (pMove == this.constants.move.none)
 		this._highlight = [];
 	else
 	{
@@ -1735,9 +1734,9 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 
 		//- Static score
 		output += '<td>';
-		if (score.valuation == this.constants.owner.black*this.constants.score.infinite)
+		if (score.valuation == -this.constants.score.infinite)
 			output += '<img src="images/mate_'+this.constants.owner.white+'.png" title="White wins" alt="-&#8734;" />';
-		else if (score.valuation == this.constants.owner.white*this.constants.score.infinite)
+		else if (score.valuation == this.constants.score.infinite)
 			output += '<img src="images/mate_'+this.constants.owner.black+'.png" title="Black wins" alt="+&#8734;" />';
 		else
 			output += (score.valuationPC !== null ? score.valuationPC+'%' : score.valuation);
@@ -1745,9 +1744,9 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 
 		//- Deep score
 		output += '<td>';
-		if (score.valuationSolver == this.constants.owner.black*this.constants.score.infinite)
+		if (score.valuationSolver == -this.constants.score.infinite)
 			output += '<img src="images/mate_'+this.constants.owner.white+'.png" title="White wins" alt="-&#8734;" />';
-		else if (score.valuationSolver == this.constants.owner.white*this.constants.score.infinite)
+		else if (score.valuationSolver == this.constants.score.infinite)
 			output += '<img src="images/mate_'+this.constants.owner.black+'.png" title="Black wins" alt="+&#8734;" />';
 		else
 			output += (score.valuationSolverPC !== null ? score.valuationSolverPC+'%' : score.valuationSolver);
@@ -1810,16 +1809,16 @@ AntiCrux.prototype.toHtml = function(pNode) {
 			switch (this.options.variant.pieces)
 			{
 				case 1:
-					owner = (pNode.owner[8*y+x] != this.constants.owner.none ? this.constants.owner.white : pNode.owner[8*y+x]);
+					owner = ((pNode.board[8*y+x] & this.constants.bitmask.owner) != this.constants.owner.none ? this.constants.owner.white : (pNode.board[8*y+x] & this.constants.bitmask.owner));
 					break;
 				case 2:
-					owner = (pNode.owner[8*y+x] != this.constants.owner.none ? this.constants.owner.black : pNode.owner[8*y+x]);
+					owner = ((pNode.board[8*y+x] & this.constants.bitmask.owner) != this.constants.owner.none ? this.constants.owner.black : (pNode.board[8*y+x] & this.constants.bitmask.owner));
 					break;
 				case 3:
 					owner = this.constants.owner.none;
 					break;
 				case 4:
-					if (pNode.owner[8*y+x] == this.constants.owner.none)
+					if ((pNode.board[8*y+x] & this.constants.bitmask.owner) == this.constants.owner.none)
 						owner = this.constants.owner.none;
 					else
 					{
@@ -1830,10 +1829,10 @@ AntiCrux.prototype.toHtml = function(pNode) {
 					}
 					break;
 				default:
-					owner = pNode.owner[8*y+x];
+					owner = (pNode.board[8*y+x] & this.constants.bitmask.owner);
 					break;
 			}
-			output += '<div class="AntiCrux-board-cell-' + (this._highlight.indexOf(8*y+x) != -1 ? 'hl' : color) + ' AntiCrux-board-piece-' + owner + pNode.piece[8*y+x] + '" data-xy="' + abc[x] + (8-y) + '">';
+			output += '<div class="AntiCrux-board-cell-' + (this._highlight.indexOf(8*y+x) != -1 ? 'hl' : color) + ' AntiCrux-board-piece-' + owner + (pNode.board[8*y+x] & this.constants.bitmask.piece) + '" data-xy="' + abc[x] + (8-y) + '">';
 			if (this.options.board.debugCellId)
 				output += y + '/' + x + '<br/>' + (8*y+x);
 			output += '</div>';
@@ -1872,7 +1871,7 @@ AntiCrux.prototype.toFen = function(pNode) {
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
-	if (!this._has(pNode, 'piece', true) || !this._has(pNode, 'owner', true))
+	if (!this._has(pNode, 'board', true))
 		return '';
 
 	//-- Builds the FEN code for the main board
@@ -1881,7 +1880,7 @@ AntiCrux.prototype.toFen = function(pNode) {
 	for (i=0 ; i<64 ; i++)
 	{
 		//Piece
-		if (pNode.owner[i] == this.constants.owner.none)
+		if ((pNode.board[i] & this.constants.bitmask.owner) == this.constants.owner.none)
 			empty++;
 		else
 		{
@@ -1892,8 +1891,8 @@ AntiCrux.prototype.toFen = function(pNode) {
 			}
 
 			//Identifies a piece
-			piece = this.constants.piece.mapping_rev[pNode.piece[i]];
-			if (pNode.owner[i] == this.constants.owner.black)
+			piece = this.constants.piece.mapping_rev[pNode.board[i] & this.constants.bitmask.piece];
+			if ((pNode.board[i] & this.constants.bitmask.owner) == this.constants.owner.black)
 				piece = piece.toLowerCase();
 			output += piece;
 		}
@@ -1976,16 +1975,16 @@ AntiCrux.prototype.toText = function(pNode) {
 			switch (this.options.variant.pieces)
 			{
 				case 1:
-					owner = (pNode.owner[i] != this.constants.owner.none ? this.constants.owner.white : pNode.owner[i]);
+					owner = ((pNode.board[i] & this.constants.bitmask.owner) != this.constants.owner.none ? this.constants.owner.white : (pNode.board[i] & this.constants.bitmask.owner));
 					break;
 				case 2:
-					owner = (pNode.owner[i] != this.constants.owner.none ? this.constants.owner.black : pNode.owner[i]);
+					owner = ((pNode.board[i] & this.constants.bitmask.owner) != this.constants.owner.none ? this.constants.owner.black : (pNode.board[i] & this.constants.bitmask.owner));
 					break;
 				case 3:
 					owner = this.constants.owner.none;
 					break;
 				case 4:
-					if (pNode.owner[i] == this.constants.owner.none)
+					if ((pNode.board[i] & this.constants.bitmask.owner) == this.constants.owner.none)
 						owner = this.constants.owner.none;
 					else
 					{
@@ -1996,7 +1995,7 @@ AntiCrux.prototype.toText = function(pNode) {
 					}
 					break;
 				default:
-					owner = pNode.owner[i];
+					owner = (pNode.board[i] & this.constants.bitmask.owner);
 					break;
 			}
 
@@ -2007,10 +2006,10 @@ AntiCrux.prototype.toText = function(pNode) {
 					car = (b ? '+' : '*');
 					break;
 				case this.constants.owner.white:
-					car = ' prnbqk'[pNode.piece[i]];
+					car = ' prnbqk'[pNode.board[i] & this.constants.bitmask.piece];
 					break;
 				case this.constants.owner.black:
-					car = ' otmvwl'[pNode.piece[i]];
+					car = ' otmvwl'[pNode.board[i] & this.constants.bitmask.piece];
 					break;
 				default:
 					throw 'Internal error - Report any error (#009)';
@@ -2188,8 +2187,8 @@ AntiCrux.prototype.toConsole = function(pBorder, pNode) {
 				buffer += (this.options.board.coordinates ? ' ' + '12345678'[7-y]+' |' : '|');
 
 			//- Nature of the position
-			car = this.constants.piece.mapping_rev[pNode.piece[i]];
-			switch (pNode.owner[i])
+			car = this.constants.piece.mapping_rev[pNode.board[i] & this.constants.bitmask.piece];
+			switch (pNode.board[i] & this.constants.bitmask.owner)
 			{
 				case this.constants.owner.white:
 					car = car.toUpperCase();
@@ -2198,7 +2197,7 @@ AntiCrux.prototype.toConsole = function(pBorder, pNode) {
 					car = car.toLowerCase();
 					break;
 				case this.constants.owner.none:
-					if (!pBorder && (pNode.piece[i] == this.constants.owner.none))
+					if (!pBorder && ((pNode.board[i] & this.constants.bitmask.piece) == this.constants.owner.none))
 						car = '.';
 					else
 						car = ' ';	//To mark the black cells, replace by:		((x+y)%2 == 1 ? '.' : ' ');
@@ -2286,9 +2285,9 @@ AntiCrux.prototype._init = function() {
 			king   : 6							//Must be the highest ID
 		},
 		owner : {
-			black  : -1,						//Negative points are black
-			none   : 0,
-			white  : 1							//Positive points are white
+			none  : 8,							//01000b
+			black : 16,							//10000b
+			white : 24							//11000b
 		},
 		score : {
 			infinite : 16777217,				//8^8+1
@@ -2299,6 +2298,10 @@ AntiCrux.prototype._init = function() {
 		},
 		move : {
 			none : 0
+		},
+		bitmask : {
+			piece  : 7,							//00111b
+			owner  : 24							//11000b
 		}
 	};
 	this.constants.piece.mapping = {
@@ -2317,13 +2320,17 @@ AntiCrux.prototype._init = function() {
 		'K' : this.constants.piece.king
 	};
 	this.constants.piece.mapping_rev = [];
-	this.constants.piece.mapping_rev[this.constants.piece.none]   = '';
-	this.constants.piece.mapping_rev[this.constants.piece.pawn]   = 'P';
-	this.constants.piece.mapping_rev[this.constants.piece.rook]   = 'R';
-	this.constants.piece.mapping_rev[this.constants.piece.knight] = 'N';
-	this.constants.piece.mapping_rev[this.constants.piece.bishop] = 'B';
-	this.constants.piece.mapping_rev[this.constants.piece.queen]  = 'Q';
-	this.constants.piece.mapping_rev[this.constants.piece.king]   = 'K';
+	this.constants.piece.mapping_rev[this.constants.piece.none]		= '';
+	this.constants.piece.mapping_rev[this.constants.piece.pawn]		= 'P';
+	this.constants.piece.mapping_rev[this.constants.piece.rook]		= 'R';
+	this.constants.piece.mapping_rev[this.constants.piece.knight]	= 'N';
+	this.constants.piece.mapping_rev[this.constants.piece.bishop]	= 'B';
+	this.constants.piece.mapping_rev[this.constants.piece.queen]	= 'Q';
+	this.constants.piece.mapping_rev[this.constants.piece.king]		= 'K';
+	this.constants.owner.mapping_rev = [];
+	this.constants.owner.mapping_rev[this.constants.owner.black]	= -1;
+	this.constants.owner.mapping_rev[this.constants.owner.none]		= 0;
+	this.constants.owner.mapping_rev[this.constants.owner.white]	= 1;
 
 	//-- Options
 	this.options = {
@@ -2465,9 +2472,8 @@ AntiCrux.prototype._initFischer = function() {
 AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 	//-- Clones the node
 	var	newNode = {
-		player	: pNode.player,
-		piece	: pNode.piece.slice(0),
-		owner	: pNode.owner.slice(0)
+		player : pNode.player,
+		board  : pNode.board.slice(0)
 	};
 	if (pNode.hasOwnProperty('enpassant'))
 		newNode.enpassant = pNode.enpassant;
@@ -2499,7 +2505,7 @@ AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 AntiCrux.prototype._ai_nodeShrink = function(pNode) {
 	var f;
 	for (f in pNode)
-		if (['owner', 'piece', 'player', 'enpassant', '_pendingPromotion'].indexOf(f) === -1)
+		if (['board', 'player', 'enpassant', '_pendingPromotion'].indexOf(f) === -1)
 			delete pNode[f];
 };
 
@@ -2524,8 +2530,8 @@ AntiCrux.prototype._ai_nodeInventory = function(pPlayer, pPiece, pColumn, pNode)
 	//-- Counts
 	counter = 0;
 	for (i=0 ; i<64 ; i++)
-		if (	((pNode.owner[i] == pPlayer) || (pPlayer === null)) &&
-				((pNode.piece[i] == pPiece ) || (pPiece  === null))
+		if (	(((pNode.board[i] & this.constants.bitmask.owner) == pPlayer) || (pPlayer === null)) &&
+				(((pNode.board[i] & this.constants.bitmask.piece) == pPiece ) || (pPiece  === null))
 		) {
 			if (pColumn !== undefined)
 				if (i%8 != pColumn)
@@ -2554,7 +2560,7 @@ AntiCrux.prototype._ai_nodeCountPiece = function(pPlayer, pNode) {
 	//-- Counts
 	counter = 0;
 	for (i=0 ; i<64 ; i++)
-		counter += (pNode.owner[i] == pPlayer ? 1 : 0);
+		counter += ((pNode.board[i] & this.constants.bitmask.owner) == pPlayer ? 1 : 0);
 	return counter;
 };
 
@@ -2578,8 +2584,8 @@ AntiCrux.prototype._ai_nodeLocatePiece = function(pPlayer, pPiece, pNode) {
 	//-- Locates the piece
 	for (y=0 ; y<8 ; y++)
 		for (x=0 ; x<8 ; x++)
-			if (	((pNode.owner[8*y+x] == pPlayer) || (pPlayer === null)) &&
-					((pNode.piece[8*y+x] == pPiece ) || (pPiece  === null))
+			if (	(((pNode.board[8*y+x] & this.constants.bitmask.owner) == pPlayer) || (pPlayer === null)) &&
+					(((pNode.board[8*y+x] & this.constants.bitmask.piece) == pPiece ) || (pPiece  === null))
 			)
 				return {x:x, y:y};
 	return null;
@@ -2595,7 +2601,7 @@ AntiCrux.prototype._ai_nodeLocatePiece = function(pPlayer, pPiece, pNode) {
 AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 	var	that, save_move,
 		board, moves, forced, move_base, move_promo,
-		i, ip, x, xp, xpp, y, yp, ypp, d, t, ep, epv;
+		i, ip, x, xp, xpp, y, yp, ypp, o, d, t, ep, epv;
 
 	//-- Checks
 	if ((pNode === undefined) || (pNode === null))
@@ -2614,13 +2620,14 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 			];
 	for (i=0 ; i<64 ; i++)
 	{
-		if (pNode.owner[i] == this.constants.owner.none)
+		o = (pNode.board[i] & this.constants.bitmask.owner);
+		if (o == this.constants.owner.none)
 			board[i] = 1;
 		else
-			if (pNode.owner[i] == pNode.player)
+			if (o == pNode.player)
 				board[i] = 2;
 			else
-				if ((pNode.owner[i] != pNode.player) && (pNode.owner[i] != this.constants.owner.none))
+				if ((o != pNode.player) && (o != this.constants.owner.none))
 					board[i] = 4;
 	}
 	ep = (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant);
@@ -2669,7 +2676,7 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 		move_base = y*1000 + x*100;
 
 		//- Processing of the piece
-		switch (pNode.piece[i])
+		switch (pNode.board[i] & this.constants.bitmask.piece)
 		{
 			case this.constants.piece.pawn:
 			{
@@ -2781,7 +2788,7 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 								break;
 					}
 				}
-				if (pNode.piece[i] == this.constants.piece.rook)		// Queen = Rook + Bishop
+				if ((pNode.board[i] & this.constants.bitmask.piece) == this.constants.piece.rook)		// Queen = Rook + Bishop
 					break;
 				//else no break, yes !
 			}
@@ -3052,7 +3059,7 @@ AntiCrux.prototype._ai_nodeValuate = function(pNode) {
 		pNode = this._root_node;
 
 	//-- Checks
-	if (!this._has(pNode, 'piece', true) || !this._has(pNode, 'owner', true))
+	if (!this._has(pNode, 'board', true))
 		return {
 			black				: 0,
 			white				: 0,
@@ -3078,10 +3085,10 @@ AntiCrux.prototype._ai_nodeValuate = function(pNode) {
 	for (i=0 ; i<64 ; i++)
 	{
 		//- Determines the value of the piece
-		val = this.options.ai.valuation[pNode.piece[i]];
+		val = this.options.ai.valuation[pNode.board[i] & this.constants.bitmask.piece];
 
 		//- Assigns the value to the right player
-		switch (pNode.owner[i])
+		switch (pNode.board[i] & this.constants.bitmask.owner)
 		{
 			case this.constants.owner.black:
 				result.black += val;
@@ -3098,17 +3105,16 @@ AntiCrux.prototype._ai_nodeValuate = function(pNode) {
 
 	//-- Valuates the position
 	if (result.black === 0)
-		result.valuation = this.constants.owner.white * this.constants.score.infinite;		//No more piece for Black
+		result.valuation = this.constants.score.infinite;		//No more piece for Black
 	else if (result.white === 0)
-		result.valuation = this.constants.owner.black * this.constants.score.infinite;		//No more piece for White
+		result.valuation = -this.constants.score.infinite;		//No more piece for White
 	else
-		result.valuation =	this.constants.owner.black * result.black +						//Normal case
-							this.constants.owner.white * result.white;
+		result.valuation = result.white - result.black;			//Normal case
 
 	//-- No possible move anymore
 	if (pNode.hasOwnProperty('moves'))
 		if (pNode.moves.length === 0)
-			result.valuation = pNode.player * -this.constants.score.infinite;
+			result.valuation = this.constants.owner.mapping_rev[pNode.player] * -this.constants.score.infinite;
 
 	//-- Scale
 	result.scale = (result.black > result.white ? result.black : result.white);
@@ -3161,20 +3167,17 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 		//- Applies the valuation for the solver
 		pNode.valuationSolver = pNode.valuation;
 		pNode._forced = true;						//All the lowest levels are defined as forced moves
-		if (pNode.valuationSolver == pPlayer*-this.constants.score.infinite)
+		if (pNode.valuationSolver == this.constants.owner.mapping_rev[pPlayer] * -this.constants.score.infinite)
 		{
 			pNode._sequence = 1;					//The sequence will help for quicker (or longer ;-) when losing) ends of game
 			pNode._opportunity = '+';
 		}
-		else if (pNode.valuationSolver == pPlayer*this.constants.score.infinite)
+		else if (pNode.valuationSolver == this.constants.owner.mapping_rev[pPlayer] * this.constants.score.infinite)
 			pNode._opportunity = '-';
 
 		//- Memory
 		if (pDepth > 1)								//This condition is needed to display the score in HTML format
-		{
-			delete pNode.owner;
-			delete pNode.piece;
-		}
+			delete pNode.board;
 		return;
 	}
 
@@ -3210,7 +3213,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 	//-- Removes the wrong nodes to always play the forced moves with the highest damage
 	if ((pNode.player == pPlayer) && hasForced)
 	{
-		threshold = pPlayer * this.constants.score.infinite;
+		threshold = this.constants.owner.mapping_rev[pPlayer] * this.constants.score.infinite;
 
 		//- Finds the valuation of the forced moves
 		for (i=pNode.nodes.length-1 ; i>=0 ; i--)
@@ -3251,7 +3254,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 		{
 			if (Math.abs(pNode.nodes[i].valuationSolver) == this.constants.score.infinite)	//For the weakest levels...
 			{
-				if (pNode.nodes[i].valuationSolver == pPlayer*this.constants.score.infinite)
+				if (pNode.nodes[i].valuationSolver == this.constants.owner.mapping_rev[pPlayer] * this.constants.score.infinite)
 				{
 					counter = 0;		//...a loosing position is considered else the end of game is abnormally easy
 					break;
@@ -3266,10 +3269,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 		{
 			pNode.valuationSolver = Math.round(pNode.valuationSolver/counter);	//Always integer !
 			if (pDepth > 1)
-			{
-				delete pNode.owner;
-				delete pNode.piece;
-			}
+				delete pNode.board;
 		}
 		else
 			condition = false;			//The valuation will follow the other rule
@@ -3278,7 +3278,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 	//-- Evaluates the current node by using the worst valuation
 	if (!condition)
 	{
-		val = pPlayer * -this.constants.score.infinite;
+		val = this.constants.owner.mapping_rev[pPlayer] * -this.constants.score.infinite;
 		for (i=0 ; i<pNode.nodes.length ; i++)
 		{
 			if ( ((pPlayer == this.constants.owner.white) && (pNode.nodes[i].valuationSolver > val)) ||
@@ -3288,14 +3288,11 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 		}
 		pNode.valuationSolver = val;
 		if (pDepth > 1)
-		{
-			delete pNode.owner;
-			delete pNode.piece;
-		}
+			delete pNode.board;
 	}
 
 	//-- Calculates the sequence which leads to a faster end of game
-	if (this.options.ai.acceleratedEndGame && this._has(pNode, '_forced') && (pNode.valuationSolver == pPlayer*-this.constants.score.infinite))
+	if (this.options.ai.acceleratedEndGame && this._has(pNode, '_forced') && (pNode.valuationSolver == this.constants.owner.mapping_rev[pPlayer]*-this.constants.score.infinite))
 	{
 		val = this.constants.score.infinite;
 		for (i=0 ; i<pNode.nodes.length ; i++)
@@ -3357,7 +3354,7 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 		pNode = this._root_node;
 
 	//-- Keeps the moves which lead to a fast end of game
-	if (this.options.ai.acceleratedEndGame && this._has(pNode, '_forced') && (pNode.valuationSolver == pNode.player * -this.constants.score.infinite))
+	if (this.options.ai.acceleratedEndGame && this._has(pNode, '_forced') && (pNode.valuationSolver == this.constants.owner.mapping_rev[pNode.player] * -this.constants.score.infinite))
 	{
 		threshold = this.constants.score.infinite;
 		for (i=0 ; i<pNode.nodes.length ; i++)
@@ -3406,7 +3403,7 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	mixture(pNode);
 	if (this.options.ai.bestStaticScore && !mixedDeep && mixedStatic)	//At least 2 nodes are implied
 	{
-		threshold = pPlayer * this.constants.score.infinite;
+		threshold = this.constants.owner.mapping_rev[pPlayer] * this.constants.score.infinite;
 
 		//- Finds the corresponding valuation
 		for (i=0 ; i<pNode.nodes.length ; i++)
@@ -3434,7 +3431,7 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	// White will minimize the valuation
 	// Black will maximize the valuation
 	moves = [];
-	threshold = pPlayer * this.constants.score.infinite;
+	threshold = this.constants.owner.mapping_rev[pPlayer] * this.constants.score.infinite;
 	for (i=0 ; i<pNode.nodes.length ; i++)
 	{
 		//- Comparison

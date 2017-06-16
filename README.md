@@ -72,9 +72,9 @@ AntiCrux is delivered via [Github](https://github.com/ecrucru/anticrux/) and [NP
 
 The stable releases are displayed on Github :
 
-- [https://github.com/ecrucru/anticrux/releases](https://github.com/ecrucru/anticrux/releases)
+- https://github.com/ecrucru/anticrux/releases
 
-The NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" is equivalent :
+The NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" is quite equivalent :
 
 ```bash
 npm install anticrux
@@ -84,8 +84,8 @@ npm install anticrux
 
 You generally have 2 branches which can be downloaded as an archive :
 
-- Master : [https://github.com/ecrucru/anticrux/archive/master.zip](https://github.com/ecrucru/anticrux/archive/master.zip)
-- Dev (if available) : [https://github.com/ecrucru/anticrux/archive/dev.zip](https://github.com/ecrucru/anticrux/archive/dev.zip)
+- Master : https://github.com/ecrucru/anticrux/archive/master.zip
+- Dev (if available) : https://github.com/ecrucru/anticrux/archive/dev.zip
 
 You can also replicate the repository if you own Git :
 
@@ -98,22 +98,21 @@ git clone https://github.com/ecrucru/anticrux.git
 
 As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface in your default browser.
 
-The tab "Board" offers the general features to move the pieces. You can't drag and drop a piece, but use 2 separate clicks.
+You have several tabs :
 
-The tab "Actions" handles the generation of a new game. By putting aside the buttons to start a game, you will not click unexpectedly on them while you are playing.
+- "Board" : it offers the general features to move the pieces. You can't drag and drop a piece, but use 2 separate clicks.
+- "Actions" : it handles the generation of a new game. By putting aside the buttons to start a game, you will not click unexpectedly on them while you are playing.
+- "Options" : it is where you refine the settings of the game. Each level is assigned some changeable features and you have to know that a higher level is not necessarily stronger. You can refer to the [dedicated paragraph](#anticrux-helo-world) to understand why.
+- "About" : it provides the legal information about AntiCrux.
 
-The tab "Options" is where you refine the settings of the game. Each level is assigned some changeable features and you have to know that a higher level is not necessarily stronger. You can refer to the [dedicated paragraph](#anticrux-helo-world) to understand why.
-
-The tab "Tree" is a way to view the decision tree used by the library. The activation requires more memory, so it is disabled by default.
-
-The tab "About" provides the legal information about AntiCrux.
+Without any local installation, just check online at http://ecrucru.free.fr/?page=anticrux and you will get the same enjoyment.
 
 
 ### Mobile interface
 
 The mobile version is a light-weighted version of the [web-interface](#web-interface). It is suitable for a smartphone which screen is often reduced and which performances are sometimes reduced.
 
-The options are set to the minimum and the board fits to the screen.
+The options are reduced and the board fits to the screen.
 
 
 ### Mobile application
@@ -122,7 +121,7 @@ By using the technologies behind Adobe PhoneGap and Apache Cordova, it is possib
 
 The application is periodically compiled online by Adobe PhoneGap Build from the freshest code of the master branch hosted on Github :
 
-- [https://build.phonegap.com/apps/2597052/share](https://build.phonegap.com/apps/2597052/share)
+- https://build.phonegap.com/apps/2597052/share
 
 For **Android 4+**, follow these steps :
 
@@ -146,7 +145,7 @@ To use the different modules of AntiCrux out of a web-browser, you must install 
 apt-get install nodejs nodejs-legacy
 ```
 
-Additional tools may be added globally :
+For developers, additional tools may be added globally :
 
 ```bash
 npm install -g uglify-js jshint yuidocjs
@@ -172,7 +171,7 @@ You need first to install [Node.js](#nodejs).
 
 To access the engine remotely over a network, you can execute AntiCrux as a chess server. By default, it listens to local connections on the port 5000 and you can't create more than one instance on the same port.
 
-Start the server by double-clicking on the script "run_server.bat" (Windows) or "run_server.sh" (Linux).
+Start the server by double-clicking on the script "run_server.bat" (Windows) or "run_server.sh" (Linux). To change the default level of the server, follow the indications written on the home screen when you connect.
 
 Because it mimics the commands of the Free Internet Chess Server (FICS), AntiCrux Server is compatible with any ICS client not supporting timeseal.
 
@@ -209,7 +208,6 @@ Some restrictions apply :
 - AntiCrux Engine is a script (not an executable file) : the procedure is detailed below
 - You can't stop the engine while it is thinking
 - There is no time control
-- No suggestion is displayed during the analysis
 
 #### Verification
 
@@ -405,6 +403,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: new method AntiCrux.prototype.getAssistance
 	- Library: option AntiCrux.options.board.analysisDepth renamed as AntiCrux.options.board.assistanceDepth
 	- Library: option AntiCrux.options.ai.noStatOnForcedMove renamed as AntiCrux.options.board.noStatOnForcedMove
+	- Library: reworked and lighter data model for the board (AntiCrux.node.piece and AntiCrux.node.owner are replaced by AntiCrux.node.board)
 
 
 ### License
@@ -445,7 +444,7 @@ AntiCrux is released under the terms of the **GNU Affero General Public License 
 
 It is important to know how the options influence a move AntiCrux makes.
 
-Schematically, AntiCrux plays all the possible moves to find a better situation. Finding the possible moves becomes exponential rapidly. Exploring more than 4 half-moves can be complicated. Because AntiChess insists on the forced moves, the number of possible moves can be reduced a lot, allowing the algorithm to explore deeper with higher efficiency.
+Schematically, AntiCrux plays all the possible moves level by level to find a better situation. Finding the possible moves becomes exponential rapidly. Exploring more than 4 half-moves can be complicated. Because AntiChess insists on the forced moves, the number of possible moves can be reduced a lot, allowing the algorithm to explore deeper with an higher efficiency.
 
 Playing one piece is an *half-move* generating a new position called *node*. This node will lead to new nodes if there are available moves for the next player. The nodes are connected and the players take turns in the play. This game is modelled with a tree structure whose branches can be cut for its hidden treasure : the right move to play !
 
@@ -703,12 +702,11 @@ The moves are identified by 3 notation systems :
 
 ### API
 
-A node is a position defined by pieces and their owner, and a player :
+A node is a position defined by the pieces, their owner and a player. The pieces and the owner are merged into the same array with the logical operator OR.
 
 ```javascript
 node = {
-  piece  : [ /* 64 cells */ ],
-  owner  : [ /* 64 cells */ ],
+  board  : [ /* 64 cells */ ],
   player : AntiCrux.constants.owner.white
 };
 ```
@@ -773,7 +771,7 @@ The parameter *pNode* is generally optional. When you omit it, the internal root
 
 Your instance is AntiCrux and embeds by default a "root node" representing the current board. The same instance will apply on any node provided in the argument. Consequently : a node is minimalist and an instance of AntiCrux is unique.
 
-To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script "run_yuidoc_server.bat" (Windows) or "run_yuidoc_server.sh" (Linux), then access to [http://localhost:3000](http://localhost:3000).
+To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script "run_yuidoc_server.bat" (Windows) or "run_yuidoc_server.sh" (Linux), then access to http://localhost:3000
 
 
 ### Valuation
