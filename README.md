@@ -468,7 +468,7 @@ The maximal depth is the number of half-moves which can be explored. The value i
 
 The value can be increased drastically if you enable *minimizeLiberty*. But the game will always play the forced moves even if it is not the best move. This is especially true at the beginning of the game.
 
-If you don't want that, you should reach the maximal depth dynamically at any moment. So you can set the maximal depth to 99, define a maximal number of nodes relevant with the size of your memory (*maxNodes*) and ask to reach this limit all the time (*wholeNodes*).
+If you don't want that, you should reach the maximal depth dynamically at any moment. So you can set the maximal depth to 99, define a maximal number of nodes relevant with the size of your memory (*maxNodes*).
 
 - **AntiCrux.options.ai.maxNodes**
 
@@ -504,14 +504,6 @@ The minimization of the liberty of your opponent doesn't necessarily pick the ri
 - Rxh1 leaves 2 moves in Qxg8 and Qxh8 but you don't lose immediately
 
 This option is relevant when AntiCrux.options.ai.minimizeLiberty is activated. The higher the figure, the higher the nodes and the lower the depth. The recommended values are 1 (forced moves where possible) or 2 (tolerable liberty without forced moves).
-
-- **AntiCrux.options.ai.wholeNodes**
-
-The exploration is done depth by depth to permit an homogeneous evaluation of all the possible moves. When you reach a next depth, the number of nodes increases exponentially. Their number is approximately given by the relation "Nodes=A\*exp(B\*Depth)" where A and B are two constants to be determined with an [exponential regression](http://keisan.casio.com/exec/system/14059930754231).
-
-If the option is set to true, you are exposed to a partial exploration of the deepest level while the previous one have been entirely explored. This is generally not an issue because it is often good to explore a maximal number of nodes even if some are not totally processed.
-
-If you don't use the option, the number of nodes is first estimated for each depth. If the prediction is lower than the defined maximal number of nodes (*maxNodes*), the next level is explored and there is great chance that it will be entirely explored and still in the limit of the maximal number of nodes. The advantage of this option is that it reduces the thinking time dynamically. The game is quicker and never a constant.
 
 - **AntiCrux.options.ai.randomizedSearch**
 
@@ -650,7 +642,6 @@ Please note that the web-interface offers all the options individually and fewer
 | maxNodes            | 100 | 50k | 50k | 50k | 15k | 30k | 50k | 75k | 80k | 85k | 90k | 120k | 150k | 200k | 300k | 400k | 500k | 750k | 1M | 2M |
 | minimizeLiberty     | -   | -   | -   | -   | -   | -   | -   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | maxReply            | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 3   | 2   | 1   | 1   | 1    | 1    | 2    | 2    | 2    | 2    | 2    | 2  | 2  |
-| wholeNodes          | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | pessimisticScenario | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
 | bestStaticScore     | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X    | X    | X    | X    | X    | X    | X    | X  | X  |

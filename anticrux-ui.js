@@ -50,7 +50,6 @@ function acui_options_load() {
 		$('#acui_option_maxnodes').val(ai.options.ai.maxNodes);
 		$('#acui_option_minimizeliberty').prop('checked', ai.options.ai.minimizeLiberty);
 		$('#acui_option_maxreply').val(ai.options.ai.maxReply).slider('refresh');
-		$('#acui_option_wholenodes').prop('checked', ai.options.ai.wholeNodes);
 		$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
 		$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
 		$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
@@ -756,7 +755,6 @@ $(document).ready(function() {
 			ai.options.ai.maxNodes				= parseInt($('#acui_option_maxnodes').val());
 			ai.options.ai.minimizeLiberty		= $('#acui_option_minimizeliberty').prop('checked');
 			ai.options.ai.maxReply				= parseInt($('#acui_option_maxreply').val());
-			ai.options.ai.wholeNodes			= $('#acui_option_wholenodes').prop('checked');
 			ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
 			ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
 			ai.options.ai.bestStaticScore		= $('#acui_option_beststaticscore').prop('checked');

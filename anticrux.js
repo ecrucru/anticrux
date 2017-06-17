@@ -504,7 +504,6 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 	this.options.ai.maxNodes			= [100, 50000, 50000, 50000, 15000, 30000, 50000, 75000, 80000, 85000, 90000, 120000, 150000, 200000, 300000, 400000, 500000, 750000, 1000000, 2000000][pLevel-1];
 	this.options.ai.minimizeLiberty		= (pLevel >= 8);
 	this.options.ai.maxReply			= [1, 1, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2][pLevel-1];
-	this.options.ai.wholeNodes			= (pLevel >= 11);
 	this.options.ai.randomizedSearch	= true;
 	this.options.ai.pessimisticScenario	= (pLevel >= 10);
 	this.options.ai.bestStaticScore		= (pLevel >= 12);
@@ -822,8 +821,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
  * @return {Integer} The internal representation of the move (to be used for the log for example), else *AntiCrux.constants.move.none* in case of error.
  */
 AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
-	var	i,
-		maxDepth, curDepth, limitDepth, reg_x, reg_y, reg_mean_x, reg_mean_y, reg_sxx, reg_sxy, reg_a, reg_b, reg_estimate;
+	var	maxDepth, curDepth, limitDepth;
 
 	//-- Checks
 	if (pNode === undefined)
@@ -858,8 +856,6 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	}
 
 	//-- Builds the decision tree level by level
-	reg_x = [];
-	reg_y = [];
 	for (curDepth=1 ; curDepth<=maxDepth ; curDepth++)
 	{
 		//- Explores to the temporary lowest level
@@ -867,51 +863,16 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 		this.options.ai.maxDepth = curDepth;
 		this._ai_nodeRecurseTree(pPlayer, 0, pNode);
 		this._reachedDepth = curDepth;
+		if (this._numNodes === 0)
+			throw 'Internal error - Report any error (#001)';
 
 		//- Callback
 		if (this.callbackExploration !== null)
 			this.callbackExploration(maxDepth, this._reachedDepth, this._numNodes);
 
-		//- Estimates the number of nodes for the next level
-		// The mathematical background is at http://keisan.casio.com/exec/system/14059930754231
-		if (this._numNodes === 0)
-			throw 'Internal error - Report any error (#001)';
-		// Input data
-		reg_x.push(curDepth);
-		reg_y.push(this._numNodes);
-		// Average
-		reg_mean_x = 0;
-		reg_mean_y = 0;
-		for (i=0 ; i<reg_x.length ; i++)
-			reg_mean_x += reg_x[i];
-		reg_mean_x /= reg_x.length;
-		for (i=0 ; i<reg_y.length ; i++)
-			reg_mean_y += Math.log(reg_y[i]);
-		reg_mean_y /= reg_y.length;
-		// Factor Sxx
-		reg_sxx = 0;
-		for (i=0 ; i<reg_x.length ; i++)
-			reg_sxx += Math.pow(reg_x[i]-reg_mean_x, 2);
-		reg_sxx /= reg_x.length;
-		// Factor Sxy
-		reg_sxy = 0;
-		for (i=0 ; i<reg_y.length ; i++)
-			reg_sxy += (reg_x[i]-reg_mean_x) * (Math.log(reg_y[i])-reg_mean_y);
-		reg_sxy /= reg_y.length;
-		// Factor B and A
-		reg_b = (reg_sxx === 0 ? 0 : reg_sxy/reg_sxx);
-		reg_a = Math.exp(reg_mean_y-reg_b*reg_mean_x);
-		// Next number of nodes (exponential model)
-		reg_estimate = Math.floor(reg_a*Math.exp(reg_b*(curDepth+1)));
-
 		//- Reaches the next level if allowed
 		if (	(curDepth >= (limitDepth ? 1 : maxDepth)) ||			//Max depth reached
-				(	!this.options.ai.wholeNodes &&						//Exceeded projection with 5% of tolerance
-					(this.options.ai.maxNodes !== 0) &&
-					(reg_estimate > this.options.ai.maxNodes)
-				) ||
-				(	this.options.ai.wholeNodes &&
-					(this.options.ai.maxNodes !== 0) &&					//Max nodes reached
+				(	(this.options.ai.maxNodes !== 0) &&					//Max nodes reached
 					(this._numNodes >= this.options.ai.maxNodes)
 				)
 		)
@@ -949,7 +910,6 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 	this._helper.setLevel(20);
 	this._helper.options.ai.maxDepth = 3;
 	this._helper.options.ai.maxNodes = 0;
-	this._helper.options.ai.wholeNodes = true;
 	if (!this._helper.loadFen(this.toFen(pNode)))
 		return 'Error : the position cannot be loaded.';
 
@@ -2342,7 +2302,6 @@ AntiCrux.prototype._init = function() {
 			maxNodes : 0,								//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
 			minimizeLiberty : false,					//TRUE allows a deeper inspection by forcing the moves, FALSE does a complete evaluation
 			maxReply : 0,								//Number >=1 corresponding to the maximal number of moves that a player is allowed in return when minimizeLiberty is enabled
-			wholeNodes : false,							//TRUE evaluates the depths until the limit is reached and makes the analysis stronger
 			randomizedSearch : false,					//TRUE helps the game to not played the same pieces
 			pessimisticScenario : false,				//TRUE makes the algorithm stronger, FALSE is more random
 			bestStaticScore : false,					//TRUE makes the algorithm stronger, FALSE is more random for low determined situations
