@@ -404,6 +404,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: option AntiCrux.options.board.analysisDepth renamed as AntiCrux.options.board.assistanceDepth
 	- Library: option AntiCrux.options.ai.noStatOnForcedMove renamed as AntiCrux.options.board.noStatOnForcedMove
 	- Library: reworked and lighter data model for the board (AntiCrux.node.piece and AntiCrux.node.owner are replaced by AntiCrux.node.board)
+	- Library: use of bit attributes for a smaller memory footprint
 
 
 ### License
@@ -693,11 +694,12 @@ The moves are identified by 3 notation systems :
 
 ### API
 
-A node is a position defined by the pieces, their owner and a player. The pieces and the owner are merged into the same array with the logical operator OR.
+A node is a position defined by an array of pieces and owners combined with the operator OR, a magic number which collects various statuses and a player.
 
 ```javascript
 node = {
   board  : [ /* 64 cells */ ],
+  magic  : AntiCrux.constants.bitmask.*,
   player : AntiCrux.constants.owner.white
 };
 ```
