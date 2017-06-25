@@ -32,9 +32,9 @@ var fs        = require('fs'),							// https://nodejs.org/api/fs.html
 //======== Definitions
 
 var enginePool = [
-		{ ai:null, type:'AC', selfDuel:false, enPassant:true, level:0, levelMin:1, levelMax:15, owner:null, name:'' },	//Up to 20
-		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  owner:null, name:'' },	//Up to 8
-		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  owner:null, name:'' }	//Up to 8
+		{ ai:null, type:'AC', selfDuel:false, enPassant:true, level:0, levelMin:1, levelMax:15, player:null, name:'' },	//Up to 20
+		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  player:null, name:'' },	//Up to 8
+		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  player:null, name:'' }	//Up to 8
 	],
 
 	sfmv_levels = [
@@ -127,8 +127,8 @@ function acelo_newjob() {
 	}
 
 	//-- Sets the color of each player
-	job.engineOne.owner = job.referee.constants.owner.white;
-	job.engineTwo.owner = job.referee.constants.owner.black;
+	job.engineOne.player = job.referee.constants.player.white;
+	job.engineTwo.player = job.referee.constants.player.black;
 
 	//-- Sets the level of each player
 	while (true)
@@ -153,7 +153,7 @@ function acelo_newjob() {
 
 	//-- Initialization of AntiCrux
 	job.referee.defaultBoard();
-	job.referee.options.board.rotated = (job.referee.owner == job.referee.constants.owner.white);	//To set the right names during the export to PGN
+	job.referee.options.board.rotated = (job.referee.player == job.referee.constants.player.white);	//To set the right names during the export to PGN
 	job.referee.options.variant.enPassant = (job.engineOne.enPassant && job.engineTwo.enPassant);	//Else it may infringe the rules
 
 	//-- Initialization of Stockfish Multi-Variant
@@ -188,7 +188,7 @@ function acelo_play() {
 		console.log('> Trace : calling acelo_play()');
 
 	//-- Finds the player
-	player = (job.referee.getPlayer() == job.referee.constants.owner.white ? job.engineOne : job.engineTwo);
+	player = (job.referee.getPlayer() == job.referee.constants.player.white ? job.engineOne : job.engineTwo);
 
 	//-- Plays a move
 	if (player.type == 'AC')
@@ -197,7 +197,7 @@ function acelo_play() {
 		move = player.ai.getMoveAI();
 		if (job.debugLevel >= 1)
 			moveStr = player.ai.moveToString(move);
-		if (job.referee.movePiece(move, true) == job.referee.constants.move.none)
+		if (job.referee.movePiece(move, true) == job.referee.constants.noMove)
 		{
 			console.log('Internal error : Invalid move by "'+player.name+'", disqualified');
 			console.log('   - FEN : ' + job.referee.toFen());
@@ -233,7 +233,7 @@ function acelo_parseSfmv(pText) {
 		console.log('> Trace : calling acelo_parseSfmv("'+pText+'")');
 
 	//-- Finds the player
-	player = (job.referee.getPlayer() == job.referee.constants.owner.white ? job.engineOne : job.engineTwo);
+	player = (job.referee.getPlayer() == job.referee.constants.player.white ? job.engineOne : job.engineTwo);
 
 	//-- Splits the input
 	list = pText.split(' ');
@@ -246,7 +246,7 @@ function acelo_parseSfmv(pText) {
 		if (job.debugLevel >= 1)
 			node = job.referee._ai_nodeCopy(job.referee.getMainNode(), false);
 		move = job.referee.movePiece(list[1], true);
-		if (move == job.referee.constants.move.none)
+		if (move == job.referee.constants.noMove)
 		{
 			console.log('External error : Invalid move by "'+player.name+'", disqualified');
 			console.log('   - FEN : ' + job.referee.toFen());
@@ -279,14 +279,14 @@ function acelo_nextTurn() {
 	{
 		if (job.debugLevel >= 3)
 			console.log('> Trace : end of game, '+job.disqualified.name+' is disqualified');
-		result = (job.disqualified.owner==job.referee.constants.owner.black ? '1-0' : '0-1');
+		result = (job.disqualified.player == job.referee.constants.player.black ? '1-0' : '0-1');
 	}
 	else
 		if (job.referee.isEndGame(false))
 		{
 			if (job.debugLevel >= 3)
-				console.log('> Trace : end of game, winner=' + (job.referee.getWinner() == job.referee.constants.owner.white ? job.engineOne.name : job.engineTwo.name));
-			result = (job.referee.getWinner() == job.referee.constants.owner.white ? '1-0' : '0-1');
+				console.log('> Trace : end of game, winner=' + (job.referee.getWinner() == job.referee.constants.player.white ? job.engineOne.name : job.engineTwo.name));
+			result = (job.referee.getWinner() == job.referee.constants.player.white ? '1-0' : '0-1');
 		}
 		else
 			if (job.referee.isDraw() || (job.referee.getHistory().length >= 150))

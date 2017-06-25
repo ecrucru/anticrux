@@ -205,7 +205,7 @@ pipe = readline.createInterface({
 					}
 					if (b)
 					{
-						if (aceng_engine.movePiece(tab[j]) == aceng_engine.constants.move.none)
+						if (aceng_engine.movePiece(tab[j]) == aceng_engine.constants.noMove)
 							throw 'Internal error - Rejected move history';
 						else
 						{

@@ -83,7 +83,7 @@ function acui_reset_ui(pResetPlayer) {
 	$('#acui_pgn').addClass('ui-disabled');
 	ai.resetStats();
 	if (pResetPlayer)
-		$('#acui_player').val(ai.constants.owner.white).change();
+		$('#acui_player').val(ai.constants.player.white).change();
 }
 
 function acui_refresh_board() {
@@ -114,7 +114,7 @@ function acui_refresh_board() {
 			//- Overrides the existing selection if it is the same player
 			if (ui_move.length == 2)
 			{
-				if (ai.getPieceByCoordinate(ui_move).owner == ai.getPieceByCoordinate(move).owner)
+				if (ai.getPieceByCoordinate(ui_move).player == ai.getPieceByCoordinate(move).player)
 					ui_move = move;
 				else
 					ui_move += move;
@@ -134,7 +134,7 @@ function acui_refresh_board() {
 
 				// Explicit move for the user
 				move = ai.movePiece(ui_move, true, player);
-				if (move != ai.constants.move.none)
+				if (move != ai.constants.noMove)
 					acui_promote(move);
 				else
 				{
@@ -206,7 +206,7 @@ function acui_refresh_history(pScroll) {
 			return false;
 		for (i=0 ; i<=index ; i++)
 		{
-			if (ai_rewind.movePiece(hist[i], false, ai_rewind.constants.owner.none) == ai_rewind.constants.move.none)
+			if (ai_rewind.movePiece(hist[i], false, ai_rewind.constants.player.none) == ai_rewind.constants.noMove)
 				throw 'Internal error - Report any error (#002)';
 			else
 			{
@@ -246,7 +246,7 @@ function acui_afterHumanMove() {
 	ui_move = '';
 	ai.updateHalfMoveClock();
 	ai.logMove(ui_move_pending);
-	ui_move_pending = ai.constants.move.none;
+	ui_move_pending = ai.constants.noMove;
 	acui_refresh_history(true);
 	acui_refresh_board();
 	if (ai.isEndGame(true))
@@ -277,24 +277,24 @@ function acui_afterHumanMove() {
 }
 
 function acui_autostart() {
-	if (ai.getPlayer() == (ai.options.board.rotated ? ai.constants.owner.white : ai.constants.owner.black))
+	if (ai.getPlayer() == (ai.options.board.rotated ? ai.constants.player.white : ai.constants.player.black))
 		setTimeout(function() {
 					$('#acui_play_ai').click();
 				}, 500);
 }
 
 function acui_switch_players() {
-	if (ai.getPlayer() == ai.constants.owner.black)
-		$('#acui_player').val(ai.constants.owner.white).change();
+	if (ai.getPlayer() == ai.constants.player.black)
+		$('#acui_player').val(ai.constants.player.white).change();
 	else
-		$('#acui_player').val(ai.constants.owner.black).change();
+		$('#acui_player').val(ai.constants.player.black).change();
 }
 
 function acui_showWinner() {
 	var winner = ai.getWinner();
-	if (winner == ai.constants.owner.none)
+	if (winner == ai.constants.player.none)
 		throw 'Internal error - Report any error (#003)';
-	winner = (winner == ai.constants.owner.white ? 'White' : 'Black');
+	winner = (winner == ai.constants.player.white ? 'White' : 'Black');
 	acui_popup('End of the game. '+winner+' has won !');
 }
 
@@ -348,10 +348,10 @@ $(document).ready(function() {
 	ui_mobile = ($('#acui_ismobile').length > 0);
 	ui_cordova = (window.cordova !== undefined);
 	ui_move = '';
-	ui_move_pending = ai.constants.move.none;
+	ui_move_pending = ai.constants.noMove;
 	ui_possibledraw = false;
 	ui_rewind = false;
-	ui_rematch = ai.constants.owner.white;
+	ui_rematch = ai.constants.player.white;
 	acui_refresh_board();
 
 	//-- Dynamic content
@@ -359,9 +359,9 @@ $(document).ready(function() {
 
 	//-- Updates the list of players
 	$('#acui_player').find('option').remove().end();
-	$('<option/>').val(ai.constants.owner.white).html('White'+(ui_mobile?'':' to play')).appendTo('#acui_player');
-	$('<option/>').val(ai.constants.owner.black).html('Black'+(ui_mobile?'':' to play')).appendTo('#acui_player');
-	$('#acui_player').val(ai.constants.owner.white).change();
+	$('<option/>').val(ai.constants.player.white).html('White'+(ui_mobile?'':' to play')).appendTo('#acui_player');
+	$('<option/>').val(ai.constants.player.black).html('Black'+(ui_mobile?'':' to play')).appendTo('#acui_player');
+	$('#acui_player').val(ai.constants.player.white).change();
 
 	//-- Updates the levels
 	$('#acui_option_predef').find('option').remove().end();
@@ -401,7 +401,7 @@ $(document).ready(function() {
 			move = ai.getMoveAI(player);
 
 		//-- Checks
-		if (move == ai.constants.move.none)
+		if (move == ai.constants.noMove)
 		{
 			if (ai.isEndGame(false))
 				acui_showWinner();
@@ -412,7 +412,7 @@ $(document).ready(function() {
 		$('#acui_lastmove').html('Last move : ' + ai.moveToString(move));
 		$('#acui_assistance').html('Assistance : ' + ($('#acui_option_pro').prop('checked') || !ai.options.board.assistance ? '-' : ai.getAssistance(true, false)));
 		acui_refresh_moves();
-		if (ai.movePiece(move, true, player) != ai.constants.move.none)
+		if (ai.movePiece(move, true, player) != ai.constants.noMove)
 		{
 			ui_move = '';
 			ai.updateHalfMoveClock();
@@ -457,7 +457,7 @@ $(document).ready(function() {
 
 		//-- Explicit move for the user
 		move = ai.movePiece(move, true, player);
-		if (move != ai.constants.move.none)
+		if (move != ai.constants.noMove)
 			acui_promote(move);
 		else
 			acui_popup('The move has been denied. Choose another one.');
@@ -614,11 +614,11 @@ $(document).ready(function() {
 	});
 
 	$('#acui_rematch').click(function() {
-		ui_rematch = (ui_rematch == ai.constants.owner.white ? ai.constants.owner.black : ai.constants.owner.white);
-		$('#acui_option_rotated').prop('checked', (ui_rematch == ai.constants.owner.black)).checkboxradio('refresh').change();
+		ui_rematch = (ui_rematch == ai.constants.player.white ? ai.constants.player.black : ai.constants.player.white);
+		$('#acui_option_rotated').prop('checked', (ui_rematch == ai.constants.player.black)).checkboxradio('refresh').change();
 		if (ai.fischer !== null)
 		{
-			if (ai.fischer == ai.constants.board.classicalFischer)
+			if (ai.fischer == ai.constants.classicalFischer)
 				$('#acui_default').click();
 			else
 				$('#acui_fischer_current').click();
@@ -656,7 +656,7 @@ $(document).ready(function() {
 			if (ai.fischer !== null)
 			{
 				$('#acui_option_fischer').val(ai.fischer).change();
-				if (ai.fischer != ai.constants.board.classicalFischer)
+				if (ai.fischer != ai.constants.classicalFischer)
 					acui_popup('You are playing AntiChess ' + ai.fischer + '.');
 			}
 			return true;
@@ -690,7 +690,7 @@ $(document).ready(function() {
 							if (ai.fischer !== null)
 							{
 								$('#acui_option_fischer').val(ai.fischer).change();
-								if (ai.fischer != ai.constants.board.classicalFischer)
+								if (ai.fischer != ai.constants.classicalFischer)
 									acui_popup('You are playing AntiChess ' + ai.fischer + '.');
 							}
 						}, 5000);				//5 seconds are arbitrary

@@ -62,7 +62,7 @@ var server = net.createServer(function(pSocket) {
 		//-- New AI
 		pSocket.acsrv_ai = new AntiCrux();
 		pSocket.acsrv_ai.setLevel(pSocket.acsrv_options.level);
-		pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.none;
+		pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.none;
 
 		//-- Welcome screen
 		pSocket.write(
@@ -560,7 +560,7 @@ server.acsrv_process = function(pSocket) {
 			if (pSocket.acsrv_options._playOnConnect)
 			{
 				pSocket.acsrv_state = 'match_proposal';
-				pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.none;		//The color is always random, but the player can force it by proposing another match
+				pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.none;		//The color is always random, but the player can force it by proposing another match
 				pSocket.write("Challenge: AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") "+pSocket.acsrv_login+" (++++) unrated suicide 180 180.\r\n");
 				pSocket.write("You can \"accept\" or \"decline\", or propose different parameters.\r\nfics% ");
 			}
@@ -598,7 +598,7 @@ server.acsrv_process = function(pSocket) {
 
 				//- Aborts the current game (automatically accepted)
 				case 'abort':
-					if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white)
+					if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
 						pSocket.write("{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Game aborted by mutual agreement} *");
 					else
 						pSocket.write("{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) Game aborted by mutual agreement} *");
@@ -609,7 +609,7 @@ server.acsrv_process = function(pSocket) {
 				//- Resigns the current game (automatically accepted)
 				case 'resign':
 					server.acsrv_stats.win++;
-					if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white)
+					if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
 						pSocket.write("{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") "+pSocket.acsrv_login+" resigns} 1-0");
 					else
 						pSocket.write("{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) "+pSocket.acsrv_login+" resigns} 0-1");
@@ -631,7 +631,7 @@ server.acsrv_process = function(pSocket) {
 				//- Switches the board
 				case 'switch':
 					pSocket.write("AntiCrux accepts the switch request.\r\n");
-					pSocket.acsrv_aicolor = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.black ? pSocket.acsrv_ai.constants.owner.white : pSocket.acsrv_ai.constants.owner.black);
+					pSocket.acsrv_aicolor = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.black ? pSocket.acsrv_ai.constants.player.white : pSocket.acsrv_ai.constants.player.black);
 					server.acsrv_playAI(pSocket);
 					server.acsrv_board(pSocket);
 					server.acsrv_endGame(pSocket);
@@ -645,7 +645,7 @@ server.acsrv_process = function(pSocket) {
 					{
 						server.acsrv_stats.draw++;
 						pSocket.write("AntiCrux accepts the draw request.\r\n");
-						if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white)
+						if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
 							pSocket.write("{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Game drawn by mutual agreement} 1/2-1/2\r\n");
 						else
 							pSocket.write("{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) Game drawn by mutual agreement} 1/2-1/2\r\n");
@@ -673,24 +673,24 @@ server.acsrv_process = function(pSocket) {
 					switch (tab[1])
 					{
 						case 'q':
-							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.owner.queen;
+							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.piece.queen;
 							buffer = 'QUEEN';
 							break;
 						case 'r':
-							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.owner.rook;
+							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.piece.rook;
 							buffer = 'ROOK';
 							break;
 						case 'b':
-							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.owner.bishop;
+							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.piece.bishop;
 							buffer = 'BISHOP';
 							break;
 						case 'k':
 						case 'n':
-							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.owner.knight;
+							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.piece.knight;
 							buffer = 'KNIGHT';
 							break;
 						case 'ki':
-							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.owner.king;
+							pSocket.acsrv_promote = pSocket.acsrv_ai.constants.piece.king;
 							buffer = 'KING';
 							break;
 						default:
@@ -723,13 +723,13 @@ server.acsrv_process = function(pSocket) {
 					}
 
 					// Init
-					white = (pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.owner.white ? 'AntiCrux' : pSocket.acsrv_login);
-					black = (pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.owner.black ? 'AntiCrux' : pSocket.acsrv_login);
+					white = (pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.player.white ? 'AntiCrux' : pSocket.acsrv_login);
+					black = (pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.player.black ? 'AntiCrux' : pSocket.acsrv_login);
 
 					// Header
 					buffer =	"Movelist for game "+pSocket.acsrv_session+":\r\n" +
 								"\r\n" +
-								white+" ("+(pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.owner.white ? pSocket.acsrv_ai.options.ai.elo : '++++')+") vs. "+black+" ("+(pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.owner.black ? pSocket.acsrv_ai.options.ai.elo : '++++')+") --- "+(new Date().toUTCString())+"\r\n" +
+								white+" ("+(pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.player.white ? pSocket.acsrv_ai.options.ai.elo : '++++')+") vs. "+black+" ("+(pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.player.black ? pSocket.acsrv_ai.options.ai.elo : '++++')+") --- "+(new Date().toUTCString())+"\r\n" +
 								"Unrated suicide match, initial time: 180 minutes, increment: 180 seconds.\r\n" +
 								"\r\n" +
 								"Move  " + server.acsrv_fixedString(white, 18) + " " + server.acsrv_fixedString(black, 18) + "\r\n";
@@ -746,7 +746,7 @@ server.acsrv_process = function(pSocket) {
 							if (i % 2 === 0)
 								buffer += server.acsrv_fixedString(Math.ceil((i+1)/2), 3, true) + '.  ';
 							buffer += server.acsrv_fixedString(pSocket._trace.moveToString(hist[i]), 8) + '(0:00)     ';
-							if (pSocket._trace.movePiece(hist[i], true, pSocket._trace.constants.owner.none) == pSocket._trace.constants.move.none)
+							if (pSocket._trace.movePiece(hist[i], true, pSocket._trace.constants.player.none) == pSocket._trace.constants.noMove)
 							{
 								buffer = '';
 								break;
@@ -779,7 +779,7 @@ server.acsrv_process = function(pSocket) {
 
 						node = pSocket.acsrv_ai._ai_nodeCopy(pSocket.acsrv_ai.getMainNode(), false);
 						move = pSocket.acsrv_ai.movePiece(line, true, pSocket.acsrv_ai.getPlayer());
-						if (move == pSocket.acsrv_ai.constants.move.none)
+						if (move == pSocket.acsrv_ai.constants.noMove)
 						{
 							pSocket.write("Invalid move\r\nfics% ");
 							server.acsrv_board(pSocket);
@@ -828,7 +828,7 @@ server.acsrv_process = function(pSocket) {
 					pSocket.write("That seek is not available.\r\nfics% ");
 				else
 				{
-					pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.none;
+					pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.none;
 					server.acsrv_startGame(pSocket);
 				}
 				continue;
@@ -845,7 +845,7 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'rematch')
 			{
 				// Checks if a match occurred already
-				if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.none)
+				if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.none)
 				{
 					tab = ['match', 'anticrux', 'suicide'];
 					//No continue
@@ -854,7 +854,7 @@ server.acsrv_process = function(pSocket) {
 				// Starts a new match from the opposite side
 				{
 					pSocket.write("AntiCrux accepts the match offer.\r\n\r\n");
-					pSocket.acsrv_aicolor = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white ? pSocket.acsrv_ai.constants.owner.black : pSocket.acsrv_ai.constants.owner.white);
+					pSocket.acsrv_aicolor = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white ? pSocket.acsrv_ai.constants.player.black : pSocket.acsrv_ai.constants.player.white);
 					server.acsrv_startGame(pSocket);
 					continue;
 				}
@@ -889,13 +889,13 @@ server.acsrv_process = function(pSocket) {
 				}
 
 				// Predefines the color of the AI
-				pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.none;
+				pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.none;
 				for (i=2 ; i<tab.length ; i++)
 				{
 					if (tab[i] == 'black')
-						pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.white;
+						pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.white;
 					if (tab[i] == 'white')
-						pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.owner.black;
+						pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.black;
 				}
 
 				// Accepts the match
@@ -949,16 +949,16 @@ server.acsrv_games = function(pSocket) {
 
 		//- Output
 		buffer = server.acsrv_fixedString(session.toString(), 2) + ' ';
-		if (socket.acsrv_aicolor == ai.constants.owner.white)
+		if (socket.acsrv_aicolor == ai.constants.player.white)
 			buffer += ai.options.ai.elo + ' AntiCrux    ++++ ' + server.acsrv_fixedString(socket.acsrv_login, 12);
 		else
 			buffer += '++++ ' + server.acsrv_fixedString(socket.acsrv_login, 12) + ' ' + ai.options.ai.elo + ' AntiCrux    ';
 		buffer +=	' [pSu 180 180] 180:00 - 180:00 (' +
-					server.acsrv_fixedString(ai._ai_nodeCountPiece(ai.constants.owner.white).toString(), 2) +
+					server.acsrv_fixedString(ai._ai_nodeCountPiece(ai.constants.player.white).toString(), 2) +
 					'-' +
-					server.acsrv_fixedString(ai._ai_nodeCountPiece(ai.constants.owner.black).toString(), 2) +
+					server.acsrv_fixedString(ai._ai_nodeCountPiece(ai.constants.player.black).toString(), 2) +
 					') ' +
-					(ai.getPlayer() == ai.constants.owner.white ? 'W' : 'B') + ':' +
+					(ai.getPlayer() == ai.constants.player.white ? 'W' : 'B') + ':' +
 					server.acsrv_fixedString(Math.ceil(ai.getHistory().length/2).toString(), 2);
 		pSocket.write(buffer+"\r\n");
 		counter++;
@@ -1014,23 +1014,23 @@ server.acsrv_startGame = function(pSocket) {
 	}
 	else
 		pSocket.acsrv_ai.defaultBoard();
-	pSocket.acsrv_promote = pSocket.acsrv_ai.constants.owner.queen;		//Reset at every new game
+	pSocket.acsrv_promote = pSocket.acsrv_ai.constants.piece.queen;		//Reset at every new game
 	pSocket.acsrv_lastMove = '';
 	pSocket.acsrv_aikills = false;
 	pSocket.acsrv_playerkills = false;
 
 	//-- Chooses the side and White always starts
-	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.none)
+	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.none)
 	{
 		b = (Math.floor(100*Math.random())%2===0);
-		pSocket.acsrv_aicolor = (b ? pSocket.acsrv_ai.constants.owner.white : pSocket.acsrv_ai.constants.owner.black);
+		pSocket.acsrv_aicolor = (b ? pSocket.acsrv_ai.constants.player.white : pSocket.acsrv_ai.constants.player.black);
 		pSocket.acsrv_ai.options.board.rotated = b;
 	}
 	else
-		pSocket.acsrv_ai.options.board.rotated = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white);
+		pSocket.acsrv_ai.options.board.rotated = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white);
 
 	//-- Creates the game
-	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white)
+	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
 		pSocket.write(
 			"Creating: AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") "+pSocket.acsrv_login+" (++++) unrated suicide 180 180\r\n\r\n" +
 			"{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Creating unrated suicide match.}\r\n"
@@ -1099,14 +1099,14 @@ server.acsrv_board = function(pSocket) {
 	//-- Board
 	node = pSocket.acsrv_ai.getMainNode();
 	hist = pSocket.acsrv_ai.getHistory();
-	move = (hist.length === 0 ? pSocket.acsrv_ai.constants.move.none : hist[hist.length-1]);
+	move = (hist.length === 0 ? pSocket.acsrv_ai.constants.noMove : hist[hist.length-1]);
 	rotated = pSocket.acsrv_ai.options.board.rotated;		//Shortened syntax
 	buffer = '';
 
 	//-- Header
 	if (hist.length === 0)
 	{
-		if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white)
+		if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
 			pSocket.write("Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+")\r\n\r\n");
 		else
 			pSocket.write("Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux)\r\n\r\n");
@@ -1124,12 +1124,12 @@ server.acsrv_board = function(pSocket) {
 			for (x=0 ; x<8 ; x++)
 			{
 				i = 8*y+x;
-				switch (node.board[i] & pSocket.acsrv_ai.constants.bitmask.owner)
+				switch (node.board[i] & pSocket.acsrv_ai.constants.bitmask.player)
 				{
-					case pSocket.acsrv_ai.constants.owner.black:
+					case pSocket.acsrv_ai.constants.player.black:
 						buffer += pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toLowerCase();
 						break;
-					case pSocket.acsrv_ai.constants.owner.white:
+					case pSocket.acsrv_ai.constants.player.white:
 						buffer += pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toUpperCase();
 						break;
 					default:
@@ -1141,7 +1141,7 @@ server.acsrv_board = function(pSocket) {
 		}
 
 		//- Player
-		if (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_ai.constants.owner.white)
+		if (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_ai.constants.player.white)
 			buffer += 'W';
 		else
 			buffer += 'B';
@@ -1162,7 +1162,7 @@ server.acsrv_board = function(pSocket) {
 		buffer += ' ' + pSocket.acsrv_session;
 
 		//- Players
-		if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white)
+		if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
 			buffer += ' AntiCrux ' + pSocket.acsrv_login;
 		else
 			buffer += ' ' + pSocket.acsrv_login + ' AntiCrux';
@@ -1178,9 +1178,9 @@ server.acsrv_board = function(pSocket) {
 
 		//- Strength
 		buffer +=	' ' +
-					pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.owner.white, node) +
+					pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.white, node) +
 					' ' +
-					pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.owner.black, node);
+					pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.black, node);
 
 		//- Remaining time
 		buffer += ' 180 180';
@@ -1192,7 +1192,7 @@ server.acsrv_board = function(pSocket) {
 			buffer += ' ' + Math.floor((hist.length+1)/2);
 
 		//- Last move
-		if (move == pSocket.acsrv_ai.constants.move.none)
+		if (move == pSocket.acsrv_ai.constants.noMove)
 			buffer += ' none';
 		else {
 			move_fromY = Math.floor(move/1000) % 10;
@@ -1220,7 +1220,7 @@ server.acsrv_board = function(pSocket) {
 			buffer += ' ' + pSocket.acsrv_lastMove;
 
 		//- Rotation
-		if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.black)
+		if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.black)
 			buffer += ' 0';
 		else
 			buffer += ' 1';
@@ -1243,15 +1243,15 @@ server.acsrv_board = function(pSocket) {
 					buffer += '    ' + ('12345678'[7-y]) + '  |';
 
 				//- Nature of the position
-				switch (node.board[i] & pSocket.acsrv_ai.constants.bitmask.owner)
+				switch (node.board[i] & pSocket.acsrv_ai.constants.bitmask.player)
 				{
-					case pSocket.acsrv_ai.constants.owner.white:
+					case pSocket.acsrv_ai.constants.player.white:
 						buffer += ' ' + pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toUpperCase() + ' |';
 						break;
-					case pSocket.acsrv_ai.constants.owner.black:
+					case pSocket.acsrv_ai.constants.player.black:
 						buffer += ' *' + pSocket.acsrv_ai.constants.piece.mapping_rev[node.board[i] & pSocket.acsrv_ai.constants.bitmask.piece].toUpperCase() + '|';
 						break;
-					case pSocket.acsrv_ai.constants.owner.none:
+					case pSocket.acsrv_ai.constants.player.none:
 						buffer += '   |';
 						break;
 				}
@@ -1261,10 +1261,10 @@ server.acsrv_board = function(pSocket) {
 			//- Additional information
 			if (y == (rotated?7:0))
 				buffer +=	'     Move # : ' + Math.ceil((hist.length+1)/2).toString() +
-							' (' + (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_ai.constants.owner.white ? 'White' : 'Black') + ')';
+							' (' + (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_ai.constants.player.white ? 'White' : 'Black') + ')';
 			if ((y == (rotated?6:1)) && (pSocket.acsrv_lastMove.length > 0))
 			{
-				if (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_ai.constants.owner.white)
+				if (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_ai.constants.player.white)
 					buffer += "     Black Moves : '"+server.acsrv_fixedString(pSocket.acsrv_lastMove, 8)+"(0:00)'";
 				else
 					buffer += "     White Moves : '"+server.acsrv_fixedString(pSocket.acsrv_lastMove, 8)+"(0:00)'";
@@ -1274,9 +1274,9 @@ server.acsrv_board = function(pSocket) {
 			if (y == (rotated?3:4))
 				buffer += '     White Clock : 3:00:00';
 			if (y == (rotated?2:5))
-				buffer += '     Black Strength : ' + pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.owner.black, node);
+				buffer += '     Black Strength : ' + pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.black, node);
 			if (y == (rotated?1:6))
-				buffer += '     White Strength : ' + pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.owner.white, node);
+				buffer += '     White Strength : ' + pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.white, node);
 
 			//- Right border
 			buffer += "\r\n";
@@ -1309,8 +1309,8 @@ server.acsrv_endGame = function(pSocket) {
 	var winner, white, black, stalemate;
 
 	//-- Prepares the output
-	white = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.white ? 'AntiCrux' : pSocket.acsrv_login);
-	black = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.owner.black ? 'AntiCrux' : pSocket.acsrv_login);
+	white = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white ? 'AntiCrux' : pSocket.acsrv_login);
+	black = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.black ? 'AntiCrux' : pSocket.acsrv_login);
 
 	//-- Checks for a draw
 	if (pSocket.acsrv_ai.isDraw())		//The possible draws are processed through an explicit request from the human player
@@ -1332,15 +1332,15 @@ server.acsrv_endGame = function(pSocket) {
 				server.acsrv_stats.win++;
 			else
 				server.acsrv_stats.loss++;
-			stalemate =	(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.owner.white, null) !== 0) &&
-						(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.owner.black, null) !== 0);
+			stalemate =	(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.player.white, null) !== 0) &&
+						(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.player.black, null) !== 0);
 
 			//- Output
 			pSocket.write(
 					"\r\n{Game "+pSocket.acsrv_session+" ("+white+" vs. "+black+") "+(winner == pSocket.acsrv_aicolor ? 'AntiCrux' : pSocket.acsrv_login)+" wins by " +
 					(stalemate ? "having less material (stalemate)" : "losing all material") +
 					"} " +
-					(winner == pSocket.acsrv_ai.constants.owner.white ? "1-0" : "0-1") +
+					(winner == pSocket.acsrv_ai.constants.player.white ? "1-0" : "0-1") +
 					"\r\n"
 				);
 			pSocket.write("No ratings adjustment done.\r\nfics% ");

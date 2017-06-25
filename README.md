@@ -367,7 +367,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: new parameter for AntiCrux.prototype.isEndGame
 	- Library: the minimal search depth is now 1 (previously 3)
 	- UI: blind and random modes
-- In progress - Version 0.3.0
+- In progress - Version 0.3.0 [no backwards compatibility]
 	- Server: new server based on Node.js
 	- Readme: update
 	- UI: button "Rematch"
@@ -377,7 +377,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: new method AntiCrux.prototype.getMainNode
 	- Library: new method AntiCrux.prototype.callbackExploration(pMaxDepth, pDepth, pNodes)
 	- Engine: new UCI-compatible chess engine based on Node.js
-	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.move.none
+	- Library: the method AntiCrux.prototype.getMoveAI doesn't return NULL anymore but AntiCrux.constants.noMove
 	- Library: scripts for Linux
 	- ELO: new tool to create games between computers and to estimate ELO ratings
 	- Library: deactivable move "en passant"
@@ -403,8 +403,8 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: new method AntiCrux.prototype.getAssistance
 	- Library: option AntiCrux.options.board.analysisDepth renamed as AntiCrux.options.board.assistanceDepth
 	- Library: option AntiCrux.options.ai.noStatOnForcedMove renamed as AntiCrux.options.board.noStatOnForcedMove
-	- Library: reworked and lighter data model for the board (AntiCrux.node.piece and AntiCrux.node.owner are replaced by AntiCrux.node.board)
-	- Library: use of bit attributes for a smaller memory footprint
+	- Library: deeply reworked and lighter data model using bit-based attributes
+	- Library: reworked AntiCrux.constants
 
 
 ### License
@@ -681,9 +681,9 @@ The pieces are represented with an arbitrary internal identifier :
 
 The pieces are owned by a player :
 
-- AntiCrux.constants.owner.black
-- AntiCrux.constants.owner.none
-- AntiCrux.constants.owner.white
+- AntiCrux.constants.player.black
+- AntiCrux.constants.player.none
+- AntiCrux.constants.player.white
 
 The moves are identified by 3 notation systems :
 
@@ -694,17 +694,7 @@ The moves are identified by 3 notation systems :
 
 ### API
 
-A node is a position defined by an array of pieces and owners combined with the operator OR, a magic number which collects various statuses and a player.
-
-```javascript
-node = {
-  board  : [ /* 64 cells */ ],
-  magic  : AntiCrux.constants.bitmask.*,
-  player : AntiCrux.constants.owner.white
-};
-```
-
-A node is enriched with attributes when you call the API below. Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application, unless you know exactly what you are doing.
+Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application, unless you know exactly what you are doing.
 
 - AntiCrux.callbackExploration(pMaxDepth, pDepth, pNodes)
 - AntiCrux.clearBoard()
@@ -760,9 +750,7 @@ A node is enriched with attributes when you call the API below. Any field or met
 - AntiCrux.undoMove()
 - AntiCrux.updateHalfMoveClock()
 
-The parameter *pNode* is generally optional. When you omit it, the internal root node is automatically picked.
-
-Your instance is AntiCrux and embeds by default a "root node" representing the current board. The same instance will apply on any node provided in the argument. Consequently : a node is minimalist and an instance of AntiCrux is unique.
+A "node" is an object which represents a state of the board with additional information. It is linked with other nodes to describe the possible target positions through a network of moves. The principal node is the "root node" (a private attribute), so by using the public methods of the library, you should not have to handle the nodes on your own. That's why the parameter *pNode* is generally optional.
 
 To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script "run_yuidoc_server.bat" (Windows) or "run_yuidoc_server.sh" (Linux), then access to http://localhost:3000
 
