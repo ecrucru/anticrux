@@ -32,9 +32,54 @@ var fs        = require('fs'),							// https://nodejs.org/api/fs.html
 //======== Definitions
 
 var enginePool = [
-		{ ai:null, type:'AC', selfDuel:false, enPassant:true, level:0, levelMin:1, levelMax:15, player:null, name:'' },	//Up to 20
-		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  player:null, name:'' },	//Up to 8
-		{ ai:null, type:'SF', selfDuel:true,  enPassant:true, level:0, levelMin:1, levelMax:8,  player:null, name:'' }	//Up to 8
+		{	ai			: null,
+			type		: 'AC',
+			selfDuel	: true,
+			enPassant	: true,
+			level		: 0,
+			levelMin	: 1,
+			levelOff	: [	false, false, false, false, false,
+							false, false, false, false, false,
+							false, false, false, false, false,
+							false, false, false, true, true],
+			player		: null,
+			name		: ''
+		},
+		/* Uncomment to use with BayesElo :
+		{	ai			: null,
+			type		: 'AC',
+			selfDuel	: true,
+			enPassant	: true,
+			level		: 0,
+			levelMin	: 1,
+			levelOff	: [	false, false, false, false, false,
+							false, false, false, false, false,
+							false, false, false, false, true,
+							true, true, true, true, true],
+			player		: null,
+			name		: ''
+		},
+		//*/
+		{	ai			: null,
+			type		: 'SF',
+			selfDuel	: true,
+			enPassant	: true,
+			level		: 0,
+			levelMin	: 1,
+			levelOff	: [false, false, false, false, false, false, false, false],
+			player		: null,
+			name		: ''
+		},
+		{	ai			: null,
+			type		: 'SF',
+			selfDuel	: true,
+			enPassant	: true,
+			level		: 0,
+			levelMin	: 1,
+			levelOff	: [false, false, false, false, false, false, false, false],
+			player		: null,
+			name		: ''
+		}
 	],
 
 	sfmv_levels = [
@@ -133,18 +178,21 @@ function acelo_newjob() {
 	//-- Sets the level of each player
 	while (true)
 	{
-		job.engineOne.level = lf_random(job.engineOne.levelMin, job.engineOne.levelMax);
+		job.engineOne.level = lf_random(job.engineOne.levelMin, job.engineOne.levelOff.length-job.engineOne.levelMin+1);
 		if (job.engineOne.type == 'AC')
 			job.engineOne.ai.setLevel(job.engineOne.level);
-		job.engineTwo.level = lf_random(job.engineTwo.levelMin, job.engineTwo.levelMax);
+		job.engineTwo.level = lf_random(job.engineTwo.levelMin, job.engineTwo.levelOff.length-job.engineTwo.levelMin+1);
 		if (job.engineTwo.type == 'AC')
 			job.engineTwo.ai.setLevel(job.engineTwo.level);
 
 		//- Avoids an auto-match
-		if ((job.engineOne.type == job.engineTwo.type) && (job.engineOne.level == job.engineTwo.level))
+		if (job.engineOne.levelOff[job.engineOne.level-job.engineOne.levelMin] || job.engineTwo.levelOff[job.engineTwo.level-job.engineTwo.levelMin])
 			continue;
 		else
-			break;
+			if ((job.engineOne.type == job.engineTwo.type) && (job.engineOne.level == job.engineTwo.level))
+				continue;
+			else
+				break;
 	}
 
 	//-- Sets the names of each player
