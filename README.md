@@ -47,7 +47,7 @@ AntiCrux is a library written in JavaScript which plays a single variant of ches
 
 For technical reasons inherited from JavaScript and its design, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *[normal](#anticrux-helo-world)* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills with fun.
 
-About the variant AntiChess, the objective consists in losing all your own pieces or reaching a stalemate. For that, you will probably have to force the moves. The rules are very simple :
+About the variant AntiChess, the objective consists in losing all your own pieces or reaching a stalemate. For that, you will probably have to force the moves. The rules are very simple and change a lot the dynamics of the game :
 
 - there are no check, no mate and no castling
 - the winner has no more piece on the board or cannot move
@@ -74,7 +74,7 @@ The stable releases are displayed on Github :
 
 - https://github.com/ecrucru/anticrux/releases
 
-The NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" is quite equivalent :
+The NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" is the latest stable release :
 
 ```bash
 npm install anticrux
@@ -317,9 +317,7 @@ ResultSet-EloRating>x
 ResultSet>x
 ```
 
-The ELO is shown relatively to an offset equal to 0 by default. If the offset is equal to 1500, you add that offset to the displayed ELO to get the estimation. However, if we assume that the lowest level is 900 ELO, the offset becomes 1683. So depending on the considered offset, the rank of AntiCrux may vary from 1650 to 1850.
-
-It is also interesting to point out that the ELO rating of AntiCrux is not "proportional" to the chosen level. This is due to the implemented tactical rules which don't rely on the depth and the time to get a competitive advantage.
+The ELO is shown here relatively to an offset equal to 0. But if the offset is equal to 1500, then you add that offset to the displayed ELO to get the final estimation. After many games played automatically and some adjustments done in the configuration, the ELO rating of AntiCrux approximately follows a logarithmic rule.
 
 
 ## Information
@@ -405,6 +403,7 @@ It is also interesting to point out that the ELO rating of AntiCrux is not "prop
 	- Library: option AntiCrux.options.ai.noStatOnForcedMove renamed as AntiCrux.options.board.noStatOnForcedMove
 	- Library: deeply reworked and lighter data model using bit-based attributes
 	- Library: reworked AntiCrux.constants
+	- Library: changed configuration for the levels
 
 
 ### License
@@ -639,19 +638,17 @@ Please note that the web-interface offers all the options individually and fewer
 
 | Level               | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  | 11  | 12   | 13   | 14   | 15   | 16   | 17   | 18   | 19 | 20 |
 |---------------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:--:|:--:|
-| maxDepth            | 3   | 8   | 8   | 8   | 3   | 5   | 6   | 7   | 8   | 9   | 10  | 15   | 20   | 30   | 30   | 30   | 40   | 40   | 45 | 50 |
-| maxNodes            | 100 | 50k | 50k | 50k | 15k | 30k | 50k | 75k | 80k | 85k | 90k | 120k | 150k | 200k | 300k | 400k | 500k | 750k | 1M | 2M |
-| minimizeLiberty     | -   | -   | -   | -   | -   | -   | -   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
-| maxReply            | 1   | 1   | 1   | 1   | 1   | 1   | 1   | 3   | 2   | 1   | 1   | 1    | 1    | 2    | 2    | 2    | 2    | 2    | 2  | 2  |
-| randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
-| pessimisticScenario | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
-| bestStaticScore     | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
-| opportunistic       | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | X    | X    | X    | X    | X    | X    | X  | X  |
-| handicap            | 0   | 70  | 50  | 25  | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  | 0  |
-| acceleratedEndGame  | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X  |
-| oyster              | X   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | -    | -    | -    | -    | -    | -    | -  | -  |
-
-Remark : There is no evidence that these levels have very different ELO ratings.
+| maxDepth            | 3   | 4   | 6   | 8   | 3   | 5   | 6   | 7   | 8   | 9   | 10  | 15   | 20   | 30   | 30   | 30   | 40   | 40   | 45 | 50   |
+| maxNodes            | 100 | 50k | 40k | 30k | 30k | 40k | 50k | 60k | 70k | 80k | 90k | 100k | 200k | 300k | 400k | 500k | 600k | 750k | 1M | 1,5M |
+| minimizeLiberty     | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
+| maxReply            | 1   | 99  | 3   | 3   | 2   | 3   | 2   | 2   | 2   | 2   | 2   | 2    | 2    | 2    | 1    | 1    | 1    | 1    | 1  | 1    |
+| randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | -    | -    | -    | -    | -  | -    |
+| pessimisticScenario | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
+| bestStaticScore     | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | X    | X    | X    | X    | X    | X    | X  | X    |
+| opportunistic       | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | -    | -    | -    | -    | -    | -    | -  | -    |
+| handicap            | 0   | 80  | 60  | 40  | 20  | 0   | 0   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  | 0    |
+| acceleratedEndGame  | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
+| oyster              | X   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | -    | -    | -    | -    | -    | -    | -  | -    |
 
 
 ### Notations

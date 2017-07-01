@@ -1,4 +1,4 @@
-﻿/*
+/*
 	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
 	Copyright (C) 2016-2017, ecrucru
 
@@ -38,6 +38,7 @@
 //		6n1/p7/2B2p2/8/8/4K3/P1P2PPR/RN6 w - -						Mate in 12 to be found (Rh6)
 //		rnb4K/pppp1k1p/5p2/2b5/4n3/8/8/8 b - -						Mate in 13 to be found
 //		1brqkn2/p1pppBp1/8/1p6/8/2P5/PP1PPP1r/B1RQKNNb w - -		Mate in 13 to be found in AntiChess 689 (Nh2)
+//		1nbqkbnr/r1pp1ppp/4p3/1p6/1P6/2P5/P2PPPPP/RNB1KBNR b - b3	Mate in 15 to be found (Bxb4, Rxa2)
 //		rnb1kb1r/p1pp1ppp/7n/4P3/1p5R/1P6/P1P1PPP1/RNBQKBN1 w - -	Mate in 15 to be found (Bh6)
 //		4k2r/pppn2pp/4p3/8/8/N3PN2/PPP1K1P1/R1B5 w - -				Mate to find g4 and Nb5 (Ne5-g4)
 
@@ -493,24 +494,22 @@ AntiCrux.prototype.getOppositePlayer = function(pNode) {
  * @return {Boolean} *true* if successful, else *false*.
  */
 AntiCrux.prototype.setLevel = function(pLevel) {
-	var eloOffset = 1500;
-
 	//-- Checks
 	if ((pLevel < 1) || (pLevel > 20))
 		return false;
 
 	//-- Applies the new settings
-	this.options.ai.elo					= eloOffset + [-1004, -325, -299, -154, -90, -42, -24, -70, -140, 153, 128, 212, 182, 175, 151, -eloOffset, -eloOffset, -eloOffset, -eloOffset, -eloOffset][pLevel-1];
-	this.options.ai.maxDepth			= [3, 8, 8, 8, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 30, 30, 40, 40, 45, 50][pLevel-1];
-	this.options.ai.maxNodes			= [100, 50000, 50000, 50000, 15000, 30000, 50000, 75000, 80000, 85000, 90000, 120000, 150000, 200000, 300000, 400000, 500000, 750000, 1000000, 2000000][pLevel-1];
+	this.options.ai.elo					= (pLevel == 1 ? 300 : Math.round(294.8 * Math.log(pLevel) + 855.5));
+	this.options.ai.maxDepth			= [3, 4, 6, 8, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 30, 30, 40, 40, 45, 50][pLevel-1];
+	this.options.ai.maxNodes			= [100, 50000, 40000, 30000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 200000, 300000, 400000, 500000, 600000, 750000, 1000000, 1500000][pLevel-1];
 	this.options.ai.minimizeLiberty		= (pLevel >= 8);
-	this.options.ai.maxReply			= [1, 1, 1, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2][pLevel-1];
-	this.options.ai.randomizedSearch	= true;
+	this.options.ai.maxReply			= [1, 99, 3, 3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1][pLevel-1];
+	this.options.ai.randomizedSearch	= (pLevel <= 14);
 	this.options.ai.pessimisticScenario	= (pLevel >= 10);
-	this.options.ai.bestStaticScore		= (pLevel >= 12);
-	this.options.ai.opportunistic		= (pLevel >= 13);
-	this.options.ai.handicap			= [0, 70, 50, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
-	this.options.ai.acceleratedEndGame	= (pLevel >= 5);
+	this.options.ai.bestStaticScore		= (pLevel >= 13);
+	this.options.ai.opportunistic		= ((pLevel >= 6) && (pLevel <= 12));
+	this.options.ai.handicap			= [0, 80, 60, 40, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
+	this.options.ai.acceleratedEndGame	= (pLevel >= 6);
 	this.options.ai.oyster				= (pLevel == 1);
 	this._lastLevel = pLevel;
 	return true;
