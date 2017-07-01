@@ -346,7 +346,10 @@ function acelo_nextTurn() {
 			else
 			{
 				if (job.debugLevel >= 3)
+				{
 					console.log('> Trace : current position "'+job.referee.toFen()+'"');
+					console.log(job.referee.toConsole(true));
+				}
 				acelo_play();
 				return;
 			}
