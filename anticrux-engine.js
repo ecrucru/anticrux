@@ -228,7 +228,7 @@ pipe = readline.createInterface({
 				movePonder = aceng_engine.getAssistance(false, true);
 
 				// Transmits the score
-				aceng_output('info score cp '+aceng_engine.getScore().valuationSolver+' depth '+aceng_engine._reachedDepth+' nodes '+aceng_engine._numNodes+' pv '+aceng_engine.moveToUCI(move));
+				aceng_output('info score cp '+aceng_engine.getScore().value+' depth '+aceng_engine._reachedDepth+' nodes '+aceng_engine._numNodes+' pv '+aceng_engine.moveToUCI(move));
 
 				// Transmits the moves
 				if (movePonder.length === 0)

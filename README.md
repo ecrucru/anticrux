@@ -33,7 +33,6 @@
 		- [Levels](#levels)
 	- [Notations](#notations)
 	- [API](#api)
-	- [Valuation](#valuation)
 
 
 
@@ -96,13 +95,16 @@ git clone https://github.com/ecrucru/anticrux.git
 
 ### Web interface
 
-As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface in your default browser.
+As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface in your default browser. The tested ones have different behaviours :
+
+- Chrome : light, slow
+- Firefox : memory intensive, fast
 
 You have several tabs :
 
 - "Board" : it offers the general features to move the pieces. You can't drag and drop a piece, but use 2 separate clicks.
 - "Actions" : it handles the generation of a new game. By putting aside the buttons to start a game, you will not click unexpectedly on them while you are playing.
-- "Options" : it is where you refine the settings of the game. Each level is assigned some changeable features and you have to know that a higher level is not necessarily stronger. You can refer to the [dedicated paragraph](#anticrux-helo-world) to understand why.
+- "Options" : it is where you refine the settings of the game.
 - "About" : it provides the legal information about AntiCrux.
 
 Without any local installation, just check online at http://ecrucru.free.fr/?page=anticrux and you will get the same enjoyment.
@@ -110,9 +112,7 @@ Without any local installation, just check online at http://ecrucru.free.fr/?pag
 
 ### Mobile interface
 
-The mobile version is a light-weighted version of the [web-interface](#web-interface). It is suitable for a smartphone which screen is often reduced and which performances are sometimes reduced.
-
-The options are reduced and the board fits to the screen.
+The mobile version is a light-weighted version of the [web-interface](#web-interface) which fits with tiny screens.
 
 
 ### Mobile application
@@ -404,6 +404,8 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: deeply reworked and lighter data model using bit-based attributes
 	- Library: reworked AntiCrux.constants
 	- Library: changed configuration for the levels
+	- Library: new returned value for AntiCrux.prototype.getScore
+	- Library: removed option AntiCrux.options.ai.bestStaticScore
 
 
 ### License
@@ -450,7 +452,7 @@ Playing one piece is an *half-move* generating a new position called *node*. Thi
 
 The positions are valuated from the bottom. Then by rules of aggregation, the upper levels are weighted based on the number of moves, the strength of the remaining pieces, etc... Once the top level is reached, AntiCrux can pick the move with the best score. It is your job to beat the AI !
 
-The algorithm adopts some randomness to never play the same game. With high levels, the randomness is rather reduced.
+The algorithm adopts some randomness to never play the same game. With high levels, the randomness is more reduced.
 
 
 ### Options
@@ -480,21 +482,7 @@ The number of nodes is a known restriction to allow AntiCrux to finish a game pr
 
 - **AntiCrux.options.ai.minimizeLiberty**
 
-The simplification consists in playing the forced moves all the time even if is not the best move from a general point of view. It also contributes to a reduced variety of the game.
-
-When multiple moves are possible, the other options will help to decide how to pick the best one.
-
-In the following table issued from a game, the number of nodes is really reduced when the feature is enabled :
-
-| Depth | Normal nodes  | Reduced nodes |
-|:-----:|:-------------:|:-------------:|
-| 2     | 146           | 21            |
-| 3     | 1898          | 40            |
-| 4     | 35883         | 73            |
-| 5     | 461749        | 147           |
-| 6     | 5449480 (?)   | 322           |
-| 7     | 70712349 (?)  | 648           |
-| 8     | 917562070 (?) | 1506          |
+The simplification consists in playing the forced moves all the time even if is not the best move from a general point of view. It also contributes to reduce the number of nodes and the variety of the game.
 
 - **AntiCrux.options.ai.maxReply**
 
@@ -516,14 +504,6 @@ When it is not up to you to play, you can expect your opponent to play his best 
 If your opponent is weak, you can turn off this option and you will be able to make higher damages if the chance is on your side.
 
 Concluding the game with this option is particularly hard. That's why the option is silently turned off in some cases.
-
-- **AntiCrux.options.ai.bestStaticScore**
-
-When the algorithm has to choose between several positions having the same deep valuation, this option picks the move having the best immediate valuation.
-
-The opponent may be discouraged in the short term by this killing move, even if it doesn't change a lot for the next turns.
-
-The option reduces the randoness of the game.
 
 - **AntiCrux.options.ai.opportunistic**
 
@@ -596,7 +576,7 @@ To not interfere with your thinking, the statistics are not generated when you p
 
 - **AntiCrux.options.board.assistance**
 
-The option allows the next moves to be anticipated for informational purposes.
+The option allows the discovery of the expected next moves. Because of the complexity of the rules, the output is for informational purposes only.
 
 - **AntiCrux.options.board.assistanceDepth**
 
@@ -644,7 +624,6 @@ Please note that the web-interface offers all the options individually and fewer
 | maxReply            | 1   | 99  | 3   | 3   | 2   | 3   | 2   | 2   | 2   | 2   | 2   | 2    | 2    | 2    | 1    | 1    | 1    | 1    | 1  | 1    |
 | randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | -    | -    | -    | -    | -  | -    |
 | pessimisticScenario | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
-| bestStaticScore     | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | X    | X    | X    | X    | X    | X    | X  | X    |
 | opportunistic       | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | -    | -    | -    | -    | -    | -    | -  | -    |
 | handicap            | 0   | 80  | 60  | 40  | 20  | 0   | 0   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  | 0    |
 | acceleratedEndGame  | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
@@ -686,7 +665,7 @@ The moves are identified by 3 notation systems :
 
 - Algebraic notation : e3, Ra6, Nfxe5, h8=Q... This classical notation is practical for the human players but necessitates a complex processing to convert it into X/Y coordinates. It is used to register the moves and to show their history.
 - Index-based notation : 0=A8 and 63=H1 as seen above. When looping an the mono-dimensional array of the board, the analysis is very simple to mark cells. It is then used internally to highlight the cells.
-- XY notation : massively used internally for the processing of the moves, X and Y are concatenated. The first figure is X from 0 to 7. The second figure is Y from 0 to 7. For example, 56=G3. You can combine up to 5 figures to build a move : the first one is the promotion based on *AntiCrux.constants.piece*, the following 2 figures describe the source position, the following 2 figures describe the target position. For example, 51201=(cxb8=Q).
+- XY notation : massively used internally for the processing of the moves, X and Y are concatenated. The first figure is X from 0 to 7. The second figure is Y from 0 to 7. For example, 56=G3. You can combine up to 5 figures to build a move : the first one is the promotion based on *AntiCrux.constants.piece*, the following 2 figures describe the source position, the following 2 figures describe the target position. For example, 51201 is "cxb8=Q".
 
 
 ### API
@@ -747,18 +726,6 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.undoMove()
 - AntiCrux.updateHalfMoveClock()
 
-A "node" is an object which represents a state of the board with additional information. It is linked with other nodes to describe the possible target positions through a network of moves. The principal node is the "root node" (a private attribute), so by using the public methods of the library, you should not have to handle the nodes on your own. That's why the parameter *pNode* is generally optional.
+A *node* is an object which represents a state of the board with additional information. It is linked with other nodes to describe the possible target positions through a network of moves. The principal node is the *root node* (a private attribute), so by using the public methods of the library, you should not have to handle the nodes on your own. That's why the parameter *pNode* is generally optional.
 
 To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script "run_yuidoc_server.bat" (Windows) or "run_yuidoc_server.sh" (Linux), then access to http://localhost:3000
-
-
-### Valuation
-
-Once a node is evaluated, you get 2 attributes among others :
-
-- node.valuation : the static score based on the weight of every piece
-- node.valuationSolver : the deep valuation after a certain exploration of the depths and based on the settings of the instance
-
-The valuation is based on a deep static score known as [centipawn](http://chess.wikia.com/wiki/Centipawn). A queen has a high score, not a pawn. Black and White are added and the valuation is changed to a percentage for a better understanding. This score varies between -100% (**bad** score for Black) and +100% (**bad** score for white).
-
-&#x26a0; The score shows the strength of the player, so its ability to lose AntiChess. Your objective is then to modify the score in favor of your opponent.

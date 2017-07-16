@@ -161,8 +161,9 @@ AntiCrux.prototype.clearBoard = function() {
 	this._halfmoveclock = 0;
 	this._halfmoveclock_status = -1;		//-1=undef, 0=reset, 1=increment
 	this._root_node = {
-		board  : [],
-		magic  : this.constants.bitmask.none | this.constants.player.white
+		board : [],
+		magic : this.constants.bitmask.none | this.constants.player.white,
+		score : this.constants.bitmask.none
 	};
 	for (i=0 ; i<64 ; i++)
 		this._root_node.board[i] = this.constants.player.none | this.constants.piece.none;
@@ -332,7 +333,7 @@ AntiCrux.prototype.loadFen = function(pFen) {
 	this._halfmoveclock_status = -1;
 
 	//-- Final
-	this._root_node.valuation = this._ai_nodeValuate().valuation;
+	this._root_node.score = this._ai_nodeValuate().score;
 	this._history_fen0 = this.toFen();
 	if (list[0].indexOf('8/8/8/8') == -1)
 		this.fischer = null;
@@ -506,7 +507,6 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 	this.options.ai.maxReply			= [1, 99, 3, 3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1][pLevel-1];
 	this.options.ai.randomizedSearch	= (pLevel <= 14);
 	this.options.ai.pessimisticScenario	= (pLevel >= 10);
-	this.options.ai.bestStaticScore		= (pLevel >= 13);
 	this.options.ai.opportunistic		= ((pLevel >= 6) && (pLevel <= 12));
 	this.options.ai.handicap			= [0, 80, 60, 40, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
 	this.options.ai.acceleratedEndGame	= (pLevel >= 6);
@@ -943,7 +943,7 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 	}
 
 	//-- Result
-	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + this._helper.getScore().valuationSolverPC + '%';
+	return 'The predicted moves are :' + "\n" + buffer + "\n" + "\n" + 'Score = ' + this._helper.getScore().valuePercent + '%';
 };
 
 /**
@@ -1301,24 +1301,15 @@ AntiCrux.prototype.moveToUCI = function(pMove) {
  *
  * @method getScore
  * @param {Object} pNode (Optional) Reference node.
- * @return {Object} Object with multiple fields.
+ * @return {Object} Object with multiple fields, or *null*.
  */
 AntiCrux.prototype.getScore = function(pNode) {
-	var score;
-
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
 
 	//-- Determines the score
-	score = this._ai_nodeValuate(pNode);
-	if (score === null)							//Game data have been dropped, so we rely on the data of the node
-		return {
-			valuation       : (pNode.hasOwnProperty('valuation') ? pNode.valuation : null),
-			valuationSolver : (pNode.hasOwnProperty('valuationSolver') ? pNode.valuationSolver : null)
-		};
-	else
-		return score;
+	return this._ai_nodeValuate(pNode);
 };
 
 /**
@@ -1492,14 +1483,12 @@ AntiCrux.prototype.isPossibleDraw = function(pNode) {
 
 	//-- Possible draw based on the deep evaluation
 	if (	!this.hasOwnProperty('_reachedDepth') ||
-			!pNode.hasOwnProperty('valuation') ||
-			!pNode.hasOwnProperty('valuationSolver')
+			((pNode.score & this.constants.bitmask.valuationType) == this.constants.bitmask.none)
 	)
 		return false;
 	else
 		return (	(this._reachedDepth >= 5) &&															//Sufficient depth for the valuation
-					(pNode.valuation === 0) &&																//Equal game on both side
-					(pNode.valuationSolver === 0) &&														//No deep opportunity
+					((pNode.score & this.constants.bitmask.valuationValue) === 0) &&						//Equal game on both side or no deep opportunity
 					(this._ai_nodeInventory(this.constants.player.black, null, undefined, pNode) <= 5) &&	//Few remaining pieces
 					(this._ai_nodeInventory(this.constants.player.white, null, undefined, pNode) <= 5)		//Few remaining pieces
 				);
@@ -1697,29 +1686,25 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 	{
 		output += '<tr><td>' + this.moveToString(pNode.moves[i], pNode) + '</td>';
 		score = this._ai_nodeValuate(pNode.nodes[i]);
+		if (score === null)
+			throw 'Internal error - Report any error (#019)';
 
-		//- Static score
+		//- Score
 		output += '<td>';
-		if (score.valuation == -this.constants.score.infinite)
+		if (score.value == -this.constants.bitmask.valuationValue)
 			output += '<img src="images/mate_'+this.constants.player.white+'.png" title="White wins" alt="-&#8734;" />';
-		else if (score.valuation == this.constants.score.infinite)
+		else if (score.value == this.constants.bitmask.valuationValue)
 			output += '<img src="images/mate_'+this.constants.player.black+'.png" title="Black wins" alt="+&#8734;" />';
 		else
-			output += (score.valuationPC !== null ? score.valuationPC+'%' : score.valuation);
+			output += '<span title="'+(score.type==this.constants.bitmask.valuationStatic?'Static':'Deep')+'">' + score.valuePercent + '%</span>';
 		output += '</td>';
 
-		//- Deep score
+		//- Opportunity
 		output += '<td>';
-		if (score.valuationSolver == -this.constants.score.infinite)
-			output += '<img src="images/mate_'+this.constants.player.white+'.png" title="White wins" alt="-&#8734;" />';
-		else if (score.valuationSolver == this.constants.score.infinite)
-			output += '<img src="images/mate_'+this.constants.player.black+'.png" title="Black wins" alt="+&#8734;" />';
-		else
-			output += (score.valuationSolverPC !== null ? score.valuationSolverPC+'%' : score.valuationSolver);
-		if (((pNode.nodes[i].magic & this.constants.bitmask.opportunity) != this.constants.bitmask.none) &&
-			(Math.abs(pNode.nodes[i].valuationSolver) != this.constants.score.infinite)
+		if (	((pNode.nodes[i].magic & this.constants.bitmask.opportunity) != this.constants.bitmask.none) &&
+				(score.type == this.constants.bitmask.valuationDeep) &&
+				(Math.abs(score.value) != this.constants.bitmask.valuationValue)
 		) {
-			output += '<td>';
 			switch (pNode.nodes[i].magic & this.constants.bitmask.opportunity)
 			{
 				case this.constants.bitmask.opportunityMinus:
@@ -1734,18 +1719,16 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 				default:
 					throw 'Internal error - Report any error (#016)';
 			}
-			output += '</td>';
 		}
 		else
-			output += '<td></td>';
+			output += '&nbsp;';
 		output += '</td></tr>';
 	}
 
 	//-- Final text
 	return (output.length === 0 ? '' :
 				'<table class="ui-table" data-role="table" data-mode="table">' +
-				'<thead><tr class="th-groups"><th></th><th colspan="3">Evaluation</th></tr>' +
-				'<tr><th data-priority="1">Move</th><th data-priority="2">Static</th><th data-priority="3">Deep</th><th data-priority="4">&nbsp;</th></tr></thead>' +
+				'<thead><tr><th data-priority="1">Move</th><th data-priority="2">Score</th><th data-priority="3">&nbsp;</th></tr></thead>' +
 				'<tbody>' +
 				output +
 				'</tbody></table>');
@@ -2251,6 +2234,7 @@ AntiCrux.prototype._init = function() {
 		//- Simple constants
 		classicalFischer		: 519,
 		noMove					: 0,
+		infinite				: 4294967295,		//11111111111111111111111111111111b
 		piece : {
 			none				: 0,				//Must be zero
 			pawn				: 1,
@@ -2266,14 +2250,9 @@ AntiCrux.prototype._init = function() {
 			black				: 16,				//                           10000b
 			white				: 24				//                           11000b
 		},
-		score : {
-			infinite			: 16777217,			//8^8+1
-			neutral				: 0
-		},
 		//- Masks
 		bitmask : {
 			none				: 0,				//00000000000000000000000000000000b
-			infinite			: 4294967295,		//11111111111111111111111111111111b
 			//magic
 			bestMove			: 1073733632,		//  111111111111111110000000000000b
 			bestMoveShift		: 13,				//                   <<<<<<<<<<<<<
@@ -2285,7 +2264,13 @@ AntiCrux.prototype._init = function() {
 			sequenceShift		: 5,				//                           <<<<<
 			//board
 			player				: 24,				//                           11000b
-			piece				: 7					//                             111b
+			piece				: 7,				//                             111b
+			//score
+			valuationValue		: 131071,			//               11111111111111111b
+			valuationSign		: 131072,			//              100000000000000000b
+			valuationType		: 786432,			//            11000000000000000000b
+			valuationStatic		: 262144,			//            01000000000000000000b
+			valuationDeep		: 786432			//            11000000000000000000b
 		}
 	};
 	this.constants.piece.mapping = {
@@ -2333,7 +2318,6 @@ AntiCrux.prototype._init = function() {
 			maxReply : 0,								//Number >=1 corresponding to the maximal number of moves that a player is allowed in return when minimizeLiberty is enabled
 			randomizedSearch : false,					//TRUE helps the game to not played the same pieces
 			pessimisticScenario : false,				//TRUE makes the algorithm stronger, FALSE is more random
-			bestStaticScore : false,					//TRUE makes the algorithm stronger, FALSE is more random for low determined situations
 			opportunistic : false,						//TRUE helps to find a winning position
 			handicap : 0,								//To weaken the algorithm, remove between 0% and 100% of the moves above a fixed number of moves
 			acceleratedEndGame : false,					//TRUE makes more direct kills but doesn't change the output
@@ -2359,7 +2343,7 @@ AntiCrux.prototype._init = function() {
 	};
 	this.setLevel(9);									//Default level to initialize "this.options.ai"
 
-	//-- Valuations
+	//-- Valuations (maximal value = 2047)
 	//Documentation : http://www.ke.tu-darmstadt.de/publications/papers/ICGA-ChessVariants.pdf
 	this.options.ai.valuation[this.constants.piece.none  ] =   0;
 	this.options.ai.valuation[this.constants.piece.pawn  ] = 240;
@@ -2460,8 +2444,8 @@ AntiCrux.prototype._initFischer = function() {
 AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 	//-- Clones the node
 	var	newNode = {
-		board  : pNode.board.slice(0),
-		magic  : this.constants.bitmask.none | (pNode.magic & this.constants.bitmask.player)
+		board : pNode.board.slice(0),
+		magic : this.constants.bitmask.none | (pNode.magic & this.constants.bitmask.player)
 	};
 	if (pNode.hasOwnProperty('enpassant'))
 		newNode.enpassant = pNode.enpassant;
@@ -2469,10 +2453,7 @@ AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 	//-- Extends the copy
 	if (pFull)
 	{
-		if (pNode.hasOwnProperty('valuation'))
-			newNode.valuation = pNode.valuation;
-		if (pNode.hasOwnProperty('valuationSolver'))
-			newNode.valuationSolver = pNode.valuationSolver;
+		newNode.score = pNode.score;
 		if (pNode.hasOwnProperty('moves'))
 			newNode.moves = pNode.moves.slice(0);
 		if (pNode.hasOwnProperty('_pendingPromotion'))
@@ -2493,7 +2474,7 @@ AntiCrux.prototype._ai_nodeCopy = function(pNode, pFull) {
 AntiCrux.prototype._ai_nodeShrink = function(pNode) {
 	var f;
 	for (f in pNode)
-		if (['board', 'magic', 'enpassant', '_pendingPromotion'].indexOf(f) === -1)
+		if (['board', 'magic', 'score', 'enpassant', '_pendingPromotion'].indexOf(f) === -1)
 			delete pNode[f];
 };
 
@@ -3000,7 +2981,7 @@ AntiCrux.prototype._ai_nodeRecurseTree = function(pPlayer, pDepth, pNode) {
 		this._ai_nodeCreateNodes(pNode);
 
 	//-- Kills the bad sub-levels to constraint the opponent
-	min_moves = this.constants.score.infinite;
+	min_moves = this.constants.infinite;
 	for (i=0 ; i<pNode.nodes.length ; i++)					//For each situation to be played by the opponent...
 	{
 		if (!pNode.nodes[i].hasOwnProperty('moves'))
@@ -3019,10 +3000,8 @@ AntiCrux.prototype._ai_nodeRecurseTree = function(pPlayer, pDepth, pNode) {
 		else
 		{
 			this._numNodes++;
-			if (!pNode.nodes[i].hasOwnProperty('valuation'))
-				pNode.nodes[i].valuation = this._ai_nodeValuate(pNode.nodes[i]).valuation;
-			if (	(pDepth >= this.options.ai.maxDepth) ||
-					((this.options.ai.maxNodes !== 0) && (this._numNodes >= this.options.ai.maxNodes))
+			if ((pDepth >= this.options.ai.maxDepth) ||
+				((this.options.ai.maxNodes !== 0) && (this._numNodes >= this.options.ai.maxNodes))
 			)
 				;		//No recursive search
 			else
@@ -3040,95 +3019,99 @@ AntiCrux.prototype._ai_nodeRecurseTree = function(pPlayer, pDepth, pNode) {
  * @return {Object} Result of the valuation.
  */
 AntiCrux.prototype._ai_nodeValuate = function(pNode) {
-	var i, val, result;
+	var i, values, valuation, scale, result;
 
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
 
-	//-- Checks
+	//-- No board
 	if (!this._has(pNode, 'board', true))
 		return {
-			black				: 0,
-			white				: 0,
-			scale				: 1,
-			valuation			: (pNode.hasOwnProperty('valuation') ? pNode.valuation : '-'),
-			valuationPC			: null,
-			valuationSolver		: (pNode.hasOwnProperty('valuationSolver') ? pNode.valuationSolver : '-'),
-			valuationSolverPC	: null
+			type         : this.constants.bitmask.none,
+			value        : 0,
+			valuePercent : 0,
+			score        : this.constants.bitmask.none
 		};
 
-	//-- Initialization
-	result = {
-		black				: 0,
-		white				: 0,
-		scale				: 0,
-		valuation			: 0,
-		valuationPC			: 0,
-		valuationSolver		: 0,
-		valuationSolverPC	: 0
-	};
-
-	//-- Gets the valuation per player
+	//-- Values per player
+	values = [];
+	values[this.constants.player.none ] = 0;
+	values[this.constants.player.black] = 0;
+	values[this.constants.player.white] = 0;
 	for (i=0 ; i<64 ; i++)
-	{
-		//- Determines the value of the piece
-		val = this.options.ai.valuation[pNode.board[i] & this.constants.bitmask.piece];
-
-		//- Assigns the value to the right player
-		switch (pNode.board[i] & this.constants.bitmask.player)
-		{
-			case this.constants.player.black:
-				result.black += val;
-				break;
-			case this.constants.player.white:
-				result.white += val;
-				break;
-			case this.constants.player.none:
-				break;
-			default:
-				throw 'Internal error - Report any error (#014)';
-		}
-	}
+		values[pNode.board[i] & this.constants.bitmask.player] += this.options.ai.valuation[pNode.board[i] & this.constants.bitmask.piece];
 
 	//-- Valuates the position
-	if (result.black === 0)
-		result.valuation = this.constants.score.infinite;		//No more piece for Black
-	else if (result.white === 0)
-		result.valuation = -this.constants.score.infinite;		//No more piece for White
+	if (values[this.constants.player.black] === 0)
+		valuation = this.constants.bitmask.valuationValue;											//No more piece for Black
+	else if (values[this.constants.player.white] === 0)
+		valuation = -this.constants.bitmask.valuationValue;											//No more piece for White
 	else
-		result.valuation = result.white - result.black;			//Normal case
+		valuation = values[this.constants.player.white] - values[this.constants.player.black];		//Normal case
 
 	//-- No possible move anymore
 	if (pNode.hasOwnProperty('moves'))
 		if (pNode.moves.length === 0)
-			result.valuation = this.constants.player.mapping_rev[pNode.magic & this.constants.bitmask.player] * -this.constants.score.infinite;
+			valuation = this.constants.player.mapping_rev[pNode.magic & this.constants.bitmask.player] * -this.constants.bitmask.valuationValue;
 
 	//-- Scale
-	result.scale = (result.black > result.white ? result.black : result.white);
-	if (result.scale === 0)
+	scale = Math.max(values[this.constants.player.black], values[this.constants.player.white]);
+	if (scale === 0)
 	{
-		result.valuation = 0;
-		result.scale = 1;
+		valuation = 0;
+		scale = 1;
 	}
 
-	//-- Static percentage
-	result.valuationPC = Math.round(100*result.valuation/result.scale);
-	result.scale = Math.round(result.scale);
-	result.valuation = Math.round(result.valuation);
+	//-- Static score
+	result = {
+		type         : this.constants.bitmask.valuationStatic,
+		value        : Math.round(valuation),
+		valuePercent : Math.round(100*valuation/scale)
+	};
 
 	//-- Deep score
-	result.valuationSolver = (pNode.hasOwnProperty('valuationSolver') ?
-									pNode.valuationSolver :
-									result.valuation);
-	if (Math.abs(result.valuationSolver) > result.scale)		//A deep promotion can generate a valuation greater than the current static valuation
-		result.scale = Math.abs(result.valuationSolver);
-
-	//-- Deep percentage
-	result.valuationSolverPC = Math.round(2*(100*(result.valuationSolver+result.scale)/(2*result.scale) - 50));
+	if ((pNode.score & this.constants.bitmask.valuationType) == this.constants.bitmask.valuationDeep)
+	{
+		result.type         = this.constants.bitmask.valuationDeep;
+		result.value        = this._ai_nodeScoreDecodeValue(pNode.score);
+		result.valuePercent = Math.round(2*(100*(result.value+scale)/(2*scale) - 50));
+	}
 
 	//-- Result
+	result.score = this._ai_nodeScoreEncode(result.value, result.type);
 	return result;
+};
+
+/**
+ * The method decodes the provided score.
+ *
+ * @private
+ * @method _ai_nodeScoreDecodeValue
+ * @param {Integer} pScore Score.
+ * @return {Integer} Signed valuation.
+ */
+AntiCrux.prototype._ai_nodeScoreDecodeValue = function(pScore) {
+	if ((pScore & this.constants.bitmask.valuationSign) == this.constants.bitmask.valuationSign)
+		return -(pScore & this.constants.bitmask.valuationValue);
+	else
+		return (pScore & this.constants.bitmask.valuationValue);
+};
+
+/**
+ * The method encodes a valuation into a compact format.
+ *
+ * @private
+ * @method _ai_nodeScoreEncode
+ * @param {Integer} pValue Signed value.
+ * @param {AntiCrux.constants.bitmask.valuationType} pType Type of score.
+ * @return {Integer} Formatted score.
+ */
+AntiCrux.prototype._ai_nodeScoreEncode = function(pValue, pType) {
+	if (pValue >= 0)
+		return pType | (pValue & this.constants.bitmask.valuationValue);
+	else
+		return pType | this.constants.bitmask.valuationSign | ((-pValue) & this.constants.bitmask.valuationValue);
 };
 
 /**
@@ -3142,7 +3125,7 @@ AntiCrux.prototype._ai_nodeValuate = function(pNode) {
  * @return {Object} Result of the valuation.
  */
 AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
-	var i, bit, hasNode, allForced, hasForced, condition, threshold, val, counter;
+	var i, bit, hasNode, allForced, hasForced, condition, threshold, val, val2, counter;
 
 	//-- Self
 	if (pNode === undefined)
@@ -3153,15 +3136,16 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 	if (!hasNode)
 	{
 		//- Applies the valuation for the solver
-		pNode.valuationSolver = pNode.valuation;
+		pNode.score = (this._ai_nodeValuate(pNode).score & ~this.constants.bitmask.valuationType) | this.constants.bitmask.valuationDeep;
 		pNode.magic |= this.constants.bitmask.forced;	//All the deepest levels are defined as forced moves
-		if (pNode.valuationSolver == this.constants.player.mapping_rev[pPlayer] * -this.constants.score.infinite)
+		val = this._ai_nodeScoreDecodeValue(pNode.score);
+		if (val == this.constants.player.mapping_rev[pPlayer] * -this.constants.bitmask.valuationValue)
 		{
 			//The sequence will help for quicker (or longer ;-) when losing) ends of game
 			pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | (1 << this.constants.bitmask.sequenceShift);
 			pNode.magic = (pNode.magic & ~this.constants.bitmask.opportunity) | this.constants.bitmask.opportunityPlus;
 		}
-		else if (pNode.valuationSolver == this.constants.player.mapping_rev[pPlayer] * this.constants.score.infinite)
+		else if (val == this.constants.player.mapping_rev[pPlayer] * this.constants.bitmask.valuationValue)
 			pNode.magic = (pNode.magic & ~this.constants.bitmask.opportunity) | this.constants.bitmask.opportunityMinus;
 
 		//- Memory
@@ -3201,7 +3185,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 	//-- Removes the wrong nodes to always play the forced moves with the highest damage
 	if (((pNode.magic & this.constants.bitmask.player) == pPlayer) && hasForced)
 	{
-		threshold = this.constants.player.mapping_rev[pPlayer] * this.constants.score.infinite;
+		threshold = this.constants.player.mapping_rev[pPlayer] * this.constants.infinite;
 
 		//- Finds the valuation of the forced moves
 		for (i=pNode.nodes.length-1 ; i>=0 ; i--)
@@ -3214,16 +3198,17 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 			}
 
 			// Determines the best threshold
-			if (((pPlayer == this.constants.player.white) && (pNode.nodes[i].valuationSolver < threshold)) ||
-				((pPlayer == this.constants.player.black) && (pNode.nodes[i].valuationSolver > threshold))
+			val = this._ai_nodeScoreDecodeValue(pNode.nodes[i].score);
+			if (((pPlayer == this.constants.player.white) && (val < threshold)) ||
+				((pPlayer == this.constants.player.black) && (val > threshold))
 			)
-				threshold = pNode.nodes[i].valuationSolver;
+				threshold = val;
 		}
 
 		//- Remove the weak moves
 		for (i=pNode.nodes.length-1 ; i>=0 ; i--)
 		{
-			if (pNode.nodes[i].valuationSolver != threshold)
+			if (this._ai_nodeScoreDecodeValue(pNode.nodes[i].score) != threshold)
 			{
 				pNode.moves.splice(i, 1);
 				pNode.nodes.splice(i, 1);
@@ -3236,13 +3221,14 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 	condition = (((pNode.magic & this.constants.bitmask.player) == pPlayer) || !this.options.ai.pessimisticScenario);
 	if (condition)
 	{
-		pNode.valuationSolver = 0;
+		val = 0;
 		counter = 0;
 		for (i=0 ; i<pNode.nodes.length ; i++)
 		{
-			if (Math.abs(pNode.nodes[i].valuationSolver) == this.constants.score.infinite)	//For the weakest levels...
+			val2 = this._ai_nodeScoreDecodeValue(pNode.nodes[i].score);
+			if (Math.abs(val2) == this.constants.bitmask.valuationValue)	//For the weakest levels...
 			{
-				if (pNode.nodes[i].valuationSolver == this.constants.player.mapping_rev[pPlayer] * this.constants.score.infinite)
+				if (val2 == this.constants.player.mapping_rev[pPlayer] * this.constants.bitmask.valuationValue)
 				{
 					counter = 0;		//...a loosing position is considered else the end of game is abnormally easy
 					break;
@@ -3250,31 +3236,33 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 				else
 					continue;			//...a winning position is voluntarily ignored. The combinations must be good in average which gives the human player the possibility to react
 			}
-			pNode.valuationSolver += pNode.nodes[i].valuationSolver;
+			val += val2;
 			counter++;
 		}
 		if (counter !== 0)
 		{
-			pNode.valuationSolver = Math.round(pNode.valuationSolver/counter);	//Always integer !
+			val = Math.round(val/counter);	//Always integer !
 			if (pDepth > 1)
 				delete pNode.board;
 		}
 		else
 			condition = false;			//The valuation will follow the other rule
+		pNode.score = this._ai_nodeScoreEncode(val, this.constants.bitmask.valuationDeep);
 	}
 
 	//-- Evaluates the current node by using the worst valuation
 	if (!condition)
 	{
-		val = this.constants.player.mapping_rev[pPlayer] * -this.constants.score.infinite;
+		val = this.constants.player.mapping_rev[pPlayer] * -this.constants.bitmask.valuationValue;
 		for (i=0 ; i<pNode.nodes.length ; i++)
 		{
-			if ( ((pPlayer == this.constants.player.white) && (pNode.nodes[i].valuationSolver > val)) ||
-				 ((pPlayer == this.constants.player.black) && (pNode.nodes[i].valuationSolver < val))
+			val2 = this._ai_nodeScoreDecodeValue(pNode.nodes[i].score);
+			if ( ((pPlayer == this.constants.player.white) && (val2 > val)) ||
+				 ((pPlayer == this.constants.player.black) && (val2 < val))
 				)
-				val = pNode.nodes[i].valuationSolver;
+				val = val2;
 		}
-		pNode.valuationSolver = val;
+		pNode.score = this._ai_nodeScoreEncode(val, this.constants.bitmask.valuationDeep);
 		if (pDepth > 1)
 			delete pNode.board;
 	}
@@ -3282,17 +3270,17 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
 	//-- Calculates the sequence which leads to a faster end of game
 	if (	this.options.ai.acceleratedEndGame &&
 			((pNode.magic & this.constants.bitmask.forced) == this.constants.bitmask.forced) &&
-			(pNode.valuationSolver == this.constants.player.mapping_rev[pPlayer]*-this.constants.score.infinite)
+			(this._ai_nodeScoreDecodeValue(pNode.score) == this.constants.player.mapping_rev[pPlayer]*-this.constants.bitmask.valuationValue)
 		)
 	{
-		val = this.constants.bitmask.infinite;
+		val = this.constants.infinite;
 		for (i=0 ; i<pNode.nodes.length ; i++)
 		{
 			bit = (pNode.nodes[i].magic & this.constants.bitmask.sequence);
 			if ((bit > 0) && (bit < val))
 				val = bit;
 		}
-		if (val != this.constants.bitmask.infinite)
+		if (val != this.constants.infinite)
 			if (val < this.constants.bitmask.sequence)		//Not above the ceiling
 				pNode.magic += (1 << this.constants.bitmask.sequenceShift);
 	}
@@ -3313,32 +3301,7 @@ AntiCrux.prototype._ai_nodeSolve = function(pPlayer, pDepth, pNode) {
  */
 AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	var	i, threshold, status, val, bitSeq,
-		mixedStatic, mixedDeep,
 		better, same, moves;
-
-	//-- Local functions (macros)
-	var mixture = function(pNode) {
-		mixedStatic = null;
-		mixedDeep = null;
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			//- Initialization
-			if (mixedStatic === null)
-				mixedStatic = pNode.nodes[i].valuation;
-			if (mixedDeep === null)
-				mixedDeep = pNode.nodes[i].valuationSolver;
-
-			//- Comparison
-			if ((typeof mixedStatic !== 'boolean') && (mixedStatic != pNode.nodes[i].valuation))
-				mixedStatic = true;
-			if ((typeof mixedDeep !== 'boolean') && (mixedDeep != pNode.nodes[i].valuationSolver))
-				mixedDeep = true;
-		}
-		if (typeof mixedStatic !== 'boolean')
-			mixedStatic = false;
-		if (typeof mixedDeep !== 'boolean')
-			mixedDeep = false;
-	};
 
 	//-- Self
 	if (pNode === undefined)
@@ -3347,10 +3310,11 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	//-- Keeps the moves which lead to a fast end of game
 	if (	this.options.ai.acceleratedEndGame &&
 			((pNode.magic & this.constants.bitmask.forced) == this.constants.bitmask.forced) &&
-			(pNode.valuationSolver == this.constants.player.mapping_rev[pNode.magic & this.constants.bitmask.player] * -this.constants.score.infinite)
+			((pNode.score & this.constants.bitmask.valuationType) == this.constants.bitmask.valuationDeep) &&
+			(this._ai_nodeScoreDecodeValue(pNode.score) == this.constants.player.mapping_rev[pNode.magic & this.constants.bitmask.player] * -this.constants.bitmask.valuationValue)
 		)
 	{
-		threshold = this.constants.bitmask.infinite;
+		threshold = this.constants.infinite;
 		for (i=0 ; i<pNode.nodes.length ; i++)
 		{
 			bitSeq = (pNode.nodes[i].magic & this.constants.bitmask.sequence);
@@ -3359,7 +3323,7 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 			)
 				threshold = bitSeq;
 		}
-		if (threshold != this.constants.bitmask.infinite)
+		if (threshold != this.constants.infinite)
 		{
 			for (i=pNode.nodes.length-1 ; i>=0 ; i--)
 			{
@@ -3374,7 +3338,6 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 	}
 
 	//-- When there are still plenty of equivalent moves, we keep the ones having the best opportunity
-	mixture(pNode);
 	if (this.options.ai.opportunistic && (pNode.nodes.length > 1))
 	{
 		//- Finds the best status
@@ -3396,43 +3359,15 @@ AntiCrux.prototype._ai_nodePick = function(pPlayer, pNode) {
 		}
 	}
 
-	//-- Keeps the less risky static moves when we have plenty of moves
-	mixture(pNode);
-	if (this.options.ai.bestStaticScore && !mixedDeep && mixedStatic)	//At least 2 nodes are implied
-	{
-		threshold = this.constants.player.mapping_rev[pPlayer] * this.constants.score.infinite;
-
-		//- Finds the corresponding valuation
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			// Determines the best valuation
-			if ( ((pPlayer == this.constants.player.white) && (pNode.nodes[i].valuation < threshold)) ||
-				 ((pPlayer == this.constants.player.black) && (pNode.nodes[i].valuation > threshold))
-				)
-				threshold = pNode.nodes[i].valuation;
-		}
-
-		//- Removes the weak moves
-		for (i=pNode.nodes.length-1 ; i>=0 ; i--)
-		{
-			if (pNode.nodes[i].valuation != threshold)
-			{
-				pNode.moves.splice(i, 1);
-				this._ai_nodeFreeMemory(pNode.nodes[i]);
-				pNode.nodes.splice(i, 1);
-			}
-		}
-	}
-
 	//-- Lists the eligible moves
 	// White will minimize the valuation
 	// Black will maximize the valuation
 	moves = [];
-	threshold = this.constants.player.mapping_rev[pPlayer] * this.constants.score.infinite;
+	threshold = this.constants.player.mapping_rev[pPlayer] * this.constants.bitmask.valuationValue;
 	for (i=0 ; i<pNode.nodes.length ; i++)
 	{
 		//- Comparison
-		val = Math.round(pNode.nodes[i].valuationSolver);
+		val = this._ai_nodeScoreDecodeValue(pNode.nodes[i].score);
 		better = ((pPlayer == this.constants.player.white) && (val < threshold)) ||
 				 ((pPlayer == this.constants.player.black) && (val > threshold));
 		same   = ((pPlayer == this.constants.player.white) && (val == threshold)) ||

@@ -1069,7 +1069,7 @@ server.acsrv_playAI = function(pSocket) {
 
 	//-- Analyzes the score
 	score = pSocket.acsrv_ai.getScore();
-	if (score.valuationSolver == pSocket.acsrv_aicolor * -pSocket.acsrv_ai.constants.score.infinite)
+	if (score.value == pSocket.acsrv_ai.constants.player.mapping_rev[pSocket.acsrv_aicolor] * -pSocket.acsrv_ai.constants.bitmask.valuationValue)
 	{
 		if (!pSocket.acsrv_aikills)
 			pSocket.write("AntiCrux(C)("+pSocket.acsrv_ai.options.ai.elo+")["+pSocket.acsrv_session+"] kibitzes: I will get you !\r\n");
@@ -1079,7 +1079,7 @@ server.acsrv_playAI = function(pSocket) {
 		pSocket.acsrv_aikills = false;
 	if (pSocket.acsrv_options.noticePossibleVictory)
 	{
-		if (score.valuationSolver == pSocket.acsrv_aicolor * pSocket.acsrv_ai.constants.score.infinite)
+		if (score.value == pSocket.acsrv_ai.constants.player.mapping_rev[pSocket.acsrv_aicolor] * pSocket.acsrv_ai.constants.bitmask.valuationValue)
 		{
 			if (!pSocket.acsrv_playerkills)
 				pSocket.write("AntiCrux(C)("+pSocket.acsrv_ai.options.ai.elo+")["+pSocket.acsrv_session+"] kibitzes: I am feeling bad...\r\n");

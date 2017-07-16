@@ -52,7 +52,6 @@ function acui_options_load() {
 		$('#acui_option_maxreply').val(ai.options.ai.maxReply).slider('refresh');
 		$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
 		$('#acui_option_pessimisticscenario').prop('checked', ai.options.ai.pessimisticScenario);
-		$('#acui_option_beststaticscore').prop('checked', ai.options.ai.bestStaticScore);
 		$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
 		$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
 		$('#acui_option_acceleratedendgame').prop('checked', ai.options.ai.acceleratedEndGame);
@@ -162,8 +161,8 @@ function acui_refresh_board() {
 
 function acui_refresh_moves() {
 	var val, player = parseInt($('#acui_player').val());
-	$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore().valuationSolverPC).slider('refresh');
-	$('#acui_score').html($('#acui_option_pro').prop('checked') ? ai.constants.score.neutral : ai.getScore().valuationSolverPC);
+	$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? 0 : ai.getScore().valuePercent).slider('refresh');
+	$('#acui_score').html($('#acui_option_pro').prop('checked') ? 0 : ai.getScore().valuePercent);
 	val = ai.getNumNodes();
 	$('#acui_nodes').html((val === 0 ? '' : 'Nodes : '+val));
 	val = ai.getReachedDepth();
@@ -320,18 +319,18 @@ function acui_fitBoard() {
 					'.AntiCrux-board-cell-0                 { width:'+w+'px; height:'+w+'px;   }' +
 					'.AntiCrux-board-cell-1                 { width:'+w+'px; height:'+w+'px;   }' +
 					'.AntiCrux-board-cell-hl                { width:'+w+'px; height:'+w+'px;   }' +
-					'.AntiCrux-board-piece-11               { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece-12               { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece-13               { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece-14               { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece-15               { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece-16               { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece--11              { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece--12              { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece--13              { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece--14              { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece--15              { background-size:'+w+'px '+w+'px; }' +
-					'.AntiCrux-board-piece--16              { background-size:'+w+'px '+w+'px; }'
+					'.AntiCrux-board-piece-161              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-162              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-163              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-164              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-165              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-166              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-241              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-242              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-243              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-244              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-245              { background-size:'+w+'px '+w+'px; }' +
+					'.AntiCrux-board-piece-246              { background-size:'+w+'px '+w+'px; }'
 				)
 			.appendTo('head');
 	}
@@ -757,7 +756,6 @@ $(document).ready(function() {
 			ai.options.ai.maxReply				= parseInt($('#acui_option_maxreply').val());
 			ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
 			ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
-			ai.options.ai.bestStaticScore		= $('#acui_option_beststaticscore').prop('checked');
 			ai.options.ai.opportunistic			= $('#acui_option_opportunistic').prop('checked');
 			ai.options.ai.handicap				= parseInt($('#acui_option_handicap').val());
 			ai.options.ai.acceleratedEndGame	= $('#acui_option_acceleratedendgame').prop('checked');
