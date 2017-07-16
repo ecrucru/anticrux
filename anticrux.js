@@ -268,27 +268,26 @@ AntiCrux.prototype.defaultBoard = function(pFischer) {
  * @return {Boolean} *true* if successful, else *false*.
  */
 AntiCrux.prototype.loadFen = function(pFen) {
-	var list, x, y, i, car;
+	var	that, list, board,
+		x, y, i, car;
 
 	//-- Checks
 	if (pFen.length === 0)
 		return false;
 
-	//-- Clears the board
-	this.clearBoard();
-
 	//-- Splits the input parameter
 	list = pFen.split(' ');
+	if (list[0].split('/').length != 8)
+		return false;
 
-	//-- Loads the FEN
+	//-- Loads the main position
 	x = 0;
 	y = 0;
+	board = [];
 	for (i=0 ; i<list[0].length ; i++)
 	{
 		car = list[0].charAt(i);
-		if (car == ' ')
-			break;
-		else if ('12345678'.indexOf(car) != -1)
+		if ('12345678'.indexOf(car) != -1)
 			x += parseInt(car);
 		else if (car == '/')
 		{
@@ -297,15 +296,22 @@ AntiCrux.prototype.loadFen = function(pFen) {
 		}
 		else if ('prnbqk'.indexOf(car.toLowerCase()) != -1)
 		{
-			this._root_node.board[8*y+x] = (car == car.toLowerCase() ? this.constants.player.black : this.constants.player.white) | this.constants.piece.mapping[car];
-			x++;
+			if (x > 7)
+				return false;
+			else
+			{
+				board[8*y+x] = (car == car.toLowerCase() ? this.constants.player.black : this.constants.player.white) | this.constants.piece.mapping[car];
+				x++;
+			}
 		}
 		else
-		{
-			this.clearBoard();
 			return false;
-		}
 	}
+	this.clearBoard();
+	that = this;
+	board.forEach(function(element, index, array) {
+						that._root_node.board[index] = element;
+					});
 
 	//-- Current player
 	this._root_node.magic = (this._root_node.magic & ~this.constants.bitmask.player) |

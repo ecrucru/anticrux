@@ -406,6 +406,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: changed configuration for the levels
 	- Library: new returned value for AntiCrux.prototype.getScore
 	- Library: removed option AntiCrux.options.ai.bestStaticScore
+	- Library: improved import from FEN
 
 
 ### License
