@@ -290,8 +290,16 @@ The following rules apply to make the determination possible :
 You will read such an output at the end :
 
 ```
->> Based on the declared ratings of Stockfish 8 with multi-variants support on lichess.org :
-   - AntiCrux Level 14 is rated 1727 after 124 games (+50/=4/-70).
+The ratings for the engine "AC" are :
+   - AC Level 8 is rated 1605 (initially 1640) after 72 games (+30/=0/-42).
+   - AC Level 9 is rated 1705 (initially 1742) after 80 games (+47/=1/-32).
+   - AC Level 10 is rated 1759 (initially 1736) after 84 games (+42/=2/-40).
+
+The ratings for the engine "SF" are :
+   - SF Level 3 is rated 1514 (initially 1350) after 372 games (+122/=11/-239).
+   - SF Level 4 is rated 1476 (initially 1500) after 345 games (+134/=13/-198).
+   - SF Level 5 is rated 2017 (initially 1850) after 362 games (+264/=14/-84).
+   - SF Level 6 is rated 2501 (initially 2150) after 346 games (+293/=1/-52).
 ```
 
 If you don't have enough data, you can rely on another statistical method with the tool named "[BayesElo](https://www.remi-coulom.fr/Bayesian-Elo/)". Download it and type the following commands :
@@ -407,6 +415,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new returned value for AntiCrux.prototype.getScore
 	- Library: removed option AntiCrux.options.ai.bestStaticScore
 	- Library: improved import from FEN
+	- ELO: projection of the rating ELO
 
 
 ### License

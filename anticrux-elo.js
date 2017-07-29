@@ -37,11 +37,10 @@ var enginePool = [
 			selfDuel	: true,
 			enPassant	: true,
 			level		: 0,
-			levelMin	: 1,
 			levelOff	: [	false, false, false, false, false,
 							false, false, false, false, false,
 							false, false, false, false, false,
-							false, false, false, true, true],
+							false, false, false, true, true],		//The levels 19 and 20 are disabled because of the memory footprint
 			player		: null,
 			name		: ''
 		},
@@ -51,7 +50,6 @@ var enginePool = [
 			selfDuel	: true,
 			enPassant	: true,
 			level		: 0,
-			levelMin	: 1,
 			levelOff	: [	false, false, false, false, false,
 							false, false, false, false, false,
 							false, false, false, false, true,
@@ -65,7 +63,6 @@ var enginePool = [
 			selfDuel	: true,
 			enPassant	: true,
 			level		: 0,
-			levelMin	: 1,
 			levelOff	: [false, false, false, false, false, false, false, false],
 			player		: null,
 			name		: ''
@@ -75,34 +72,25 @@ var enginePool = [
 			selfDuel	: true,
 			enPassant	: true,
 			level		: 0,
-			levelMin	: 1,
 			levelOff	: [false, false, false, false, false, false, false, false],
 			player		: null,
 			name		: ''
 		}
 	],
 
-	sfmv_levels = [
-		/* Source: https://lichess.org/blog/U4mtoEQAAEEAgZRL/strongest-chess-player-ever
-		{ skill: 3, depth: 1, time: 50, elo:1350 },
-		{ skill: 6, depth: 2, time:100, elo:1420 },
-		{ skill: 9, depth: 3, time:150, elo:1500 },
-		{ skill:11, depth: 4, time:200, elo:1600 },
-		{ skill:14, depth: 6, time:250, elo:1700 },
-		{ skill:17, depth: 8, time:300, elo:1900 },
-		{ skill:20, depth:10, time:350, elo:2200 },
-		{ skill:20, depth:12, time:400, elo:2500 } //*/
-
-		//* Source: @veloce/lichobile/src/js/ui/ai/engine.ts
-		{ skill: 1, depth: 1, time:1000, elo:1350 },
-		{ skill: 3, depth: 1, time:2000, elo:1420 },
-		{ skill: 6, depth: 2, time:3000, elo:1500 },
-		{ skill: 9, depth: 3, time:4000, elo:1600 },
-		{ skill:11, depth: 5, time:5000, elo:1700 },
-		{ skill:14, depth: 8, time:6000, elo:1900 },
-		{ skill:17, depth:13, time:7000, elo:2200 },
-		{ skill:20, depth:21, time:8000, elo:2500 } //*/
-	],
+	engineOptions = {
+		'AC' : {
+			xp : false
+		},
+		'SF' : {
+			//Source: @veloce/lichobile/src/js/ui/ai/engine.ts
+			skill : [   1,    3,    6,    9,   11,   14,   17,   20],
+			depth : [   1,    1,    2,    3,    5,    8,   13,   21],
+			time  : [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000],
+			elo   : [ 670,  750, 1350, 1500, 1850, 2150, 2500, 2800],	//Formerly [1350, 1420, 1500, 1600, 1700, 1900, 2200, 2500]
+			xp    : true
+		}
+	},
 
 	job = {
 		//- Internal
@@ -114,10 +102,11 @@ var enginePool = [
 		running			: false,
 		//- Options
 		debugLevel		: 1,							//0=none, 1=activity, 2=trace, 3=detailed trace
-		file			: 'anticrux-elo.pgn',
-		genGames    	: true,
-		numGames		: 225,							//For 4 CPU
-		genStats    	: true
+		file			: 'anticrux-elo.pgn',			//Output file to store the games
+		genGames    	: true,							//Will the job generate new games in PGN format ?
+		numGames		: 225,							//Number of games to generate per job
+		genStats    	: true,							//Will the job generate the final statistics ?
+		fixedInitialElo	: false							//Will the initial ELO 1500 be used to determine the target ELO ?
 	};
 
 
@@ -178,15 +167,15 @@ function acelo_newjob() {
 	//-- Sets the level of each player
 	while (true)
 	{
-		job.engineOne.level = lf_random(job.engineOne.levelMin, job.engineOne.levelOff.length-job.engineOne.levelMin+1);
+		job.engineOne.level = lf_random(1, job.engineOne.levelOff.length);
 		if (job.engineOne.type == 'AC')
 			job.engineOne.ai.setLevel(job.engineOne.level);
-		job.engineTwo.level = lf_random(job.engineTwo.levelMin, job.engineTwo.levelOff.length-job.engineTwo.levelMin+1);
+		job.engineTwo.level = lf_random(1, job.engineTwo.levelOff.length);
 		if (job.engineTwo.type == 'AC')
 			job.engineTwo.ai.setLevel(job.engineTwo.level);
 
 		//- Avoids an auto-match
-		if (job.engineOne.levelOff[job.engineOne.level-job.engineOne.levelMin] || job.engineTwo.levelOff[job.engineTwo.level-job.engineTwo.levelMin])
+		if (job.engineOne.levelOff[job.engineOne.level-1] || job.engineTwo.levelOff[job.engineTwo.level-1])
 			continue;
 		else
 			if ((job.engineOne.type == job.engineTwo.type) && (job.engineOne.level == job.engineTwo.level))
@@ -267,7 +256,7 @@ function acelo_play() {
 	else
 	{
 		player.ai.postMessage('position fen ' + job.referee.toFen());
-		player.ai.postMessage('go depth '+sfmv_levels[player.level-1].depth+' movetime '+sfmv_levels[player.level-1].time);
+		player.ai.postMessage('go depth '+engineOptions[player.type].depth[player.level-1]+' movetime '+engineOptions[player.type].time[player.level-1]);
 	}
 }
 
@@ -364,10 +353,10 @@ function acelo_nextTurn() {
 		Result		: result,
 		Termination	: 'normal'
 	};
-	if (job.engineOne.type == 'SF')
-		pgnHeader.WhiteElo = sfmv_levels[job.engineOne.level-1].elo;
-	if (job.engineTwo.type == 'SF')
-		pgnHeader.BlackElo = sfmv_levels[job.engineTwo.level-1].elo;
+	if (engineOptions[job.engineOne.type].hasOwnProperty('elo'))
+		pgnHeader.WhiteElo = engineOptions[job.engineOne.type].elo[job.engineOne.level-1];
+	if (engineOptions[job.engineTwo.type].hasOwnProperty('elo'))
+		pgnHeader.BlackElo = engineOptions[job.engineTwo.type].elo[job.engineTwo.level-1];
 	if (job.disqualified !== null)
 		pgnHeader.Termination = 'rules infraction';
 	pgn = job.referee.toPgn(pgnHeader);
@@ -387,9 +376,11 @@ function acelo_nextTurn() {
 function acelo_elo() {
 	// http://www.fide.com/component/handbook/?id=172&view=article
 
-	var	pgn, i, game, regex,
-		level, levelStat, opponent,
-		t, p, dp, rc, ra;
+	var	pgn, regex, games, game,
+		t, p, dp, rc, ra, d, pd,
+		eloData,
+		level, elopponent, levelStat,
+		i, e;
 
 	//-- Trace
 	if (job.debugLevel >= 2)
@@ -405,16 +396,17 @@ function acelo_elo() {
 	pgn = pgn.split("\r").join('').split("\n");
 
 	//-- Reads the games
-	levelStat = [];
+	games = [];
 	game = null;
 	for (i=0 ; i<pgn.length ; i++)
 	{
 		if (game === null)
 			game = {
-				level		: 0,
 				white		: '',
+				whiteLevel	: 0,
 				whiteElo	: 0,
 				black		: '',
+				blackLevel	: 0,
 				blackElo	: 0,
 				result		: '',
 				variant		: false
@@ -426,12 +418,14 @@ function acelo_elo() {
 		if (regex !== null)
 		{
 			game.white = 'AC';
-			game.level = parseInt(regex[1]);
+			game.whiteLevel = parseInt(regex[1]);
 			continue;
 		}
-		if (pgn[i].match(/^\[white\s.*stockfish/))
+		regex = pgn[i].match(/^\[white\s.*stockfish.*level\s([0-9]+)/);
+		if (regex !== null)
 		{
 			game.white = 'SF';
+			game.whiteLevel = parseInt(regex[1]);
 			continue;
 		}
 
@@ -440,12 +434,14 @@ function acelo_elo() {
 		if (regex !== null)
 		{
 			game.black = 'AC';
-			game.level = parseInt(regex[1]);
+			game.blackLevel = parseInt(regex[1]);
 			continue;
 		}
-		if (pgn[i].match(/^\[black\s.*stockfish/))
+		regex = pgn[i].match(/^\[black\s.*stockfish.*level\s([0-9]+)/);
+		if (regex !== null)
 		{
 			game.black = 'SF';
+			game.blackLevel = parseInt(regex[1]);
 			continue;
 		}
 
@@ -481,57 +477,75 @@ function acelo_elo() {
 			continue;
 		}
 
-		//- Proceeds with the reading of the games
+		//- Stores the game
 		if (pgn[i].length === 0)
 		{
-			if (	game.variant &&
-					((game.white == 'AC') || (game.black == 'AC')) &&
-					(game.level > 0) &&
-					!((game.white == 'AC') && (game.black == 'AC'))
-			) {
-				// Initializes the statistics
-				if (levelStat[game.level] === undefined)
-				{
-					levelStat[game.level] = {
-						win			: 0,
-						draw		: 0,
-						loss		: 0,
-						opponents	: {}
-					};
-				}
-
-				// Resets the unexpected values
-				if (game.white == 'AC')
-					game.whiteElo = 0;
-				if (game.black == 'AC')
-					game.blackElo = 0;
-
-				// Updates the statistics
-				if (((game.white != 'AC') && (game.whiteElo > 0)) ||
-					((game.black != 'AC') && (game.blackElo > 0))
-				) {
-					if ((game.white != 'AC') && (game.whiteElo > 0))
-						levelStat[game.level].opponents[game.whiteElo] = (levelStat[game.level].opponents[game.whiteElo] === undefined ? 1 : levelStat[game.level].opponents[game.whiteElo]+1);
-					else
-						levelStat[game.level].opponents[game.blackElo] = (levelStat[game.level].opponents[game.blackElo] === undefined ? 1 : levelStat[game.level].opponents[game.blackElo]+1);
-					if (game.result == '1/2-1/2')
-						levelStat[game.level].draw++;
-					else
-						if (((game.white == 'AC') && (game.result == '1-0')) ||
-							((game.black == 'AC') && (game.result == '0-1'))
-						)
-							levelStat[game.level].win++;
-						else
-							levelStat[game.level].loss++;
-				}
-			}
+			if ( game.variant &&
+				(game.white.length  > 0) &&
+				(game.whiteLevel    > 0) &&
+				(game.black.length  > 0) &&
+				(game.blackLevel    > 0) &&
+				(game.result.length > 0) &&
+				!(	(game.white      == game.black) &&
+					(game.whiteLevel == game.blackLevel)
+				)
+			)
+				games.push(JSON.parse(JSON.stringify(game)));
 			game = null;
 		}
 	}
+	if (job.debugLevel >= 2)
+		console.log('> Trace : '+games.length+' games loaded');
 
-	//-- Analyzes the ELO rating for every level
-	console.log('');
-	console.log('>> Based on the declared ratings of Stockfish 8 with multi-variants support on lichess.org :');
+	//-- Determines the initial ratings Rn
+	eloData = {};
+	for (i=0 ; i<enginePool.length ; i++)
+		if (!eloData.hasOwnProperty(enginePool[i].type))
+			eloData[enginePool[i].type] = {
+				rating0 : [],
+				rating  : [],
+				played  : [],
+				win     : [],
+				loss    : [],
+				draw    : []
+			};
+	//... for Stockfish
+	for (i=0 ; i<engineOptions.SF.elo.length ; i++)
+		eloData.SF.rating[i] = (job.fixedInitialElo ? 1500 : engineOptions.SF.elo[i]);
+	//... for AntiCrux
+	levelStat = [];
+	for (i=0 ; i<games.length ; i++)
+	{
+		game = games[i];
+		if (((game.white == 'AC') || (game.black == 'AC')) && (game.white != game.black))
+		{
+			level = (game.white == 'AC' ? game.whiteLevel : game.blackLevel) - 1;
+			elopponent = (game.white == 'AC' ? game.blackElo : game.whiteElo);
+			if (elopponent <= 0)
+				continue;
+
+			//- Initializes the statistics
+			if (levelStat[level] === undefined)
+				levelStat[level] = {
+					win			: 0,
+					draw		: 0,
+					loss		: 0,
+					opponents	: {}
+				};
+
+			//- Updates the statistics
+			levelStat[level].opponents[elopponent] = (levelStat[level].opponents[elopponent] === undefined ? 1 : levelStat[level].opponents[elopponent]+1);
+			if (game.result == '1/2-1/2')
+				levelStat[level].draw++;
+			else
+				if (((game.white == 'AC') && (game.result == '1-0')) ||
+					((game.black == 'AC') && (game.result == '0-1'))
+				)
+					levelStat[level].win++;
+				else
+					levelStat[level].loss++;
+		}
+	}
 	for (level in levelStat)
 	{
 		//- Checks
@@ -541,24 +555,26 @@ function acelo_elo() {
 		levelStat[level].points = levelStat[level].win + levelStat[level].draw/2;
 
 		//- Calculates the rating
-		if (levelStat[level].points === 0)
-			ra = 'as indeterminate';
+		if ((levelStat[level].points === 0) || job.fixedInitialElo)
+			ra = 1500;
 		else
 		{
 			p = Math.round(100 * levelStat[level].points / levelStat[level].games);
 			dp = [	-800, -677, -589, -538, -501, -470, -444, -422, -401, -383,
 					-366, -351, -336, -322, -309, -296, -284, -273, -262, -251,
 					-240, -230, -220, -211, -202, -193, -184, -175, -166, -158,
-					-149, -141, -133, -125, -117, -110, -102, -95, -87, -80,
-					-72, -65, -57, -50, -43, -36, -29, -21, -14, -7, 0, 7, 14,
-					21, 29, 36, 43, 50, 57, 65, 72, 80, 87, 95, 102, 110, 117,
-					125, 133, 141, 149, 158, 166, 175, 184, 193, 202, 211, 220,
-					230, 240, 251, 262, 273, 284, 296, 309, 322, 336, 351, 366,
-					383, 401, 422, 444, 470, 501, 538, 589, 677, 800			][p];
+					-149, -141, -133, -125, -117, -110, -102,  -95,  -87,  -80,
+					 -72,  -65,  -57,  -50,  -43,  -36,  -29,  -21,  -14,   -7,
+					   0,    7,   14,   21,   29,   36,   43,   50,   57,   65,
+					  72,   80,   87,   95,  102,  110,  117,  125,  133,  141,
+					 149,  158,  166,  175,  184,  193,  202,  211,  220,  230,
+					 240,  251,  262,  273,  284,  296,  309,  322,  336,  351,
+					 366,  383,  401,  422,  444,  470,  501,  538,  589,  677,
+					 800][p];
 			rc = 0;
 			t = Object.keys(levelStat[level].opponents).length;
-			for (opponent in levelStat[level].opponents)
-				rc += opponent * levelStat[level].opponents[opponent];
+			for (e in levelStat[level].opponents)
+				rc += e * levelStat[level].opponents[e];
 			rc = Math.round(rc/levelStat[level].games);
 			if (p == 50)
 				ra = rc;
@@ -569,9 +585,120 @@ function acelo_elo() {
 					ra = rc + 20 * (levelStat[level].points - levelStat[level].games/2)/0.5;
 			ra = Math.round(ra);
 		}
+		eloData.AC.rating[level] = ra;
+	}
 
-		//- Result
-		console.log('   - AntiCrux Level '+level+' is rated '+ra+' after '+levelStat[level].games+' games (+'+levelStat[level].win+'/='+levelStat[level].draw+'/-'+levelStat[level].loss+').');
+	//-- Initializes some additional data
+	for (e in eloData)
+	{
+		eloData[e].rating0 = eloData[e].rating.slice();
+		for (i=0 ; i<eloData[e].rating.length ; i++)
+		{
+			eloData[e].played[i] = 0;
+			eloData[e].win[i]    = 0;
+			eloData[e].loss[i]   = 0;
+			eloData[e].draw[i]   = 0;
+		}
+	}
+
+	//-- Calculates the projected rating
+	for (i=0 ; i<games.length ; i++)
+	{
+		game = games[i];
+
+		//- Considers the current game
+		game.whiteElo = eloData[game.white].rating[game.whiteLevel-1];	//Override
+		game.blackElo = eloData[game.black].rating[game.blackLevel-1];	//Override
+		if ((game.whiteElo === undefined) || (game.blackElo === undefined))
+			continue;
+		eloData[game.white].played[game.whiteLevel-1]++;
+		eloData[game.black].played[game.blackLevel-1]++;
+		game.whitePlayed = eloData[game.white].played[game.whiteLevel-1];
+		game.blackPlayed = eloData[game.black].played[game.blackLevel-1];
+
+		//- ELO difference
+		d = Math.abs(game.whiteElo - game.blackElo);
+		if (d > 400)
+			d = 400;
+
+		//- Player's score probability [0..400]
+		pd = [	50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 53, 53,
+				53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55,
+				56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 58, 58, 58, 58, 58, 58,
+				58, 58, 59, 59, 59, 59, 59, 59, 59, 60, 60, 60, 60, 60, 60, 60, 60, 61, 61, 61,
+				61, 61, 61, 61, 62, 62, 62, 62, 62, 62, 62, 62, 63, 63, 63, 63, 63, 63, 63, 64,
+				64, 64, 64, 64, 64, 64, 64, 65, 65, 65, 65, 65, 65, 65, 66, 66, 66, 66, 66, 66,
+				66, 66, 67, 67, 67, 67, 67, 67, 67, 67, 68, 68, 68, 68, 68, 68, 68, 68, 69, 69,
+				69, 69, 69, 69, 69, 69, 70, 70, 70, 70, 70, 70, 70, 70, 71, 71, 71, 71, 71, 71,
+				71, 71, 71, 72, 72, 72, 72, 72, 72, 72, 72, 73, 73, 73, 73, 73, 73, 73, 73, 73,
+				74, 74, 74, 74, 74, 74, 74, 74, 74, 75, 75, 75, 75, 75, 75, 75, 75, 75, 76, 76,
+				76, 76, 76, 76, 76, 76, 76, 77, 77, 77, 77, 77, 77, 77, 77, 77, 78, 78, 78, 78,
+				78, 78, 78, 78, 78, 78, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 80, 80, 80, 80,
+				80, 80, 80, 80, 80, 80, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 82, 82, 82,
+				82, 82, 82, 82, 82, 82, 82, 82, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84,
+				84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 85, 85, 85, 85, 85, 85, 85, 85, 85,
+				85, 85, 85, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 87, 87, 87, 87,
+				87, 87, 87, 87, 87, 87, 87, 87, 87, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88,
+				88, 88, 88, 88, 88, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 90, 90,
+				90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 91, 91, 91, 91, 91,
+				91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 92, 92, 92, 92, 92, 92, 92, 92,
+				92][d] / 100.0; //Approximately equal to 1/(1+10^(-D/400))
+		if (game.whiteElo == game.blackElo)
+		{
+			game.whitePD = pd;	//0.5
+			game.blackPD = pd;	//0.5
+		}
+		else if (game.whiteElo > game.blackElo)
+		{
+			game.whitePD = pd;
+			game.blackPD = 1.0 - pd;
+		}
+		else
+		{
+			game.whitePD = 1.0 - pd;
+			game.blackPD = pd;
+		}
+
+		//- Score of the game
+		if (game.result == '1-0')
+		{
+			game.whiteScore = 1;
+			eloData[game.white].win[game.whiteLevel-1]++;
+			game.blackScore = 0;
+			eloData[game.black].loss[game.blackLevel-1]++;
+		}
+		else if (game.result == '0-1')
+		{
+			game.whiteScore = 0;
+			eloData[game.white].loss[game.whiteLevel-1]++;
+			game.blackScore = 1;
+			eloData[game.black].win[game.blackLevel-1]++;
+		}
+		else
+		{
+			game.whiteScore = 0.5;
+			eloData[game.white].draw[game.whiteLevel-1]++;
+			game.blackScore = 0.5;
+			eloData[game.black].draw[game.blackLevel-1]++;
+		}
+
+		//- Development coefficient K
+		game.whiteK = ((game.whitePlayed < 30) && !engineOptions[game.white].xp ? 40 : (game.whiteElo >= 2400 ? 10 : 20));
+		game.blackK = ((game.blackPlayed < 30) && !engineOptions[game.black].xp ? 40 : (game.blackElo >= 2400 ? 10 : 20));
+ 	
+		//- New ELO
+		eloData[game.white].rating[game.whiteLevel-1] += Math.round(game.whiteK * (game.whiteScore - game.whitePD));
+		eloData[game.black].rating[game.blackLevel-1] += Math.round(game.blackK * (game.blackScore - game.blackPD));
+	}
+
+	//-- Final display of the statistics
+	for (e in eloData)
+	{
+		console.log('');
+		console.log('The ratings for the engine "'+e+'" are :');
+		for (i=0 ; i<eloData[e].rating.length ; i++)
+			if (eloData[e].rating[i] !== undefined)
+				console.log('   - '+e+' Level '+(i+1)+' is rated '+eloData[e].rating[i]+' (initially '+eloData[e].rating0[i]+') after '+(eloData[e].win[i]+eloData[e].draw[i]+eloData[e].loss[i])+' games (+'+eloData[e].win[i]+'/='+eloData[e].draw[i]+'/-'+eloData[e].loss[i]+').');
 	}
 	return true;
 }
