@@ -380,7 +380,7 @@ $(document).ready(function() {
 
 	//-- Title bar
 	$('#acui_switch_ui').click(function() {
-		window.location = (ui_mobile ? 'index.html' : 'mobile.html');
+		window.location.href = (ui_mobile ? 'index.html' : 'mobile.html');
 	});
 
 	//-- Events (Board)
@@ -709,7 +709,7 @@ $(document).ready(function() {
 
 	$('#acui_about').click(function() {
 		setTimeout(function() {
-				window.location = 'https://github.com/ecrucru/anticrux/';
+				window.location.href = 'https://github.com/ecrucru/anticrux/';
 			}, 1000);
 		return true;
 	});

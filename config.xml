@@ -18,7 +18,9 @@
 
 	<icon src="images/mobicon.png" />
 	<content src="mobile.html" />
-	<access origin="https://github.com" />
+
+	<plugin name="cordova-plugin-whitelist" spec="1.3.2" />
+	<allow-intent href="https://github.com/ecrucru/*" />
 
 	<platform name="android" />
 	<platform name="winphone" />
