@@ -416,6 +416,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: removed option AntiCrux.options.ai.bestStaticScore
 	- Library: improved import from FEN
 	- ELO: projection of the rating ELO
+	- ELO: save as CSV
 
 
 ### License

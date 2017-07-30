@@ -80,9 +80,11 @@ var enginePool = [
 
 	engineOptions = {
 		'AC' : {
-			xp : false
+			name : 'AntiCrux',
+			xp   : false
 		},
 		'SF' : {
+			name  : 'Stockfish',
 			//Source: @veloce/lichobile/src/js/ui/ai/engine.ts
 			skill : [   1,    3,    6,    9,   11,   14,   17,   20],
 			depth : [   1,    1,    2,    3,    5,    8,   13,   21],
@@ -103,6 +105,7 @@ var enginePool = [
 		//- Options
 		debugLevel		: 1,							//0=none, 1=activity, 2=trace, 3=detailed trace
 		file			: 'anticrux-elo.pgn',			//Output file to store the games
+		fileElo			: 'anticrux-elo.csv',			//Output file to store the evolution of the ELO rating (blank name = no generation)
 		genGames    	: true,							//Will the job generate new games in PGN format ?
 		numGames		: 225,							//Number of games to generate per job
 		genStats    	: true,							//Will the job generate the final statistics ?
@@ -185,8 +188,8 @@ function acelo_newjob() {
 	}
 
 	//-- Sets the names of each player
-	job.engineOne.name = (job.engineOne.type=='AC'?'AntiCrux':'Stockfish') + ' Level ' + job.engineOne.level;
-	job.engineTwo.name = (job.engineTwo.type=='AC'?'AntiCrux':'Stockfish') + ' Level ' + job.engineTwo.level;
+	job.engineOne.name = engineOptions[job.engineOne.type].name + ' Level ' + job.engineOne.level;
+	job.engineTwo.name = engineOptions[job.engineTwo.type].name + ' Level ' + job.engineTwo.level;
 
 	//-- Initialization of AntiCrux
 	job.referee.defaultBoard();
@@ -378,9 +381,9 @@ function acelo_elo() {
 
 	var	pgn, regex, games, game,
 		t, p, dp, rc, ra, d, pd,
-		eloData,
+		eloData, csv,
 		level, elopponent, levelStat,
-		i, e;
+		i, j, k, e, s, tab;
 
 	//-- Trace
 	if (job.debugLevel >= 2)
@@ -502,7 +505,6 @@ function acelo_elo() {
 	for (i=0 ; i<enginePool.length ; i++)
 		if (!eloData.hasOwnProperty(enginePool[i].type))
 			eloData[enginePool[i].type] = {
-				rating0 : [],
 				rating  : [],
 				played  : [],
 				win     : [],
@@ -511,7 +513,7 @@ function acelo_elo() {
 			};
 	//... for Stockfish
 	for (i=0 ; i<engineOptions.SF.elo.length ; i++)
-		eloData.SF.rating[i] = (job.fixedInitialElo ? 1500 : engineOptions.SF.elo[i]);
+		eloData.SF.rating[i] = [job.fixedInitialElo ? 1500 : engineOptions.SF.elo[i]];
 	//... for AntiCrux
 	levelStat = [];
 	for (i=0 ; i<games.length ; i++)
@@ -585,13 +587,11 @@ function acelo_elo() {
 					ra = rc + 20 * (levelStat[level].points - levelStat[level].games/2)/0.5;
 			ra = Math.round(ra);
 		}
-		eloData.AC.rating[level] = ra;
+		eloData.AC.rating[level] = [ra];
 	}
 
 	//-- Initializes some additional data
 	for (e in eloData)
-	{
-		eloData[e].rating0 = eloData[e].rating.slice();
 		for (i=0 ; i<eloData[e].rating.length ; i++)
 		{
 			eloData[e].played[i] = 0;
@@ -599,7 +599,6 @@ function acelo_elo() {
 			eloData[e].loss[i]   = 0;
 			eloData[e].draw[i]   = 0;
 		}
-	}
 
 	//-- Calculates the projected rating
 	for (i=0 ; i<games.length ; i++)
@@ -607,10 +606,12 @@ function acelo_elo() {
 		game = games[i];
 
 		//- Considers the current game
-		game.whiteElo = eloData[game.white].rating[game.whiteLevel-1];	//Override
-		game.blackElo = eloData[game.black].rating[game.blackLevel-1];	//Override
-		if ((game.whiteElo === undefined) || (game.blackElo === undefined))
+		if ((eloData[game.white].rating[game.whiteLevel-1] === undefined) ||
+		    (eloData[game.black].rating[game.blackLevel-1] === undefined)
+		)
 			continue;
+		game.whiteElo = eloData[game.white].rating[game.whiteLevel-1][eloData[game.white].rating[game.whiteLevel-1].length-1];	//Override
+		game.blackElo = eloData[game.black].rating[game.blackLevel-1][eloData[game.black].rating[game.blackLevel-1].length-1];	//Override
 		eloData[game.white].played[game.whiteLevel-1]++;
 		eloData[game.black].played[game.blackLevel-1]++;
 		game.whitePlayed = eloData[game.white].played[game.whiteLevel-1];
@@ -687,8 +688,8 @@ function acelo_elo() {
 		game.blackK = ((game.blackPlayed < 30) && !engineOptions[game.black].xp ? 40 : (game.blackElo >= 2400 ? 10 : 20));
  	
 		//- New ELO
-		eloData[game.white].rating[game.whiteLevel-1] += Math.round(game.whiteK * (game.whiteScore - game.whitePD));
-		eloData[game.black].rating[game.blackLevel-1] += Math.round(game.blackK * (game.blackScore - game.blackPD));
+		eloData[game.white].rating[game.whiteLevel-1].push(eloData[game.white].rating[game.whiteLevel-1][eloData[game.white].rating[game.whiteLevel-1].length-1] + Math.round(game.whiteK * (game.whiteScore - game.whitePD)));
+		eloData[game.black].rating[game.blackLevel-1].push(eloData[game.black].rating[game.blackLevel-1][eloData[game.black].rating[game.blackLevel-1].length-1] + Math.round(game.blackK * (game.blackScore - game.blackPD)));
 	}
 
 	//-- Final display of the statistics
@@ -698,7 +699,55 @@ function acelo_elo() {
 		console.log('The ratings for the engine "'+e+'" are :');
 		for (i=0 ; i<eloData[e].rating.length ; i++)
 			if (eloData[e].rating[i] !== undefined)
-				console.log('   - '+e+' Level '+(i+1)+' is rated '+eloData[e].rating[i]+' (initially '+eloData[e].rating0[i]+') after '+(eloData[e].win[i]+eloData[e].draw[i]+eloData[e].loss[i])+' games (+'+eloData[e].win[i]+'/='+eloData[e].draw[i]+'/-'+eloData[e].loss[i]+').');
+				console.log('   - '+e+' Level '+(i+1)+' is rated '+(eloData[e].rating[i][eloData[e].rating[i].length-1])+' (initially '+eloData[e].rating[i][0]+') after '+(eloData[e].win[i]+eloData[e].draw[i]+eloData[e].loss[i])+' games (+'+eloData[e].win[i]+'/='+eloData[e].draw[i]+'/-'+eloData[e].loss[i]+').');
+	}
+
+	//-- Saves the CSV file
+	if (job.fileElo.length > 0)
+	{
+		//- Builds the file
+		csv = [''];
+		s = 0;
+		for (e in eloData)
+		{
+			for (i=0 ; i<eloData[e].rating.length ; i++)
+			{
+				tab = eloData[e].rating[i];
+				if (tab === undefined)
+					continue;
+
+				//- Header
+				csv[0] += (csv[0].length>0 ? ';' : '') + e + (i+1);
+
+				//- Items
+				for (j=0 ; j<Math.max(tab.length, csv.length-1) ; j++)
+				{
+					if (csv[j+1] === undefined)
+					{
+						csv[j+1] = '';
+						for (k=0 ; k<s ; k++)
+							csv[j+1] += ';';
+					}
+					else
+						if (csv[j+1].length > 0)
+							csv[j+1] += ';';
+					if (tab[j] !== undefined)
+						csv[j+1] += tab[j];
+				}
+				s++;
+			}
+		}
+
+		//- Saves the data
+		fs.writeFile(job.fileElo, csv.join("\r\n")+"\r\n", function(pError) {
+			if (pError !== null)
+				console.log('Error : ' + pError);
+		});
+		if (job.debugLevel >= 1)
+		{
+			console.log('');
+			console.log('CSV file saved under "'+job.fileElo+'".');
+		}
 	}
 	return true;
 }
