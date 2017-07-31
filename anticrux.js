@@ -276,7 +276,7 @@ AntiCrux.prototype.loadFen = function(pFen) {
 		return false;
 
 	//-- Splits the input parameter
-	list = pFen.split(' ');
+	list = pFen.trim().split(' ');
 	if (list[0].split('/').length != 8)
 		return false;
 
@@ -2671,14 +2671,6 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 						save_move(x-1, y-1, i-9, true);
 					if ((x < 7) && (board[i-7] == 4))
 						save_move(x+1, y-1, i-7, true);
-					// En passant
-					if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
-					{
-						if ((x > 0) && (pNode.enpassant == i-9))
-							save_move(x-1, y-1, i-9, true);
-						if ((x < 7) && (pNode.enpassant == i-7))
-							save_move(x+1, y-1, i-7, true);
-					}
 				}
 				else
 				{
@@ -2694,14 +2686,6 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 						save_move(x-1, y+1, i+7, true);
 					if ((x < 7) && (board[i+9] == 4))
 						save_move(x+1, y+1, i+9, true);
-					// En passant
-					if (pNode.hasOwnProperty('enpassant') && this.options.variant.enPassant)
-					{
-						if ((x > 0) && (pNode.enpassant == i+7))
-							save_move(x-1, y+1, i+7, true);
-						if ((x < 7) && (pNode.enpassant == i+9))
-							save_move(x+1, y+1, i+9, true);
-					}
 				}
 				if (ep)
 					board[pNode.enpassant] = epv;
