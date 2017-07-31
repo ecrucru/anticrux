@@ -2000,7 +2000,7 @@ AntiCrux.prototype.toText = function(pNode) {
  * @return {String} PGN content.
  */
 AntiCrux.prototype.toPgn = function(pHeader) {
-	var	lf_setheader, pgn,
+	var	lf_setheader, pgnHead, pgnItem,
 		i, e, turn, moveStr, symbols;
 
 	//-- Checks
@@ -2039,7 +2039,6 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 		if (this.options.ai.elo > 0)
 			lf_setheader('BlackElo', this.options.ai.elo);
 	}
-	lf_setheader('Termination', 'normal');
 	if (this.hasSetUp())
 	{
 		lf_setheader('SetUp', '1');
@@ -2048,17 +2047,6 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	lf_setheader('PlyCount', this._history.length);
 	lf_setheader('Variant', 'suicide');
 	lf_setheader('TimeControl', '-');
-
-	//-- Builds the header
-	pgn = '';
-	for (e in pHeader)
-	{
-		if (typeof pHeader[e] === 'string')
-			pgn += '['+e+' "'+pHeader[e].split('\\').join("\\\\").split('"').join('\\"')+'"]' + "\n";
-		else
-			pgn += '['+e+' "'+pHeader[e]+'"]' + "\n";
-	}
-	pgn += "\n";
 
 	//-- Deactivates the symbols
 	symbols = this.options.board.symbols;
@@ -2069,13 +2057,14 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	if (!this._helper.loadFen(this._history_fen0))
 		return '';
 
-	//-- Moves
+	//-- Moves the pieces
+	pgnItem = '';
 	turn = 0;
 	for (i=0 ; i<this._history.length ; i++)
 	{
 		//- Next turn
 		if (i % 2 === 0)
-			pgn += (turn>0 ? ' ' : '') + (++turn) + '.';
+			pgnItem += (turn>0 ? ' ' : '') + (++turn) + '.';
 
 		//- Move
 		moveStr = this._helper.moveToString(this._history[i]);
@@ -2083,41 +2072,53 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 			throw 'Internal error - Report any error (#011)';
 		else
 		{
-			pgn += ' ' + moveStr;
+			pgnItem += ' ' + moveStr;
 			this._helper.updateHalfMoveClock();
 			this._helper.logMove(this._history[i]);
 			this._helper.switchPlayer();
 		}
 	}
 
-	//-- Final position
+	//-- Restores the symbols
+	this.options.board.symbols = symbols;
+
+	//-- Marks the termination of the game
 	if (pHeader.Result != '*')
-		pgn += '# ' + pHeader.Result;
+		pgnItem += '# ' + pHeader.Result;
 	else
 		switch (this._helper.getWinner())
 		{
 			case this._helper.constants.player.white:
-				pgn += '# 1-0';
-				pgn = pgn.replace('[Result "*"]', '[Result "1-0"]');
+				pgnItem += '# 1-0';
+				pHeader.Result = '1-0';
 				break;
 			case this._helper.constants.player.black:
-				pgn += '# 0-1';
-				pgn = pgn.replace('[Result "*"]', '[Result "0-1"]');
+				pgnItem += '# 0-1';
+				pHeader.Result = '0-1';
 				break;
 			case this._helper.constants.player.none:
 				if (this._helper.isDraw())
 				{
-					pgn += '# 1/2-1/2';
-					pgn = pgn.replace('[Result "*"]', '[Result "1/2-1/2"]');
+					pgnItem += '# 1/2-1/2';
+					pHeader.Result = '1/2-1/2';
 				}
 				break;
 		}
+	lf_setheader('Termination', (pHeader.Result != '*' ? 'normal' : 'unterminated'));
 
-	//-- Restores the symbols
-	this.options.board.symbols = symbols;
+	//-- Builds the header
+	pgnHead = '';
+	for (e in pHeader)
+	{
+		if (typeof pHeader[e] === 'string')
+			pgnHead += '['+e+' "'+pHeader[e].split('\\').join("\\\\").split('"').join('\\"')+'"]' + "\n";
+		else
+			pgnHead += '['+e+' "'+pHeader[e]+'"]' + "\n";
+	}
+	pgnHead += "\n";
 
 	//-- Result
-	return pgn;
+	return pgnHead + pgnItem;
 };
 
 /**
