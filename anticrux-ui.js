@@ -808,6 +808,8 @@ $(document).ready(function() {
 	$('#acui_js, #acui_sect_rewind, #acui_sect_level_notice').hide();
 	if ((ui_mobile && acui_isphone()) || (!ui_mobile && !acui_isphone()))
 		$('#acui_switch_ui').hide();
+	if (ui_cordova)
+		$('#acui_pgn').hide();
 	if (ui_mobile)
 		acui_options_load();
 	else
