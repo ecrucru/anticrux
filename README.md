@@ -417,6 +417,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: improved import from FEN
 	- ELO: projection of the rating ELO
 	- ELO: save as CSV
+	- Library: new method AntiCrux.prototype.getDateElements
 
 
 ### License
@@ -689,6 +690,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.defaultBoard(pFischer)
 - AntiCrux.freeMemory()
 - AntiCrux.getAssistance(pSymbols, pUCI)
+- AntiCrux.getDateElements()
 - AntiCrux.getDrawReason()
 - AntiCrux.getHalfMoveClock()
 - AntiCrux.getHistory()

@@ -132,6 +132,27 @@ AntiCrux.prototype.copyOptions = function(pObject) {
 };
 
 /**
+ * The method returns an object which contains the different formatted parts
+ * of the current date and time.
+ *
+ * @method getDateElements
+ * @return {Object} Object with the elements of the current date and time.
+ */
+AntiCrux.prototype.getDateElements = function() {
+	var d = new Date();
+	return {
+		// Date
+		year    :  d.getFullYear().toString(),
+		month   : (d.getMonth()+1 < 10 ? '0' : '') + (d.getMonth()+1).toString(),
+		day     : (d.getDate()    < 10 ? '0' : '') +  d.getDate().toString(),
+		// Time
+		hours   : (d.getHours()   < 10 ? '0' : '') +  d.getHours().toString(),
+		minutes : (d.getMinutes() < 10 ? '0' : '') +  d.getMinutes().toString(),
+		seconds : (d.getSeconds() < 10 ? '0' : '') +  d.getSeconds().toString()
+	};
+};
+
+/**
  * The method returns the primary node which contains the information about the board.
  * This is typically the node claimed by any argument of the other methods named *pNode*,
  * even if *pNode* is generally optional.
@@ -2016,7 +2037,8 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	};
 	lf_setheader('Event',  'Game');
 	lf_setheader('Site',   'https://github.com/ecrucru/anticrux/');
-	lf_setheader('Date',   (new Date().toISOString().slice(0, 10)));
+	e = this.getDateElements();
+	lf_setheader('Date',   e.year + '-' + e.month + '-' + e.day);
 	lf_setheader('Round',  '?');
 	lf_setheader('White',  '');
 	lf_setheader('Black',  '');

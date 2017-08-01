@@ -542,7 +542,7 @@ $(document).ready(function() {
 	});
 
 	$('#acui_pgn').click(function() {
-		var dl, pgn;
+		var dl, pgn, obj;
 
 		//-- Gets the PGN data
 		pgn = ai.toPgn({});
@@ -554,7 +554,8 @@ $(document).ready(function() {
 			// http://stackoverflow.com/questions/3665115/
 			dl = document.createElement('a');
 			dl.setAttribute('href', 'data:application/x-chess-pgn;charset=iso-8859-1,' + encodeURIComponent(pgn));
-			dl.setAttribute('download', 'anticrux_'+(new Date().toISOString().slice(0, 10))+'_'+(new Date().toLocaleTimeString().replace(/[^0-9]/g, ''))+'.pgn');
+			obj = ai.getDateElements();
+			dl.setAttribute('download', 'anticrux_' + obj.year + obj.month + obj.day + '_' + obj.hours + obj.minutes + obj.seconds + '.pgn');
 			dl.style.display = 'none';
 			document.body.appendChild(dl);
 			dl.click();
