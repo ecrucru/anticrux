@@ -1340,6 +1340,33 @@ AntiCrux.prototype.getScore = function(pNode) {
 };
 
 /**
+ * The method returns the shortest mate (if detected).
+ *
+ * @method getShortestMate
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Object} Depth of the mate in moves. Zero means "no mate".
+ */
+AntiCrux.prototype.getShortestMate = function(pNode) {
+	var sequence;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Checks if we have a deep analysis to find the mate
+	if ((pNode.score & this.constants.bitmask.valuationType) != this.constants.bitmask.valuationDeep)
+		return 0;
+
+	//-- Checks if we reached the maximal score
+	if ((pNode.score & this.constants.bitmask.valuationValue) != this.constants.bitmask.valuationValue)
+		return 0;
+
+	//-- Returns the mate
+	sequence = (this.hasOwnProperty('_reachedDepth') ? Math.ceil(this._reachedDepth/2.0) : 49);
+	return ((pNode.score & this.constants.bitmask.valuationSign) == this.constants.bitmask.valuationSign ? -sequence : sequence);
+};
+
+/**
  * The method switches the current player.
  *
  * @method switchPlayer

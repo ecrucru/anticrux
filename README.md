@@ -205,27 +205,27 @@ AntiCrux Engine acts like an UCI-compatible engine which can be connected to any
 
 Some restrictions apply :
 
-- AntiCrux Engine is a script (not an executable file) : the procedure is detailed below
-- You can't stop the engine while it is thinking
-- There is no time control
+- AntiCrux Engine is a script (not an executable file) : the procedure is detailed below.
+- You can't stop the engine while it is thinking.
+- There is no time control.
 
 #### Verification
 
-To verify that AntiCrux Engine reacts correctly, you can create the following file "uci_test.txt" **with an empty line at its end** :
+To verify that AntiCrux Engine reacts correctly, open a terminal and run :
+
+```bash
+node --expose-gc anticrux-engine.js
+```
+
+Then type UCI commands from scratch :
 
 ```
 uci
-setoption name level value 12
+setoption name Skill Level value 12
 isready
 ucinewgame
 position startpos moves a3
 go infinite
-```
-
-Then run the command :
-
-```
-node --expose-gc anticrux-engine.js < uci_test.txt
 ```
 
 #### Procedure for pyChess
@@ -418,6 +418,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- ELO: projection of the rating ELO
 	- ELO: save as CSV
 	- Library: new method AntiCrux.prototype.getDateElements
+	- Library: new method AntiCrux.prototype.getShortestMate
 
 
 ### License
@@ -708,6 +709,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getPlayer(pNode)
 - AntiCrux.getReachedDepth()
 - AntiCrux.getScore(pNode)
+- AntiCrux.getShortestMate(pNode)
 - AntiCrux.getWinner(pNode)
 - AntiCrux.hasPendingPromotion(pNode)
 - AntiCrux.hasSetUp()
