@@ -40,7 +40,7 @@ function acui_options_load() {
 	{
 		level = ai.getLevel();
 		if (level !== null)
-			$('#acui_option_level').val(level).slider('refresh');
+			$('#acui_option_level').val(level).change();
 	}
 	else
 	//-- Desktop version
