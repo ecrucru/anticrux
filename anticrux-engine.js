@@ -31,6 +31,7 @@ var	AntiCrux = require('anticrux'),
 	fs = require('fs'),								//https://nodejs.org/api/fs.html
 	acengine = {
 		state : 'wait_gui',
+		positionOK : false,
 		instance : null,
 		trace : {
 			hasWritten	: false,
@@ -124,7 +125,7 @@ process.stdin.on('readable', function() {
 		if (tab[0] == 'debug')
 		{
 			acengine.trace.debug = (tab[1].toLowerCase() == 'on');		//No use of "info string"
-			return;
+			continue;
 		}
 
 		//- Other commands
@@ -143,6 +144,7 @@ process.stdin.on('readable', function() {
 					acengine.send('uciok');
 					acengine.send('copyprotection ok');
 					acengine.state = 'options';
+					acengine.positionOK = false;
 				}
 				break;
 
@@ -186,12 +188,24 @@ process.stdin.on('readable', function() {
 			// The game has started
 			case 'playing':
 				if (tab[0] == 'ucinewgame')
+				{
 					acengine.instance.defaultBoard();
+					acengine.positionOK = true;
+				}
+
+				else if (tab[0] == 'isready')
+				{
+					if (!acengine.positionOK)
+						acengine.send('info string AntiCrux is waiting for a position to analyze');
+					acengine.send('readyok');
+				}
 
 				else if (tab[0] == 'position')
 				{
+					// Loads the initial position
 					if (tab[1] == 'fen')
 					{
+						acengine.positionOK = true;
 						fen = '';
 						for (j=2 ; j<tab.length ; j++)
 						{
@@ -200,13 +214,19 @@ process.stdin.on('readable', function() {
 							fen += (fen.length > 0 ? ' ' : '') + tab[j];
 						}
 						if (!acengine.instance.loadFen(fen))
-							if (acengine.trace.debug)
-								acengine.send('info string Invalid FEN ' + fen);
+						{
+							acengine.positionOK = false;
+							acengine.send('info string Invalid FEN ' + fen);
+							continue;
+						}
 					}
 					else if (tab[1] == 'startpos')
+					{
 						acengine.instance.defaultBoard();
+						acengine.positionOK = true;
+					}
 					else
-						return;
+						continue;
 
 					// Proceeds with the additional moves
 					b = false;
@@ -222,7 +242,11 @@ process.stdin.on('readable', function() {
 						if (b)
 						{
 							if (acengine.instance.movePiece(tab[j]) == acengine.instance.constants.noMove)
-								throw 'Internal error - Rejected move history';
+							{
+								acengine.send('info string Invalid move history');
+								acengine.positionOK = false;
+								break;
+							}
 							else
 							{
 								acengine.instance.updateHalfMoveClock();
@@ -234,6 +258,14 @@ process.stdin.on('readable', function() {
 
 				else if (tab[0] == 'go')
 				{
+					// Verifies the loaded position
+					if (!acengine.positionOK)
+					{
+						acengine.send('info string No position to analyze');
+						acengine.send('bestmove 0000');
+						continue;
+					}
+
 					// Mapping of the level
 					if (tab[1] == 'depth')
 						acengine.send("info string 'go depth N' is ignored");

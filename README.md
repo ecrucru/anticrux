@@ -19,6 +19,7 @@
 	- [Node.js](#nodejs)
 	- [AntiCrux Server](#anticrux-server)
 	- [AntiCrux Engine](#anticrux-engine)
+		- [Procedure for WinBoard](#procedure-for-winboard)
 		- [Procedure for pyChess](#procedure-for-pychess)
 	- [AntiCrux hELO world](#anticrux-helo-world)
 - [Information](#information)
@@ -221,12 +222,29 @@ Then type UCI commands from scratch :
 
 ```
 uci
+setoption name UCI_Variant value suicide
 setoption name Skill Level value 12
 isready
 ucinewgame
 position startpos moves a3
 go infinite
 ```
+
+#### Procedure for WinBoard
+
+You need to use at least WinBoard 4.9 else you will be told that the variant `suicide` is not supported.
+
+In WinBoard, go to the menu "Engine" and menu item "Edit engine list...". Then add the following new line and save it :
+
+```
+"AntiCrux" -fcp "C:\fullpath\nodejs\node.exe --expose-gc C:\fullpath\anticrux-engine.js" -fd "C:\fullpath\anticrux" -fn "AntiCrux" -fUCI /variant=suicide
+```
+
+Restart WinBoard. On the main dialog "WinBoard Startup", select AntiCrux from the drop-down lists to start a new game against it. From the menu "File" and menu item "New variant...", you can run a new suicide game.
+
+During the game, if you do an incorrect move under certain conditions, the engine will probably leave the game because WinBoard doesn't send a correct position to analyze.
+
+To activate the logo in WinBoard, copy the picture located at "images/anticrux.bmp" to the parent folder and rename the picture as "logo.bmp".
 
 #### Procedure for pyChess
 
