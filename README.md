@@ -419,6 +419,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- ELO: save as CSV
 	- Library: new method AntiCrux.prototype.getDateElements
 	- Library: new method AntiCrux.prototype.getShortestMate
+	- Library: super queen
 
 
 ### License
@@ -609,6 +610,10 @@ Some engines don't accept the rule "[en passant](https://en.wikipedia.org/wiki/E
 - **AntiCrux.options.variant.promoteQueen**
 
 With this option, you immediately promote paws as queen. You cannot choose for another piece.
+
+- **AntiCrux.options.variant.superQueen**
+
+The queen can move also like the knight. It doesn't affect the weight used for the valuation of this piece.
 
 - **AntiCrux.options.variant.pieces**
 

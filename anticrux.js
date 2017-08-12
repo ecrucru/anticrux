@@ -2382,6 +2382,7 @@ AntiCrux.prototype._init = function() {
 		variant : {
 			enPassant : true,							//TRUE activates the move "en passant" (some AI doesn't manage IT)
 			promoteQueen : false,						//TRUE only promotes pawns as queen
+			superQueen : false,							//TRUE allows the queen for horse riding
 			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
 		},
 		board : {
@@ -2880,7 +2881,10 @@ AntiCrux.prototype._ai_nodeMoves = function(pNode) {
 								break;
 					}
 				}
-				break;
+
+				if (((pNode.board[i] & this.constants.bitmask.piece) == this.constants.piece.bishop) || !this.options.variant.superQueen)	// Super Queen = Rook + Bishop + Knight
+					break;
+				//else no break, yes !
 			}
 
 			case this.constants.piece.knight:
