@@ -13,6 +13,7 @@
 	- [Grab your copy](#grab-your-copy)
 		- [Stable](#stable)
 		- [Work in progress](#work-in-progress)
+	- [Compatibility matrix](#compatibility-matrix)
 	- [Web interface](#web-interface)
 	- [Mobile interface](#mobile-interface)
 	- [Mobile application](#mobile-application)
@@ -94,6 +95,21 @@ git clone https://github.com/ecrucru/anticrux.git
 ```
 
 
+### Compatibility matrix
+
+| AntiCrux                    | Windows | Linux | Macintosh | NodeJS | jsUCI | Android | iOS | Windows Phone    |
+|:---------------------------:|:-------:|:-----:|:---------:|:------:|:-----:|:-------:|:---:|:----------------:|
+| Web desktop UI              | Yes     | Yes   | Yes       | -      | -     | Yes     | Yes | (Not tested)     |
+| Web mobile UI               | Yes     | Yes   | Yes       | -      | -     | Yes     | Yes | (Not tested)     |
+| Application for smartphones | -       | -     | -         | -      | -     | Yes     | No  | Yes (Not tested) |
+| NPM package                 | Yes     | Yes   | Yes       | Yes    | -     | -       | -   | -                |
+| Engine UCI                  | Yes     | Yes   | Yes       | Yes    | Yes   | -       | -   | -                |
+| Server                      | Yes     | Yes   | Yes       | Yes    | No    | -       | -   | -                |
+| ELO                         | Yes     | Yes   | Yes       | Yes    | No    | -       | -   | -                |
+
+Note : the symbol "-" denotes that a feature is not applicable.
+
+
 ### Web interface
 
 As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface in your default browser. The tested ones have different behaviours :
@@ -146,16 +162,11 @@ To use the different modules of AntiCrux out of a web-browser, you must install 
 apt-get install nodejs nodejs-legacy
 ```
 
-For developers, additional tools may be added globally :
+If you are a software developer, few additional tools may be added globally :
 
 ```bash
 npm install -g uglify-js jshint yuidocjs
 ```
-
-AntiCrux can be built locally with two scripts :
-
-- "build_min.bat" (Windows) or "build_min.sh" (Linux) creates the minimized version of the library (if needed by the HTML user interface)
-- "build_nodejs.bat" (Windows) or "build_nodejs.sh" (Linux) copies the right files into the sub-directory "node_modules"
 
 To test if your installation is working, you can run the following test :
 
@@ -163,7 +174,7 @@ To test if your installation is working, you can run the following test :
 node --expose-gc anticrux-demo.js
 ```
 
-Remark : if you don't install the package "nodejs-legacy", replace the command "node" by "nodejs".
+As a convenient alternative, you may use jsUCI to run the [compatible modules](#compatibility-matrix). This tool is not recommended because it offers fewer capabilities compared to NodeJS. In practice, just replace any occurrence of `node.exe --expose-gc` by `jsuci_1_2.exe` (adapt the name to fit with the relevant version).
 
 
 ### AntiCrux Server
@@ -172,7 +183,7 @@ You need first to install [Node.js](#nodejs).
 
 To access the engine remotely over a network, you can execute AntiCrux as a chess server. By default, it listens to local connections on the port 5000 and you can't create more than one instance on the same port.
 
-Start the server by double-clicking on the script "run_server.bat" (Windows) or "run_server.sh" (Linux). To change the default level of the server, follow the indications written on the home screen when you connect.
+Start the server by double-clicking on the script `run_server.bat` (Windows) or `run_server.sh` (Linux). To change the default level of the server, follow the indications written on the home screen when you connect.
 
 Because it mimics the commands of the Free Internet Chess Server (FICS), AntiCrux Server is compatible with any ICS client not supporting timeseal.
 
@@ -202,7 +213,7 @@ telnet localhost 5000
 
 You need first to install [Node.js](#nodejs).
 
-AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches !
+AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches ! The played variant is `suicide` only.
 
 Some restrictions apply :
 
@@ -234,17 +245,27 @@ go infinite
 
 You need to use at least WinBoard 4.9 else you will be told that the variant `suicide` is not supported.
 
-In WinBoard, go to the menu "Engine" and menu item "Edit engine list...". Then add the following new line and save it :
+In WinBoard, add a new engine and set the following options :
+
+- Nickname : `AntiCrux`
+- Engine : `"C:\full-path-to-nodejs\node.exe"`
+- Command-line parameters : `--expose-gc "C:\fullpath-to-anticrux\anticrux-engine.js"`
+- Special WinBoard options : `/variant=suicide`
+- Directory : `C:\fullpath-to-anticrux\`
+- [X] UCI
+- [X] Add this engine to the list
+
+This settings will end up with an equivalent line added to the list of engines :
 
 ```
-"AntiCrux" -fcp "C:\fullpath\nodejs\node.exe --expose-gc C:\fullpath\anticrux-engine.js" -fd "C:\fullpath\anticrux" -fn "AntiCrux" -fUCI /variant=suicide
+"AntiCrux" -fcp 'C:\fullpath-to-nodejs\node.exe --expose-gc "C:\fullpath-to-anticrux\anticrux-engine.js"' -fd "C:\fullpath-to-anticrux\anticrux\" -fn "AntiCrux" -fUCI /variant=suicide
 ```
 
-Restart WinBoard. On the main dialog "WinBoard Startup", select AntiCrux from the drop-down lists to start a new game against it. From the menu "File" and menu item "New variant...", you can run a new suicide game.
+Restart WinBoard. On the main dialog "WinBoard Startup", select AntiCrux from the drop-down lists to start a new game against it.
 
 During the game, if you do an incorrect move under certain conditions, the engine will probably leave the game because WinBoard doesn't send a correct position to analyze.
 
-To activate the logo in WinBoard, copy the picture located at "images/anticrux.bmp" to the parent folder and rename the picture as "logo.bmp".
+To activate the logo in WinBoard, copy the picture located at "images/anticrux.bmp" to the same folder as the file "anticrux-engine.js", then rename the copied picture as "logo.bmp".
 
 #### Procedure for pyChess
 
@@ -286,7 +307,7 @@ This procedure is expected to change with the upcoming release of pyChess 0.12.5
 
 This tool generates a [PGN file](https://en.wikipedia.org/wiki/Portable_Game_Notation) to estimate the level of AntiCrux in regard of other UCI-compatible chess engines. For now, only AntiCrux and the special Stockfish-based engine developed by @ddugovic and compiled by @niklasf are considered because they are related to JavaScript.
 
-To get reliable games, the processing will take hours (or days !). To accelerate the generation, you may launch in parallel with the scripts "run_elo.bat" (Windows) or "run_elo.sh" (Linux) as many processes as your computer has CPU.
+To get reliable games, the processing will take hours (or days !). To accelerate the generation, you may launch in parallel with the scripts `run_elo.bat` (Windows) or `run_elo.sh` (Linux) as many processes as your computer has CPU.
 
 The script has 3 main changeable parameters :
 
@@ -438,6 +459,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new method AntiCrux.prototype.getDateElements
 	- Library: new method AntiCrux.prototype.getShortestMate
 	- Library: super queen
+	- Engine: experimental support for jsUCI
 
 
 ### License
@@ -766,4 +788,4 @@ Any field or method beginning with an underscore is a private member which is no
 
 A *node* is an object which represents a state of the board with additional information. It is linked with other nodes to describe the possible target positions through a network of moves. The principal node is the *root node* (a private attribute), so by using the public methods of the library, you should not have to handle the nodes on your own. That's why the parameter *pNode* is generally optional.
 
-To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script "run_yuidoc_server.bat" (Windows) or "run_yuidoc_server.sh" (Linux), then access to http://localhost:3000
+To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script `run_yuidoc_server.bat` (Windows) or `run_yuidoc_server.sh` (Linux), then access to http://localhost:3000
