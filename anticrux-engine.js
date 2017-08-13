@@ -29,11 +29,11 @@
 //======== Initialization
 var acengine = {
 		//=== Private members
-		state : 'wait_gui',
+		connected  : false,
 		positionOK : false,
-		instance : null,
-		jsUCI : ((typeof importScripts !== 'undefined') && (typeof postMessage !== 'undefined')),
-		trace : {											//Only for NodeJS
+		instance   : null,
+		jsUCI      : ((typeof importScripts !== 'undefined') && (typeof postMessage !== 'undefined')),
+		trace      : {										//Only for NodeJS
 			hasWritten	: false,
 			debug		: false,							//Editable option
 			logFile		: 'anticrux-engine.log'				//Editable option
@@ -86,170 +86,157 @@ var acengine = {
 					continue;
 				}
 
-				//- Other commands
-				switch (acengine.state)
+				//- Main commands
+				if (!acengine.connected)
 				{
-					// The engine is waiting for the instructions of the GUI
-					case 'wait_gui':
-						if (tab[0] == 'uci')
+					if (tab[0] == 'uci')
+					{
+						acengine.send('id name AntiCrux '+acengine.instance.options.ai.version);
+						acengine.send('id author https://github.com/ecrucru/anticrux/');
+						acengine.send('option name UCI_Chess960 type check default false');
+						acengine.send('option name UCI_Variant type combo default suicide var suicide');
+						acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
+						acengine.send('option name Debug type check default false');
+						acengine.send('uciok');
+						acengine.send('copyprotection ok');
+						acengine.connected = true;
+						acengine.positionOK = false;
+					}
+				}
+				else
+				{
+					if (tab[0] == 'setoption')
+					{
+						// Parses the command
+						obj = { name:'', value:'' };	//At least these fields
+						objKey = '';
+						for (j=0 ; j<tab.length ; j++)
 						{
-							acengine.send('id name AntiCrux '+acengine.instance.options.ai.version);
-							acengine.send('id author https://github.com/ecrucru/anticrux/');
-							acengine.send('option name UCI_Chess960 type check default false');
-							acengine.send('option name UCI_Variant type combo default suicide var suicide');
-							acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
-							acengine.send('option name Debug type check default false');
-							acengine.send('uciok');
-							acengine.send('copyprotection ok');
-							acengine.state = 'options';
-							acengine.positionOK = false;
-						}
-						break;
-
-					// The transmission of the options is pending
-					case 'options':
-						if (tab[0] == 'setoption')
-						{
-							// Parses the command
-							obj = { name:'', value:'' };	//At least these fields
-							objKey = '';
-							for (j=0 ; j<tab.length ; j++)
+							// Key
+							if (['name', 'value', 'type', 'default', 'min', 'max', 'var'].indexOf(tab[j].toLowerCase()) !== -1)
 							{
-								// Key
-								if (['name', 'value', 'type', 'default', 'min', 'max', 'var'].indexOf(tab[j].toLowerCase()) !== -1)
-								{
-									objKey = tab[j].toLowerCase();
-									obj[objKey] = '';
-									continue;
-								}
-								if (objKey.length === 0)
-									continue;
-
-								// Value
-								obj[objKey] += (obj[objKey].length > 0 ? ' ' : '') + tab[j];
+								objKey = tab[j].toLowerCase();
+								obj[objKey] = '';
+								continue;
 							}
+							if (objKey.length === 0)
+								continue;
 
-							// Applies the option
-							if (obj.name == 'Skill Level')
-								acengine.instance.setLevel(parseInt(obj.value));
-							if (obj.name == 'Debug')
-								acengine.trace.debug = (obj.value.toLowerCase() == 'true');
+							// Value
+							obj[objKey] += (obj[objKey].length > 0 ? ' ' : '') + tab[j];
 						}
 
-						if (tab[0] == 'isready')
+						// Applies the option
+						if (obj.name == 'Skill Level')
+							acengine.instance.setLevel(parseInt(obj.value));
+						if (obj.name == 'Debug')
+							acengine.trace.debug = (obj.value.toLowerCase() == 'true');
+					}
+
+					else if (tab[0] == 'ucinewgame')
+					{
+						acengine.instance.defaultBoard();
+						acengine.positionOK = true;
+					}
+
+					else if (tab[0] == 'isready')
+					{
+						if (!acengine.positionOK)
+							acengine.send('info string AntiCrux is waiting for a position to analyze');
+						acengine.send('readyok');
+					}
+
+					else if (tab[0] == 'position')
+					{
+						// Loads the initial position
+						if (tab[1] == 'fen')
 						{
-							acengine.state = 'playing';
-							acengine.send('readyok');
+							acengine.positionOK = true;
+							fen = '';
+							for (j=2 ; j<tab.length ; j++)
+							{
+								if (tab[j] == 'moves')
+									break;
+								fen += (fen.length > 0 ? ' ' : '') + tab[j];
+							}
+							if (!acengine.instance.loadFen(fen))
+							{
+								acengine.positionOK = false;
+								acengine.send('info string Invalid FEN ' + fen);
+								continue;
+							}
 						}
-						break;
-
-					// The game has started
-					case 'playing':
-						if (tab[0] == 'ucinewgame')
+						else if (tab[1] == 'startpos')
 						{
 							acengine.instance.defaultBoard();
 							acengine.positionOK = true;
 						}
+						else
+							continue;
 
-						else if (tab[0] == 'isready')
+						// Proceeds with the additional moves
+						b = false;
+						for (j=2 ; j<tab.length ; j++)
 						{
-							if (!acengine.positionOK)
-								acengine.send('info string AntiCrux is waiting for a position to analyze');
-							acengine.send('readyok');
-						}
-
-						else if (tab[0] == 'position')
-						{
-							// Loads the initial position
-							if (tab[1] == 'fen')
+							if (tab[j].length === 0)
+								continue;
+							if (tab[j] == 'moves')
 							{
-								acengine.positionOK = true;
-								fen = '';
-								for (j=2 ; j<tab.length ; j++)
+								b = true;
+								continue;
+							}
+							if (b)
+							{
+								if (acengine.instance.movePiece(tab[j]) == acengine.instance.constants.noMove)
 								{
-									if (tab[j] == 'moves')
-										break;
-									fen += (fen.length > 0 ? ' ' : '') + tab[j];
-								}
-								if (!acengine.instance.loadFen(fen))
-								{
+									acengine.send('info string Invalid move history');
 									acengine.positionOK = false;
-									acengine.send('info string Invalid FEN ' + fen);
-									continue;
+									break;
 								}
-							}
-							else if (tab[1] == 'startpos')
-							{
-								acengine.instance.defaultBoard();
-								acengine.positionOK = true;
-							}
-							else
-								continue;
-
-							// Proceeds with the additional moves
-							b = false;
-							for (j=2 ; j<tab.length ; j++)
-							{
-								if (tab[j].length === 0)
-									continue;
-								if (tab[j] == 'moves')
+								else
 								{
-									b = true;
-									continue;
-								}
-								if (b)
-								{
-									if (acengine.instance.movePiece(tab[j]) == acengine.instance.constants.noMove)
-									{
-										acengine.send('info string Invalid move history');
-										acengine.positionOK = false;
-										break;
-									}
-									else
-									{
-										acengine.instance.updateHalfMoveClock();
-										acengine.instance.switchPlayer();
-									}
+									acengine.instance.updateHalfMoveClock();
+									acengine.instance.switchPlayer();
 								}
 							}
 						}
+					}
 
-						else if (tab[0] == 'go')
+					else if (tab[0] == 'go')
+					{
+						// Verifies the loaded position
+						if (!acengine.positionOK)
 						{
-							// Verifies the loaded position
-							if (!acengine.positionOK)
-							{
-								acengine.send('info string No position to analyze');
-								acengine.send('bestmove 0000');
-								continue;
-							}
-
-							// Mapping of the level
-							if (tab[1] == 'depth')
-								acengine.send("info string 'go depth N' is ignored");
-
-							// Gets the right move to play and extra information
-							move = acengine.instance.getMoveAI();
-							movePonder = acengine.instance.getAssistance(false, true);
-
-							// Transmits the score
-							score = acengine.instance.getShortestMate();
-							if (score === 0)
-								score = 'cp ' + acengine.instance.getScore().value;
-							else
-								score = 'mate ' + score;
-							acengine.send('info depth '+acengine.instance._reachedDepth+' score '+score+' nodes '+acengine.instance._numNodes+' pv '+acengine.instance.moveToUCI(move));
-
-							// Transmits the moves
-							if (movePonder.length === 0)
-								acengine.send('bestmove '+acengine.instance.moveToUCI(move));
-							else
-								acengine.send('bestmove '+acengine.instance.moveToUCI(move)+' ponder '+movePonder);
-
-							// Releases the memory
-							acengine.instance.freeMemory();
+							acengine.send('info string No position to analyze');
+							acengine.send('bestmove 0000');
+							continue;
 						}
-						break;
+
+						// Mapping of the level
+						if (tab[1] == 'depth')
+							acengine.send("info string 'go depth N' is ignored");
+
+						// Gets the right move to play and extra information
+						move = acengine.instance.getMoveAI();
+						movePonder = acengine.instance.getAssistance(false, true);
+
+						// Transmits the score
+						score = acengine.instance.getShortestMate();
+						if (score === 0)
+							score = 'cp ' + acengine.instance.getScore().value;
+						else
+							score = 'mate ' + score;
+						acengine.send('info depth '+acengine.instance._reachedDepth+' score '+score+' nodes '+acengine.instance._numNodes+' pv '+acengine.instance.moveToUCI(move));
+
+						// Transmits the moves
+						if (movePonder.length === 0)
+							acengine.send('bestmove '+acengine.instance.moveToUCI(move));
+						else
+							acengine.send('bestmove '+acengine.instance.moveToUCI(move)+' ponder '+movePonder);
+
+						// Releases the memory
+						acengine.instance.freeMemory();
+					}
 				}
 			}
 		},
