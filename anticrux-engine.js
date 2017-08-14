@@ -43,7 +43,7 @@ var acengine = {
 		process : function(pInput) {
 			var	i, j, b,
 				input, line, tab, obj, objKey,
-				move, fen, score, movePonder;
+				move, fen, score, stats, movePonder;
 
 			//-- Simplifies the input
 			input = pInput.split("\r").join('');
@@ -223,10 +223,11 @@ var acengine = {
 						// Transmits the score
 						score = acengine.instance.getShortestMate();
 						if (score === 0)
-							score = 'cp ' + acengine.instance.getScore().value;
+							score = 'cp ' + (10*acengine.instance.getScore().valuePercent);
 						else
 							score = 'mate ' + score;
-						acengine.send('info depth '+acengine.instance._reachedDepth+' score '+score+' nodes '+acengine.instance._numNodes+' pv '+acengine.instance.moveToUCI(move));
+						stats = acengine.instance.getStatsAI(true);
+						acengine.send('info depth '+stats.depth+' score '+score+' time '+stats.time+' nodes '+stats.nodes+' nps '+stats.nps+' pv '+acengine.instance.moveToUCI(move));
 
 						// Transmits the moves
 						if (movePonder.length === 0)
@@ -280,8 +281,8 @@ else
 acengine.instance = new AntiCrux();
 acengine.instance.options.board.noStatOnForcedMove = true;	//Faster
 acengine.instance.options.board.assistance = true;			//Ponder
-acengine.instance.callbackExploration = function(pMaxDepth, pDepth, pNodes) {
-		acengine.send('info depth '+pMaxDepth+' seldepth '+pDepth+' nodes '+pNodes+' pv 0000');
+acengine.instance.callbackExploration = function(pStats) {
+		acengine.send('info depth '+pStats.depth+' score cp 0 time '+pStats.time+' nodes '+pStats.nodes+' nps '+pStats.nps+' pv 0000');
 	};
 
 //-- Main loop

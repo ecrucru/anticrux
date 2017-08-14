@@ -161,13 +161,12 @@ function acui_refresh_board() {
 }
 
 function acui_refresh_moves() {
-	var val, player = parseInt($('#acui_player').val());
+	var stats, player = parseInt($('#acui_player').val());
 	$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? 0 : ai.getScore().valuePercent).slider('refresh');
 	$('#acui_score').html($('#acui_option_pro').prop('checked') ? 0 : ai.getScore().valuePercent);
-	val = ai.getNumNodes();
-	$('#acui_nodes').html((val === 0 ? '' : 'Nodes : '+val));
-	val = ai.getReachedDepth();
-	$('#acui_depth').html((val === 0 ? '' : 'Depth : '+val));
+	stats = ai.getStatsAI(true);
+	$('#acui_nodes').html((stats.nodes === 0 ? '' : 'Nodes : '+stats.nodes));
+	$('#acui_depth').html((stats.depth === 0 ? '' : 'Depth : '+stats.depth));
 	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistical data with the professional mode.</div>' : ai.getMovesHtml(player));
 }
 

@@ -848,9 +848,10 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
  * @return {Integer} The internal representation of the move (to be used for the log for example), else *AntiCrux.constants.noMove* in case of error.
  */
 AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
-	var	maxDepth, curDepth, limitDepth, bMove;
+	var	maxDepth, curDepth, limitDepth, stats, bMove;
 
 	//-- Checks
+	this._startDate = Date.now();
 	if (pNode === undefined)
 		pNode = this._root_node;
 	if (pPlayer === undefined)
@@ -895,7 +896,11 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 
 		//- Callback
 		if (this.callbackExploration !== null)
-			this.callbackExploration(maxDepth, this._reachedDepth, this._numNodes);
+		{
+			stats = this.getStatsAI(true);
+			stats.maxDepth = maxDepth;
+			this.callbackExploration(stats);
+		}
 
 		//- Reaches the next level if allowed
 		if (	(curDepth >= (limitDepth ? 1 : maxDepth)) ||			//Max depth reached
@@ -1006,6 +1011,35 @@ AntiCrux.prototype.getAssistance = function(pSymbols, pUCI) {
 };
 
 /**
+ * The method returns the time taken by the AI to find a move, the maximal and reached depths,
+ * the number of analyzed nodes, and the speed in nodes per second.
+ *
+ * @method getStatsAI
+ * @param {Boolean} pElapsed Use of the elapsed time instead of the absolute time.
+ * @return {Object} Object with the above mentioned fields.
+ */
+AntiCrux.prototype.getStatsAI = function (pElapsed) {
+	var result = {
+		maxDepth : this.options.ai.maxDepth,
+		depth    : (this.hasOwnProperty('_reachedDepth') ? this._reachedDepth : 0),
+		nodes    : (this.hasOwnProperty('_numNodes') ? this._numNodes : 0),
+		time     : (pElapsed ? Date.now()-this._startDate : this._startDate)
+	};
+	result.nps = (result.time === 0 ? 0 : Math.floor(1000*result.nodes/result.time));
+	return result;
+};
+
+/**
+ * The method resets the internal statistics of the last exploration of the nodes.
+ *
+ * @method resetStats
+ */
+AntiCrux.prototype.resetStats = function() {
+	this._numNodes = 0;
+	this._reachedDepth = 0;
+};
+
+/**
  * The method logs a move to the history log.
  *
  * @method logMove
@@ -1053,16 +1087,6 @@ AntiCrux.prototype.updateHalfMoveClock = function() {
 };
 
 /**
- * The method resets the internal statistics of the last exploration of the nodes.
- *
- * @method resetStats
- */
-AntiCrux.prototype.resetStats = function() {
-	this._numNodes = 0;
-	this._reachedDepth = 0;
-};
-
-/**
  * The method reverts the last move and does the necessary internal updates (history, halfmove clock...).
  *
  * @method undoMove
@@ -1093,26 +1117,6 @@ AntiCrux.prototype.undoMove = function() {
 	}
 	this._history = hist;
 	return true;
-};
-
-/**
- * The method returns the number of explored nodes.
- *
- * @method getNumNodes
- * @return {Integer} Number of explored nodes.
- */
-AntiCrux.prototype.getNumNodes = function() {
-	return (this.hasOwnProperty('_numNodes') ? this._numNodes : 0);
-};
-
-/**
- * The method returns the reached depth after the exploration of the nodes.
- *
- * @method getReachedDepth
- * @return {Integer} Reached depth.
- */
-AntiCrux.prototype.getReachedDepth = function() {
-	return (this.hasOwnProperty('_reachedDepth') ? this._reachedDepth : 0);
 };
 
 /**
@@ -2269,9 +2273,7 @@ AntiCrux.prototype.freeMemory = function() {
  * The callback is invoked during the exploration of the nodes.
  *
  * @method callbackExploration
- * @param {Integer} pMaxDepth Maximal reachable depth.
- * @param {Integer} pDepth Current depth.
- * @param {Integer} pNodes Count of processed nodes.
+ * @param {Object} pStats Statistics about the game.
  */
 AntiCrux.prototype.callbackExploration = null;
 
@@ -2413,6 +2415,7 @@ AntiCrux.prototype._init = function() {
 	//-- General variables
 	this._helper = null;								//You can't refer to that variable without calling first _initHelper()
 	this._buffer_fischer = [];							//You can't refer to that variable without calling first _initFischer()
+	this._startDate = Date.now();
 };
 
 /**

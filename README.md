@@ -460,6 +460,9 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new method AntiCrux.prototype.getShortestMate
 	- Library: super queen
 	- Engine: experimental support for jsUCI
+	- Library: removed method AntiCrux.prototype.getReachedDepth
+	- Library: removed method AntiCrux.prototype.getNumNodes
+	- Library: new method AntiCrux.prototype.getStatsAI
 
 
 ### License
@@ -730,7 +733,7 @@ The moves are identified by 3 notation systems :
 
 Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application, unless you know exactly what you are doing.
 
-- AntiCrux.callbackExploration(pMaxDepth, pDepth, pNodes)
+- AntiCrux.callbackExploration(pStats)
 - AntiCrux.clearBoard()
 - AntiCrux.copyOptions(pObject)
 - AntiCrux.defaultBoard(pFischer)
@@ -747,14 +750,13 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getMoveAI(pPlayer, pNode)
 - AntiCrux.getMovesHtml(pPlayer, pNode)
 - AntiCrux.getNewFischerId()
-- AntiCrux.getNumNodes()
 - AntiCrux.getOppositePlayer(pNode)
 - AntiCrux.getPieceByCoordinate(pCoordinate, pNode)
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbols)
 - AntiCrux.getPlayer(pNode)
-- AntiCrux.getReachedDepth()
 - AntiCrux.getScore(pNode)
 - AntiCrux.getShortestMate(pNode)
+- AntiCrux.getStatsAI(pElapsed)
 - AntiCrux.getWinner(pNode)
 - AntiCrux.hasPendingPromotion(pNode)
 - AntiCrux.hasSetUp()
