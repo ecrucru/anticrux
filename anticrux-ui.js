@@ -71,6 +71,7 @@ function acui_options_load() {
 		$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
 		$('#acui_option_superqueen').prop('checked', ai.options.variant.superQueen);
 		$('#acui_option_pieces').val(ai.options.variant.pieces).change();
+		$('#acui_option_randomizedposition').val(ai.options.variant.randomizedPosition).change();
 	}
 }
 
@@ -751,31 +752,32 @@ $(document).ready(function() {
 		//-- Desktop version
 		{
 			//- AI
-			ai.options.ai.maxDepth				= parseInt($('#acui_option_maxdepth').val());
-			ai.options.ai.maxNodes				= parseInt($('#acui_option_maxnodes').val());
-			ai.options.ai.minimizeLiberty		= $('#acui_option_minimizeliberty').prop('checked');
-			ai.options.ai.maxReply				= parseInt($('#acui_option_maxreply').val());
-			ai.options.ai.randomizedSearch		= $('#acui_option_randomizedsearch').prop('checked');
-			ai.options.ai.pessimisticScenario	= $('#acui_option_pessimisticscenario').prop('checked');
-			ai.options.ai.opportunistic			= $('#acui_option_opportunistic').prop('checked');
-			ai.options.ai.handicap				= parseInt($('#acui_option_handicap').val());
-			ai.options.ai.acceleratedEndGame	= $('#acui_option_acceleratedendgame').prop('checked');
-			ai.options.ai.oyster				= $('#acui_option_oyster').prop('checked');
+			ai.options.ai.maxDepth					= parseInt($('#acui_option_maxdepth').val());
+			ai.options.ai.maxNodes					= parseInt($('#acui_option_maxnodes').val());
+			ai.options.ai.minimizeLiberty			= $('#acui_option_minimizeliberty').prop('checked');
+			ai.options.ai.maxReply					= parseInt($('#acui_option_maxreply').val());
+			ai.options.ai.randomizedSearch			= $('#acui_option_randomizedsearch').prop('checked');
+			ai.options.ai.pessimisticScenario		= $('#acui_option_pessimisticscenario').prop('checked');
+			ai.options.ai.opportunistic				= $('#acui_option_opportunistic').prop('checked');
+			ai.options.ai.handicap					= parseInt($('#acui_option_handicap').val());
+			ai.options.ai.acceleratedEndGame		= $('#acui_option_acceleratedendgame').prop('checked');
+			ai.options.ai.oyster					= $('#acui_option_oyster').prop('checked');
 
 			//- Board
-			ai.options.board.fischer			= parseInt($('#acui_option_fischer').val());
-			ai.options.board.assistance			= $('#acui_option_assistance').prop('checked');
-			ai.options.board.symbols			= $('#acui_option_symbol').prop('checked');
-			ai.options.board.coordinates		= $('#acui_option_coordinates').prop('checked');
-			ai.options.board.noStatOnForcedMove	= $('#acui_option_nostatonforcedmove').prop('checked');
-			ai.options.board.noStatOnOwnMove	= $('#acui_option_nostatonownmove').prop('checked');
-			ai.options.board.debugCellId		= $('#acui_option_debugcellid').prop('checked');
+			ai.options.board.fischer				= parseInt($('#acui_option_fischer').val());
+			ai.options.board.assistance				= $('#acui_option_assistance').prop('checked');
+			ai.options.board.symbols				= $('#acui_option_symbol').prop('checked');
+			ai.options.board.coordinates			= $('#acui_option_coordinates').prop('checked');
+			ai.options.board.noStatOnForcedMove		= $('#acui_option_nostatonforcedmove').prop('checked');
+			ai.options.board.noStatOnOwnMove		= $('#acui_option_nostatonownmove').prop('checked');
+			ai.options.board.debugCellId			= $('#acui_option_debugcellid').prop('checked');
 
 			//- Variant
-			ai.options.variant.enPassant		= $('#acui_option_enpassant').prop('checked');
-			ai.options.variant.promoteQueen		= $('#acui_option_promotequeen').prop('checked');
-			ai.options.variant.superQueen		= $('#acui_option_superqueen').prop('checked');
-			ai.options.variant.pieces			= parseInt($('#acui_option_pieces').val());
+			ai.options.variant.enPassant			= $('#acui_option_enpassant').prop('checked');
+			ai.options.variant.promoteQueen			= $('#acui_option_promotequeen').prop('checked');
+			ai.options.variant.superQueen			= $('#acui_option_superqueen').prop('checked');
+			ai.options.variant.pieces				= parseInt($('#acui_option_pieces').val());
+			ai.options.variant.randomizedPosition	= parseInt($('#acui_option_randomizedposition').val());
 		}
 		return true;
 	});
@@ -804,6 +806,13 @@ $(document).ready(function() {
 			$('#acui_sect_level_notice').show();
 		else
 			$('#acui_sect_level_notice').hide();
+	});
+
+	$('#acui_option_randomizedposition').change(function() {
+		if ($('#acui_option_randomizedposition').val() > 0)
+			$('#acui_fischer').addClass('ui-disabled');
+		else
+			$('#acui_fischer').removeClass('ui-disabled');
 	});
 
 	//-- Default elements

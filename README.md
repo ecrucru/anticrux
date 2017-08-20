@@ -463,6 +463,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: removed method AntiCrux.prototype.getReachedDepth
 	- Library: removed method AntiCrux.prototype.getNumNodes
 	- Library: new method AntiCrux.prototype.getStatsAI
+	- Library: randomized start positions
 
 
 ### License
@@ -662,13 +663,23 @@ The queen can move also like the knight. It doesn't affect the weight used for t
 
 This human-related option renders the board differently. It may be used to reduce the readability of the game but the players must still follow the basic rules. The possible modes are :
 
-- 0 : normal
-- 1 : only white pieces
-- 2 : only black pieces
-- 3 : blind
-- 4 : random
+- 0 : Normal
+- 1 : Only white pieces
+- 2 : Only black pieces
+- 3 : Blind
+- 4 : Random
 
 The export to FEN and PGN is not impacted.
+
+- **AntiCrux.options.variant.randomizedPosition**
+
+This option randomizes the start positions of the pieces across the board. On contrary to AntiChess960, the pieces are really mixed up and your attack must be carefully planned in advance to take advantage of the obvious disorder.
+
+- 0 : Normal / AntiChess960
+- 1 : Main pieces
+- 2 : One's side
+- 3 : Half board
+- 4 : Full board
 
 
 #### Levels

@@ -131,7 +131,7 @@
 						<div data-role="controlgroup" data-type="horizontal">
 							<a id="acui_clear" href="#" data-role="button">Clear</a>
 							<a id="acui_default" href="#" data-role="button">New classic game</a>
-							<a href="#acui_fischer_popup" data-role="button" data-rel="popup" data-transition="slideup">New game 960</a>
+							<a id="acui_fischer" href="#acui_fischer_popup" data-role="button" data-rel="popup" data-transition="slideup">New game 960</a>
 							<a id="acui_rematch" href="#" data-role="button">Rematch</a>
 						</div>
 
@@ -209,6 +209,15 @@
 									<option value="2">Black pieces</option>
 									<option value="3">Blind</option>
 									<option value="4">Random</option>
+								</select>
+							</p>
+							<p><label for="acui_option_randomizedposition">Randomized position :</label>
+								<select class="AntiCrux-ui-option" id="acui_option_randomizedposition">
+									<option value="0">Normal / AntiChess960</option>
+									<option value="1">Main pieces</option>
+									<option value="2">One's side</option>
+									<option value="3">Half board</option>
+									<option value="4">Full board</option>
 								</select>
 							</p>
 						</div>

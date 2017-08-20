@@ -212,7 +212,7 @@ AntiCrux.prototype.getNewFischerId = function() {
  * @return {Boolean} *true* if successful, else *false*.
  */
 AntiCrux.prototype.defaultBoard = function(pFischer) {
-	var i, z, p, krn, pieces;
+	var i, imin, imax, x, y, z, p, krn, pieces;
 
 	//-- Self
 	if (pFischer === undefined)
@@ -272,6 +272,35 @@ AntiCrux.prototype.defaultBoard = function(pFischer) {
 		this._root_node.board[8*6+i] = this.constants.player.white | this.constants.piece.pawn;
 		this._root_node.board[8*7+i] = this.constants.player.white | pieces[i];
 	}
+
+	//-- Randomizes the position (AntiChess960 not applicable)
+	if (this.options.variant.randomizedPosition !== 0)
+	{
+		this.fischer = null;
+		for (y=0 ; y<8 ; y++)
+		{
+			for (x=0 ; x<8 ; x++)
+			{
+				i = 8*y + x;
+
+				//- Finds the authorized boundaries
+				imin = (y<=1 ? [-1,0, 0, 0, 0] : [-1,56,48,32, 0])[this.options.variant.randomizedPosition];
+				imax = (y<=1 ? [-1,7,15,31,63] : [-1,63,63,63,63])[this.options.variant.randomizedPosition];
+
+				//- A piece belongs to the scope of the shuffle
+				if ((i < imin) || (i > imax))
+					continue;
+
+				//- Exchanges the pieces
+				p = Math.round(Math.random() * (imax - imin)) + imin;
+				z = this._root_node.board[p];
+				this._root_node.board[p] = this._root_node.board[i];
+				this._root_node.board[i] = z;
+			}
+		}
+	}
+
+	//-- Saves the initial position
 	this._history_fen0 = this.toFen();
 	return true;
 };
@@ -2293,6 +2322,7 @@ AntiCrux.prototype._init = function() {
 		classicalFischer		: 519,
 		noMove					: 0,
 		infinite				: 4294967295,		//11111111111111111111111111111111b
+		//- Complex constants
 		piece : {
 			none				: 0,				//Must be zero
 			pawn				: 1,
@@ -2302,7 +2332,6 @@ AntiCrux.prototype._init = function() {
 			queen				: 5,
 			king				: 6					//Must be the highest ID
 		},
-		//- Complex constants
 		player : {
 			none				: 8,				//                           01000b
 			black				: 16,				//                           10000b
@@ -2385,7 +2414,8 @@ AntiCrux.prototype._init = function() {
 			enPassant : true,							//TRUE activates the move "en passant" (some AI doesn't manage IT)
 			promoteQueen : false,						//TRUE only promotes pawns as queen
 			superQueen : false,							//TRUE allows the queen for horse riding
-			pieces : 0									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
+			pieces : 0,									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
+			randomizedPosition : 0						//Variant for the position: 0=normal, 1=main pieces, 2=one's side, 3=half board, 4=full board
 		},
 		board : {
 			fischer : this.getNewFischerId(),			//Default layout (519=classical)
