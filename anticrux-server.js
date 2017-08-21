@@ -1022,7 +1022,7 @@ server.acsrv_startGame = function(pSocket) {
 	//-- Chooses the side and White always starts
 	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.none)
 	{
-		b = (Math.floor(100*Math.random())%2===0);
+		b = (Math.round(Math.random() * 99) % 2 === 0);
 		pSocket.acsrv_aicolor = (b ? pSocket.acsrv_ai.constants.player.white : pSocket.acsrv_ai.constants.player.black);
 		pSocket.acsrv_ai.options.board.rotated = b;
 	}

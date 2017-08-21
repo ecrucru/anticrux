@@ -136,7 +136,7 @@ function acelo_welcome() {
 function acelo_newjob() {
 	var	n1, n2,
 		lf_random = function(pMin, pMax) {
-						return (Math.floor(32768*Math.random()) % (pMax - pMin + 1)) + pMin;
+						return (Math.round(Math.random() * 32767) % (pMax - pMin + 1)) + pMin;
 					};
 
 	//-- Trace

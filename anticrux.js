@@ -199,7 +199,7 @@ AntiCrux.prototype.clearBoard = function() {
  * @return {Integer} A number between 1 and 960.
  */
 AntiCrux.prototype.getNewFischerId = function() {
-	return Math.floor(Math.random()*960)+1;
+	return Math.round(Math.random() * 959) + 1;
 };
 
 /**
@@ -1865,7 +1865,7 @@ AntiCrux.prototype.toHtml = function(pNode) {
 						player = this.constants.player.none;
 					else
 					{
-						if (Math.floor(100*Math.random()) % 2 === 0)
+						if (Math.round(Math.random() * 99) % 2 === 0)
 							player = this.constants.player.black;
 						else
 							player = this.constants.player.white;
@@ -2031,7 +2031,7 @@ AntiCrux.prototype.toText = function(pNode) {
 						player = this.constants.player.none;
 					else
 					{
-						if (Math.floor(100*Math.random()) % 2 === 0)
+						if (Math.round(Math.random() * 99) % 2 === 0)
 							player = this.constants.player.black;
 						else
 							player = this.constants.player.white;
@@ -3048,7 +3048,7 @@ AntiCrux.prototype._ai_nodeRecurseTree = function(pPlayer, pDepth, pNode) {
 		//- Removes random valid moves
 		for (i=min_moves ; i>0 ; i--)
 		{
-			p = Math.floor(Math.random() * pNode.moves.length);
+			p = Math.round(Math.random() * (pNode.moves.length-1));
 			pNode.moves.splice(p, 1);
 			if (pNode.hasOwnProperty('nodes'))
 				pNode.nodes.splice(p, 1);
