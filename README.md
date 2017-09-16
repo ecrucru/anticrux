@@ -265,42 +265,19 @@ Restart WinBoard. On the main dialog "WinBoard Startup", select AntiCrux from th
 
 During the game, if you do an incorrect move under certain conditions, the engine will probably leave the game because WinBoard doesn't send a correct position to analyze.
 
-To activate the logo in WinBoard, copy the picture located at "images/anticrux.bmp" to the same folder as the file "anticrux-engine.js", then rename the copied picture as "logo.bmp".
+To activate the logo in WinBoard, copy the picture located at `images/anticrux.bmp` to the same folder as the file `anticrux-engine.js`, then rename the copied picture as `logo.bmp`.
 
 #### Procedure for pyChess
 
-Open the file "%USERPROFILE%\\.config\\pychess\\engines.json" with a text editor.
+The following procedure applies from pyChess 0.99 released on September 2017.
 
-Append the following content (paths to be adapted) before the last "]" :
+Run pyChess. In the menu "Edit > Engines", add a new engine by selecting `anticrux-engine.js`.
 
-```json
-, {
-  "args": [
-    "--expose-gc",
-    "C:\\fullpath\\anticrux-engine.js"
-  ],
-  "command": "C:\\fullpath\\nodejs\\node.exe",
-  "country": "fr",
-  "name": "AntiCrux",
-  "protocol": "uci",
-  "variants": [
-    "suicide"
-  ],
-  "workingDirectory": "C:\\fullpath\\anticrux\\"
-}
-```
+Then set `--expose-gc` for the parameters of the environment.
 
-Run pyChess : it will update this new entry with other custom fields provided by the latest release of AntiCrux.
+The working directory is the one where the engine is stored.
 
-You can now play from the menu "Game > New game > Suicide chess". If the engine doesn't appear in the drop-down list, then you can try to restore the following section in the configuration file :
-
-```json
-"variants": [
-    "suicide"
-  ],
-```
-
-This procedure is expected to change with the upcoming release of pyChess 0.12.5.
+To start a new game, you should always use the menu "File > New game" because the home screen is unable (at the current time) to start a variant game. From the dialog of the new game, you must select the variant called "Suicide" and then select the engine.
 
 
 ## AntiCrux hELO world
