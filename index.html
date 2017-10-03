@@ -96,10 +96,11 @@
 
 								<div id="acui_tab_board_evaluation" class="ui-body-d ui-content">
 									<div id="acui_sect_eval">
-										<span id="acui_lastmove"></span>
-										<br/><span id="acui_assistance"></span>
-										<br/><span id="acui_nodes"></span>
-										<br/><span id="acui_depth"></span>
+										<span class="acui_block" id="acui_lastmove"></span>
+										<span class="acui_block" id="acui_assistance"></span>
+										<span class="acui_block" id="acui_depth"></span>
+										<span class="acui_block" id="acui_nodes"></span>
+										<span class="acui_block" id="acui_nps"></span>
 									</div>
 									<div id="acui_moves"></div>
 								</div>
@@ -178,10 +179,9 @@
 							<p><label for="acui_option_minimizeliberty">Minimize the liberty</label> <input class="AntiCrux-ui-option" id="acui_option_minimizeliberty" type="checkbox" /></p>
 							<p><label for="acui_option_maxreply">Maximal number of replies :</label> <input class="AntiCrux-ui-option" id="acui_option_maxreply" type="range" value="1" min="1" max="10" /></p>
 							<p><label for="acui_option_randomizedsearch">Randomized search</label> <input class="AntiCrux-ui-option" id="acui_option_randomizedsearch" type="checkbox" /></p>
-							<p><label for="acui_option_pessimisticscenario">Pessimistic scenario</label> <input class="AntiCrux-ui-option" id="acui_option_pessimisticscenario" type="checkbox" /></p>
+							<p><label for="acui_option_worstcase">Worst case</label> <input class="AntiCrux-ui-option" id="acui_option_worstcase" type="checkbox" /></p>
 							<p><label for="acui_option_opportunistic">Opportunistic</label> <input class="AntiCrux-ui-option" id="acui_option_opportunistic" type="checkbox" /></p>
 							<p><label for="acui_option_handicap">Handicap :</label> <input class="AntiCrux-ui-option" id="acui_option_handicap" type="range" value="0" min="0" max="100" /></p>
-							<p><label for="acui_option_acceleratedendgame">Accelerated end of game</label> <input class="AntiCrux-ui-option" id="acui_option_acceleratedendgame" type="checkbox" /></p>
 							<p><label for="acui_option_oyster">Oyster</label> <input class="AntiCrux-ui-option" id="acui_option_oyster" type="checkbox" /></p>
 						</div>
 
@@ -196,7 +196,7 @@
 							<p><label for="acui_option_coordinates">Coordinates</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_coordinates" type="checkbox" /></p>
 							<p><label for="acui_option_nostatonforcedmove">No statistic on forced moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonforcedmove" type="checkbox" /></p>
 							<p><label for="acui_option_nostatonownmove">No statistic on own moves</label> <input class="AntiCrux-ui-option" id="acui_option_nostatonownmove" type="checkbox" /></p>
-							<p><label for="acui_option_debugcellid">Internal identifier</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_debugcellid" type="checkbox" /></p>
+							<p><label for="acui_option_debug">Debug (developers only)</label> <input class="AntiCrux-ui-option AntiCrux-ui-option-refresh" id="acui_option_debug" type="checkbox" /></p>
 						</div>
 
 						<div class="AntiCrux-vSizer AntiCrux-leftMargin">

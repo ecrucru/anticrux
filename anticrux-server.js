@@ -779,7 +779,7 @@ server.acsrv_process = function(pSocket) {
 						if (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_aicolor)
 							throw 'Internal error';
 
-						node = pSocket.acsrv_ai._ai_nodeCopy(pSocket.acsrv_ai.getMainNode(), false);
+						node = pSocket.acsrv_ai._ai_copy(pSocket.acsrv_ai.getMainNode(), false);
 						move = pSocket.acsrv_ai.movePiece(line, true, pSocket.acsrv_ai.getPlayer());
 						if (move == pSocket.acsrv_ai.constants.noMove)
 						{
@@ -956,9 +956,9 @@ server.acsrv_games = function(pSocket) {
 		else
 			buffer += '++++ ' + server.acsrv_fixedString(socket.acsrv_login, 12) + ' ' + ai.options.ai.elo + ' AntiCrux    ';
 		buffer +=	' [pSu 180 180] 180:00 - 180:00 (' +
-					server.acsrv_fixedString(ai._ai_nodeCountPiece(ai.constants.player.white).toString(), 2) +
+					server.acsrv_fixedString(ai._ai_countPiece(ai.constants.player.white).toString(), 2) +
 					'-' +
-					server.acsrv_fixedString(ai._ai_nodeCountPiece(ai.constants.player.black).toString(), 2) +
+					server.acsrv_fixedString(ai._ai_countPiece(ai.constants.player.black).toString(), 2) +
 					') ' +
 					(ai.getPlayer() == ai.constants.player.white ? 'W' : 'B') + ':' +
 					server.acsrv_fixedString(Math.ceil(ai.getHistory().length/2).toString(), 2);
@@ -1149,7 +1149,7 @@ server.acsrv_board = function(pSocket) {
 			buffer += 'B';
 
 		//- En passant
-		if (!node.hasOwnProperty('enpassant'))
+		if (typeof node.enpassant === 'undefined')
 			buffer += ' -1';
 		else
 			buffer += ' ' + (node.enpassant%10);
@@ -1180,9 +1180,9 @@ server.acsrv_board = function(pSocket) {
 
 		//- Strength
 		buffer +=	' ' +
-					pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.white, node) +
+					pSocket.acsrv_ai._ai_countPiece(pSocket.acsrv_ai.constants.player.white, node) +
 					' ' +
-					pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.black, node);
+					pSocket.acsrv_ai._ai_countPiece(pSocket.acsrv_ai.constants.player.black, node);
 
 		//- Remaining time
 		buffer += ' 180 180';
@@ -1276,9 +1276,9 @@ server.acsrv_board = function(pSocket) {
 			if (y == (rotated?3:4))
 				buffer += '     White Clock : 3:00:00';
 			if (y == (rotated?2:5))
-				buffer += '     Black Strength : ' + pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.black, node);
+				buffer += '     Black Strength : ' + pSocket.acsrv_ai._ai_countPiece(pSocket.acsrv_ai.constants.player.black, node);
 			if (y == (rotated?1:6))
-				buffer += '     White Strength : ' + pSocket.acsrv_ai._ai_nodeCountPiece(pSocket.acsrv_ai.constants.player.white, node);
+				buffer += '     White Strength : ' + pSocket.acsrv_ai._ai_countPiece(pSocket.acsrv_ai.constants.player.white, node);
 
 			//- Right border
 			buffer += "\r\n";
@@ -1334,8 +1334,8 @@ server.acsrv_endGame = function(pSocket) {
 				server.acsrv_stats.win++;
 			else
 				server.acsrv_stats.loss++;
-			stalemate =	(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.player.white, null) !== 0) &&
-						(pSocket.acsrv_ai._ai_nodeInventory(pSocket.acsrv_ai.constants.player.black, null) !== 0);
+			stalemate =	(pSocket.acsrv_ai._ai_inventory(pSocket.acsrv_ai.constants.player.white, null) !== 0) &&
+						(pSocket.acsrv_ai._ai_inventory(pSocket.acsrv_ai.constants.player.black, null) !== 0);
 
 			//- Output
 			pSocket.write(

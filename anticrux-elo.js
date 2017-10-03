@@ -286,7 +286,7 @@ function acelo_parseSfmv(pText) {
 	if (list[0] == 'bestmove')
 	{
 		if (job.debugLevel >= 1)
-			node = job.referee._ai_nodeCopy(job.referee.getMainNode(), false);
+			node = job.referee._ai_copy(job.referee.getMainNode(), false);
 		move = job.referee.movePiece(list[1], true);
 		if (move == job.referee.constants.noMove)
 		{

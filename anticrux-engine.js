@@ -223,12 +223,12 @@ var acengine = {
 						movePonder = acengine.instance.getAssistance(false, true);
 
 						// Transmits the score
-						score = acengine.instance.getShortestMate();
-						if (score === 0)
-							score = 'cp ' + (10*acengine.instance.getScore().valuePercent);
+						score = acengine.instance.getScore();
+						if (score.mate)
+							score = 'mate ' + score.mateMoves;
 						else
-							score = 'mate ' + score;
-						stats = acengine.instance.getStatsAI(true);
+							score = 'cp ' + Math.round(100 * score.value / acengine.instance.options.ai.valuation[acengine.instance.constants.piece.pawn]);
+						stats = acengine.instance.getStatsAI();
 						acengine.send('info depth '+stats.depth+' score '+score+' time '+stats.time+' nodes '+stats.nodes+' nps '+stats.nps+' pv '+acengine.instance.moveToUCI(move));
 
 						// Transmits the moves

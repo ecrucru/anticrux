@@ -434,13 +434,16 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- ELO: projection of the rating ELO
 	- ELO: save as CSV
 	- Library: new method AntiCrux.prototype.getDateElements
-	- Library: new method AntiCrux.prototype.getShortestMate
 	- Library: super queen
 	- Engine: experimental support for jsUCI
 	- Library: removed method AntiCrux.prototype.getReachedDepth
 	- Library: removed method AntiCrux.prototype.getNumNodes
 	- Library: new method AntiCrux.prototype.getStatsAI
 	- Library: randomized start positions
+	- Library: removed option AntiCrux.options.ai.acceleratedEndGame
+	- Library: the nodes are pure objects with no prototype
+	- Library: renamed option AntiCrux.options.board.debugCellId to AntiCrux.options.board.debug
+	- Library: renamed option AntiCrux.options.ai.pessimisticScenario to AntiCrux.options.ai.worstCase
 
 
 ### License
@@ -532,31 +535,21 @@ This option is relevant when AntiCrux.options.ai.minimizeLiberty is activated. T
 
 When you scan the nodes at the deepest level, the processing order is always the same. To bring some randomness in the game, the randomization of the moves at each level is a good option.
 
-- **AntiCrux.options.ai.pessimisticScenario**
+- **AntiCrux.options.ai.worstCase**
 
-When it is not up to you to play, you can expect your opponent to play his best move. Assuming that you can't rely on the mistake of your opponent to reach a good position, the algorithm consider a very defensive approach by being pessimistic.
-
-If your opponent is weak, you can turn off this option and you will be able to make higher damages if the chance is on your side.
-
-Concluding the game with this option is particularly hard. That's why the option is silently turned off in some cases.
+When it is not up to you to play, you can expect your opponent to play his best move. This makes the situation very pessimistic for you. If your opponent is weak, you can turn off this option and you will be able to make higher damages if the chance is on your side.
 
 - **AntiCrux.options.ai.opportunistic**
 
-Sometimes a winning position is hidden by counter moves of the opponent. However, it will not necessary play one of these moves. So when we have equivalent positions, the option will favor the ones leading to a potential win.
+This option weakens the AI because it relies on the systematic mistake of the opponent to take an advantage if there is an opportunity to win or lose.
 
-The option reduces the randomness of the game.
+It is often used in coordination with the option AntiCrux.options.ai.worstCase.
 
 - **AntiCrux.options.ai.handicap**
 
 This option weakens the algorithm by removing randomly some possible moves above a minimal number of moves.
 
 The number is expressed as a percentage between 0 and 100.
-
-- **AntiCrux.options.ai.acceleratedEndGame**
-
-When the artificial intelligence is sure to win, the move is chosen to put an end to the game as fast as possible. Else the game may never finish. Indeed, this option is recommended all the time.
-
-It is up to the human player to declare a draw by stopping the game.
 
 - **AntiCrux.options.ai.oyster**
 
@@ -617,7 +610,7 @@ The option allows the discovery of the expected next moves. Because of the compl
 
 An higher depth for the assistant implies the anticipation of more moves and an higher reliability of the suggested moves at low depth.
 
-- **AntiCrux.options.board.debugCellId**
+- **AntiCrux.options.board.debug**
 
 This option is used for debugging purposes in the process of developing AntiCrux.
 
@@ -672,10 +665,9 @@ Please note that the web-interface offers all the options individually and fewer
 | minimizeLiberty     | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
 | maxReply            | 1   | 99  | 3   | 3   | 2   | 3   | 2   | 2   | 2   | 2   | 2   | 2    | 2    | 2    | 1    | 1    | 1    | 1    | 1  | 1    |
 | randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | -    | -    | -    | -    | -  | -    |
-| pessimisticScenario | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
+| worstCase           | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
 | opportunistic       | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | -    | -    | -    | -    | -    | -    | -  | -    |
 | handicap            | 0   | 80  | 60  | 40  | 20  | 0   | 0   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  | 0    |
-| acceleratedEndGame  | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
 | oyster              | X   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | -    | -    | -    | -    | -    | -    | -  | -    |
 
 
@@ -743,8 +735,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbols)
 - AntiCrux.getPlayer(pNode)
 - AntiCrux.getScore(pNode)
-- AntiCrux.getShortestMate(pNode)
-- AntiCrux.getStatsAI(pElapsed)
+- AntiCrux.getStatsAI()
 - AntiCrux.getWinner(pNode)
 - AntiCrux.hasPendingPromotion(pNode)
 - AntiCrux.hasSetUp()

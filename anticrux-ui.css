@@ -40,6 +40,10 @@
 	line-height:30px;
 }
 
+.acui_block {
+	display:block;
+}
+
 .acui_img {
 	vertical-align:middle;
 }
