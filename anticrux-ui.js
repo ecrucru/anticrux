@@ -61,7 +61,7 @@ function acui_options_load() {
 		//- Board
 		$('#acui_option_fischer').val(ai.options.board.fischer);
 		$('#acui_option_assistance').prop('checked', ai.options.board.assistance);
-		$('#acui_option_symbol').prop('checked', ai.options.board.symbols);
+		$('#acui_option_symbols').prop('checked', ai.options.board.symbols);
 		$('#acui_option_coordinates').prop('checked', ai.options.board.coordinates);
 		$('#acui_option_nostatonforcedmove').prop('checked', ai.options.board.noStatOnForcedMove);
 		$('#acui_option_nostatonownmove').prop('checked', ai.options.board.noStatOnOwnMove);
@@ -450,7 +450,7 @@ $(document).ready(function() {
 		//-- Moves
 		buffer = ai.moveToString(move);
 		$('#acui_lastmove').html(buffer.length>0 ? 'Last move : '+buffer : '');
-		buffer = ($('#acui_option_pro').prop('checked') || !ai.options.board.assistance ? '' : ai.getAssistance(true, false));
+		buffer = ($('#acui_option_pro').prop('checked') || !ai.options.board.assistance ? '' : ai.getAssistance(null, false));
 		$('#acui_assistance').html(buffer.length>0 ? 'Assistance : '+buffer : '');
 		acui_refresh_moves();
 		if (ai.movePiece(move, true, player) != ai.constants.noMove)
@@ -816,7 +816,7 @@ $(document).ready(function() {
 			//- Board
 			ai.options.board.fischer				= parseInt($('#acui_option_fischer').val());
 			ai.options.board.assistance				= $('#acui_option_assistance').prop('checked');
-			ai.options.board.symbols				= $('#acui_option_symbol').prop('checked');
+			ai.options.board.symbols				= $('#acui_option_symbols').prop('checked');
 			ai.options.board.coordinates			= $('#acui_option_coordinates').prop('checked');
 			ai.options.board.noStatOnForcedMove		= $('#acui_option_nostatonforcedmove').prop('checked');
 			ai.options.board.noStatOnOwnMove		= $('#acui_option_nostatonownmove').prop('checked');

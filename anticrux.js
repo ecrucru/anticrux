@@ -1021,12 +1021,12 @@ AntiCrux.prototype.predictMoves = function(pNode) {
  * The method returns the expected deep sequence of moves.
  *
  * @method getAssistance
- * @param {Boolean} pSymbols Use Unicode symbols. The option is ignored if pUCI is equal to *true*.
+ * @param {Boolean} pSymbols Use the Unicode symbols. The option is ignored if you provide *null* or if pUCI is equal to *true*.
  * @param {Boolean} pUCI UCI notation.
  * @return {String} String of the moves.
  */
 AntiCrux.prototype.getAssistance = function(pSymbols, pUCI) {
-	var pNode;
+	var pNode, currentSymbols;
 
 	//-- Checks the options
 	if (!this.options.board.assistance)
@@ -1040,12 +1040,15 @@ AntiCrux.prototype.getAssistance = function(pSymbols, pUCI) {
 	//-- Initializes the basic position
 	this._buffer = '';
 	this._initHelper();
-	this.options.board.symbols = pSymbols;
 	if (!this._helper.loadFen(this.toFen()))
 		return '';
 
 	//-- Gets the calculated sequence of moves
+	currentSymbols = this.options.board.symbols;
+	if (pSymbols !== null)
+		this.options.board.symbols = pSymbols;
 	this._ai_assistance(pNode, pUCI, 1);
+	this.options.board.symbols = currentSymbols;
 	return this._buffer;
 };
 
