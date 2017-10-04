@@ -223,7 +223,7 @@ function acui_refresh_history(pScroll) {
 
 function acui_refresh_stats() {
 	//Method to be called after the move is done because the score is partially evaluated with the static view
-	var	score, stats, objs, obj, i;
+	var score, stats, objs, obj, i;
 
 	//-- Sets the texts
 	score = ai.getScore();
@@ -320,6 +320,21 @@ function acui_showWinner() {
 	acui_popup('End of the game. '+winner+' has won !');
 }
 
+function acui_setMultiLines(pState) {
+	var obj, val;
+
+	//-- Gets the editor
+	obj = $('#acui_input');
+	if (obj.length === 0)
+		return;
+
+	//-- Changes the options of the text area
+	if (!pState)
+		obj.val(obj.val().split("\r").join('').split("\n")[0]);
+	obj.rows = (pState ? 10 : 1);
+	obj.height(obj.rows * 20) / (ui_cordova ? window.devicePixelRatio : 1);
+}
+
 function acui_popup(pMessage) {
 	setTimeout(function() {
 					$('#acui_popup_text').html(pMessage.split("\n").join('<br/>'));
@@ -396,7 +411,7 @@ $(document).ready(function() {
 	ai.setLevel(defaultLevel);
 
 	//-- Events (General)
-	$("input[type='text']").on('click', function () {
+	$('textarea').on('click', function () {
 		$(this).select();
 		return true;
 	});
@@ -660,6 +675,7 @@ $(document).ready(function() {
 			if (ai.hasSetUp())
 			{
 				ui_move = '';
+				acui_setMultiLines(false);
 				$('#acui_input').val(ai.getInitialPosition());
 				$('#acui_fen_load').click();
 				acui_autostart();
@@ -671,6 +687,7 @@ $(document).ready(function() {
 
 	$('#acui_fen_load').click(function() {
 		var player;
+		acui_setMultiLines(false);
 		if (!ai.loadFen($('#acui_input').val()))
 		{
 			acui_popup('The FEN cannot be loaded because it has a wrong format.');
@@ -696,12 +713,14 @@ $(document).ready(function() {
 	});
 
 	$('#acui_fen_gen').click(function() {
+		acui_setMultiLines(false);
 		$('#acui_input').val(ai.toFen()).focus().click();
 		return true;
 	});
 
 	$('#acui_lichess_load').click(function() {
 		var player;
+		acui_setMultiLines(false);
 		if (!ai.loadLichess($('#acui_input').val()))
 		{
 			acui_popup('The game cannot be retrieved from Lichess.org. Please never abuse.');
@@ -731,6 +750,7 @@ $(document).ready(function() {
 	});
 
 	$('#acui_text_gen').click(function() {
+		acui_setMultiLines(true);
 		$('#acui_input').val(ai.toText()).focus().click();
 		return true;
 	});
@@ -846,16 +866,22 @@ $(document).ready(function() {
 	});
 
 	//-- Default elements
+	// Board
 	$('#acui_js, #acui_sect_rewind, #acui_sect_level_notice').hide();
 	if ((ui_mobile && acui_isphone()) || (!ui_mobile && !acui_isphone()))
 		$('#acui_switch_ui').hide();
 	if (ui_cordova)
 		$('#acui_pgn').hide();
+	// Actions
+	acui_setMultiLines(false);
+	// Options
 	if (ui_mobile)
 		acui_options_load();
 	else
 		$('#acui_option_predef').val(5).change();
+	// About
 	$('#acui_version').html(ai.options.ai.version);
+	// General
 	$(document).on('selectstart', function() {
 		return ai.options.board.debug;	//By default, no text selection to avoid moving the pieces on the screen
 	});

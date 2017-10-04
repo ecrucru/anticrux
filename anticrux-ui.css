@@ -40,6 +40,11 @@
 	line-height:30px;
 }
 
+#acui_input {
+	font-family:monospace;
+	resize:none;
+}
+
 .acui_block {
 	display:block;
 }
