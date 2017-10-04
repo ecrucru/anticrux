@@ -444,6 +444,8 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: the nodes are pure objects with no prototype
 	- Library: renamed option AntiCrux.options.board.debugCellId to AntiCrux.options.board.debug
 	- Library: renamed option AntiCrux.options.ai.pessimisticScenario to AntiCrux.options.ai.worstCase
+	- Library: new option AntiCrux.options.ai.distance
+	- Library: new tactical strategy based on the distance between the pieces
 
 
 ### License
@@ -544,6 +546,12 @@ When it is not up to you to play, you can expect your opponent to play his best 
 This option weakens the AI because it relies on the systematic mistake of the opponent to take an advantage if there is an opportunity to win or lose.
 
 It is often used in coordination with the option AntiCrux.options.ai.worstCase.
+
+- **AntiCrux.options.ai.distance**
+
+This option favors the proximity between the pieces independently from their color. It ensures that the pieces meet each other to get trapped. Consequently, it reduces the diversity of the moves and it increases the ability of the AI to win.
+
+The first analysis takes the smallest average distance between every pieces. The second analysis keeps the shortest move in order that the piece doesn't travel too much all over the board. The third analysis is a random pick (if needed).
 
 - **AntiCrux.options.ai.handicap**
 
@@ -658,8 +666,8 @@ The options above are combined into predefined levels in a range from 1 to 20. T
 
 Please note that the web-interface offers all the options individually and fewer predefined levels.
 
-| Level               | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  | 11  | 12   | 13   | 14   | 15   | 16   | 17   | 18   | 19 | 20 |
-|---------------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:--:|:--:|
+| Level               | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  | 11  | 12   | 13   | 14   | 15   | 16   | 17   | 18   | 19 | 20   |
+|---------------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:--:|:----:|
 | maxDepth            | 3   | 4   | 6   | 8   | 3   | 5   | 6   | 7   | 8   | 9   | 10  | 15   | 20   | 30   | 30   | 30   | 40   | 40   | 45 | 50   |
 | maxNodes            | 100 | 50k | 40k | 30k | 30k | 40k | 50k | 60k | 70k | 80k | 90k | 100k | 200k | 300k | 400k | 500k | 600k | 750k | 1M | 1,5M |
 | minimizeLiberty     | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
@@ -667,6 +675,7 @@ Please note that the web-interface offers all the options individually and fewer
 | randomizedSearch    | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | -    | -    | -    | -    | -  | -    |
 | worstCase           | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X  | X    |
 | opportunistic       | -   | -   | -   | -   | -   | X   | X   | X   | X   | X   | X   | X    | -    | -    | -    | -    | -    | -    | -  | -    |
+| distance            | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | -    | -    | -    | -    | -    | -    | -  | -    |
 | handicap            | 0   | 80  | 60  | 40  | 20  | 0   | 0   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  | 0    |
 | oyster              | X   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | -    | -    | -    | -    | -    | -    | -  | -    |
 

@@ -29,6 +29,7 @@
 //		r1bqk1nr/p2npp1p/1p4p1/8/4P3/6P1/P4b1P/5BR1 w - -			Uncertain game
 //		3q1b2/4p1pr/4P3/8/6b1/8/5P2/8 w - -							Quick win or deep loss
 //		8/6k1/3p3p/1p5P/1P6/5p2/1p3P2/8 b - -						Pawn game
+//		2b1R1n1/5pp1/8/8/8/5P1P/8/5r2 w - -							Mate in 4 to be found (Rxg8)
 //		1r6/4npb1/n4k2/7P/P6R/P4K2/2P2P2/2R5 w - -					Mate in 6 to be found (Rb1)
 //		8/5pb1/n5k1/8/P6R/PP6/4KP2/8 w - -							Variant of the previous mate (Rd4)
 //		1nb1k3/4Q3/6pn/8/8/8/2PqPP2/4K1N1 b - -						Mate in 7 to be found (Rxe7)
@@ -563,6 +564,7 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 	this.options.ai.randomizedSearch	= (pLevel <= 14);
 	this.options.ai.worstCase			= (pLevel >= 10);
 	this.options.ai.opportunistic		= ((pLevel >= 6) && (pLevel <= 12));
+	this.options.ai.distance			= false;
 	this.options.ai.handicap			= [0, 80, 60, 40, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
 	this.options.ai.oyster				= (pLevel == 1);
 	this._lastLevel = pLevel;
@@ -573,7 +575,7 @@ AntiCrux.prototype.setLevel = function(pLevel) {
  * The method returns the last level of the AI set with the method *setLevel()*.
  *
  * @method getLevel
- * @return {Integer} Last set level, equal to null if never changed.
+ * @return {Integer} Last set level.
  */
 AntiCrux.prototype.getLevel = function() {
 	return this._lastLevel;
@@ -2408,7 +2410,8 @@ AntiCrux.prototype._init = function() {
 			maxReply : 0,								//Number >=1 corresponding to the maximal number of moves that a player is allowed in return when minimizeLiberty is enabled
 			randomizedSearch : false,					//TRUE helps the game to not played the same pieces
 			worstCase : false,							//TRUE makes the algorithm stronger because it considers the best move of the opponent, FALSE is easier to beat
-			opportunistic : false,						//TRUE helps to find a winning position
+			opportunistic : false,						//TRUE helps to find a winning position at the cost of a risk of defeat
+			distance : false,							//TRUE favors the boards with pieces close together
 			handicap : 0,								//To weaken the algorithm, remove between 0% and 100% of the moves above a fixed number of moves
 			oyster : false								//TRUE is a full random play
 		},
@@ -2668,8 +2671,8 @@ AntiCrux.prototype._ai_shrink = function(pNode, pResetMask) {
  *
  * @private
  * @method _ai_inventory
- * @param {AntiCrux.constants.player} pPlayer Player or null if not relevant.
- * @param {AntiCrux.constants.piece} pPiece Piece or null if not relevant.
+ * @param {AntiCrux.constants.player} pPlayer Player or *null* if not relevant.
+ * @param {AntiCrux.constants.piece} pPiece Piece or *null* if not relevant.
  * @param {Integer} pColumn (Optional) Column to check between 0 and 7.
  * @param {Object} pNode (Optional) Reference node.
  * @return {Integer} Number of pieces.
@@ -2723,8 +2726,8 @@ AntiCrux.prototype._ai_countPiece = function(pPlayer, pNode) {
  *
  * @private
  * @method _ai_locatePiece
- * @param {AntiCrux.constants.player} pPlayer Player or null if not relevant.
- * @param {AntiCrux.constants.piece} pPiece Piece or null if not relevant.
+ * @param {AntiCrux.constants.player} pPlayer Player or *null* if not relevant.
+ * @param {AntiCrux.constants.piece} pPiece Piece or *null* if not relevant.
  * @param {Object} pNode (Optional) Reference node.
  * @return {Object} Coordinates {x=0..7, y=0..7} of the located piece, or *null* if nothing has been found.
  */
@@ -3339,10 +3342,6 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 				pNode.magic = (pNode.magic & ~this.constants.bitmask.opportunity) | this.constants.bitmask.opportunityMinus;
 				break;
 		}
-
-		//- Memory
-		if (pDepth > 1)									//This condition is needed to display the score in HTML format
-			delete pNode.board;
 		return;
 	}
 
@@ -3375,18 +3374,10 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 			plus++;
 			if (val > 0)
 			{
-				if ((plusMin === null) || (plusMax === null))
-				{
+				if ((plusMin === null) || (val < plusMin))
 					plusMin = val;
+				if ((plusMax === null) || (val > plusMax))
 					plusMax = val;
-				}
-				else
-				{
-					if (val > plusMax)
-						plusMax = val;
-					if (val < plusMin)
-						plusMin = val;
-				}
 			}
 		}
 		if ((pNode.nodes[i].magic & this.constants.bitmask.opportunityMinus) == this.constants.bitmask.opportunityMinus)
@@ -3394,18 +3385,10 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 			minus++;
 			if (val > 0)
 			{
-				if ((minusMin === null) || (minusMax === null))
-				{
+				if ((minusMin === null) || (val < minusMin))
 					minusMin = val;
+				if ((minusMax === null) || (val > minusMax))
 					minusMax = val;
-				}
-				else
-				{
-					if (val > minusMax)
-						minusMax = val;
-					if (val < minusMin)
-						minusMin = val;
-				}
 			}
 		}
 	}
@@ -3574,34 +3557,14 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
  * @return {Integer} The internal representation of the move, or an exception if no move is found.
  */
 AntiCrux.prototype._ai_pick = function(pPlayer, pNode) {
-	var	i, threshold, status, val,
-		better, same, moves;
+	var	i, j, k,
+		node, moves,
+		threshold, val, better, same,
+		points, total;
 
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
-
-	//-- When there are still plenty of equivalent moves, we keep the ones having the best opportunity
-	if (this.options.ai.opportunistic && (pNode.nodes.length > 1))
-	{
-		//- Finds the best status
-		status = null;
-		for (i=0 ; i<pNode.nodes.length ; i++)
-		{
-			val = this.constants.bitmask.opportunityPriority[pNode.nodes[i].magic & this.constants.bitmask.opportunity];
-			if ((status === null) || (val > status))
-				status = val;
-		}
-		for (i=pNode.nodes.length-1 ; i>=0 ; i--)
-		{
-			if (this.constants.bitmask.opportunityPriority[pNode.nodes[i].magic & this.constants.bitmask.opportunity] != status)
-			{
-				pNode.moves.splice(i, 1);
-				this._ai_freeMemory(pNode.nodes[i]);
-				pNode.nodes.splice(i, 1);
-			}
-		}
-	}
 
 	//-- Lists the eligible moves
 	// White will minimize the valuation
@@ -3625,6 +3588,60 @@ AntiCrux.prototype._ai_pick = function(pPlayer, pNode) {
 		}
 		if (same || better)
 			moves.push(pNode.moves[i]);
+	}
+
+	//-- Choice based on the minimization of the distance between the pieces
+	if (this.options.ai.distance && (moves.length > 1) && ((pNode.magic & this.constants.bitmask.player) == pPlayer))
+	{
+		//- Calculates the average distance between the points to remove the wide boards
+		threshold = null;
+		for (i=moves.length-1 ; i>=0 ; i--)
+		{
+			node = pNode.nodes[pNode.moves.indexOf(moves[i])];
+
+			// Lists the points (X,Y)
+			points = [];
+			for (j=0 ; j<64 ; j++)
+				if ((node.board[j] & this.constants.bitmask.player) !== this.constants.player.none)
+					points.push([j%8, Math.floor(j/8)]);
+
+			// Computes
+			total = 0;
+			for (j=0 ; j<points.length ; j++)
+				for (k=j+1 ; k<points.length ; k++)
+					total += Math.sqrt(Math.pow(points[j][0]-points[k][0], 2) + Math.pow(points[j][1]-points[k][1], 2));
+			val = Math.floor(10 * total / (points.length * (points.length-1) - 1));
+			if ((threshold === null) || (val < threshold))
+			{
+				threshold = val;
+				moves.splice(i+1);
+			}
+			else
+				if (val > threshold)
+					moves.splice(i, 1);
+		}
+
+		//- Calculates the unit distance of the moves to prefer the shortest moves and to avoid ending into a tie
+		if (moves.length > 1)
+		{
+			threshold = null;
+			for (i=moves.length-1 ; i>=0 ; i--)
+			{
+				val = /*Math.floor*/(/*10 * Math.sqrt*/(
+											Math.pow((Math.floor(moves[i]/ 100)%10) - (moves[i]%10), 2) +
+											Math.pow((Math.floor(moves[i]/1000)%10) - (Math.floor(moves[i]/10)%10), 2)
+										)
+								);
+				if ((threshold === null) || (val < threshold))
+				{
+					threshold = val;
+					moves.splice(i+1);
+				}
+				else
+					if (val > threshold)
+						moves.push(moves[i]);
+			}
+		}
 	}
 
 	//-- Final move

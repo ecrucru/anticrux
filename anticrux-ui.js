@@ -55,6 +55,7 @@ function acui_options_load() {
 		$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
 		$('#acui_option_worstcase').prop('checked', ai.options.ai.worstCase);
 		$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
+		$('#acui_option_distance').prop('checked', ai.options.ai.distance);
 		$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
 		$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
 
@@ -332,7 +333,7 @@ function acui_setMultiLines(pState) {
 	if (!pState)
 		obj.val(obj.val().split("\r").join('').split("\n")[0]);
 	obj.rows = (pState ? 10 : 1);
-	obj.height(obj.rows * 20) / (ui_cordova ? window.devicePixelRatio : 1);
+	obj.height(obj.rows * 20 / (ui_cordova ? window.devicePixelRatio : 1));
 }
 
 function acui_popup(pMessage) {
@@ -810,6 +811,7 @@ $(document).ready(function() {
 			ai.options.ai.randomizedSearch			= $('#acui_option_randomizedsearch').prop('checked');
 			ai.options.ai.worstCase					= $('#acui_option_worstcase').prop('checked');
 			ai.options.ai.opportunistic				= $('#acui_option_opportunistic').prop('checked');
+			ai.options.ai.distance					= $('#acui_option_distance').prop('checked');
 			ai.options.ai.handicap					= parseInt($('#acui_option_handicap').val());
 			ai.options.ai.oyster					= $('#acui_option_oyster').prop('checked');
 
