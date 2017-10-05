@@ -322,7 +322,7 @@ function acui_showWinner() {
 }
 
 function acui_setMultiLines(pState) {
-	var obj, val;
+	var obj;
 
 	//-- Gets the editor
 	obj = $('#acui_input');
@@ -847,6 +847,7 @@ $(document).ready(function() {
 		$('#acui_page').removeClass('ui-page-theme-a ui-page-theme-b').addClass('ui-page-theme-' + (ai.options.board.darkTheme?'b':'a'));
 		$('#acui_rewind, #acui_switch_ui').removeClass('ui-btn-a ui-btn-b').addClass('ui-btn-' + (ai.options.board.darkTheme?'a':'b'));
 		$('#acui_lastmove, #acui_assistance').html('');
+		acui_refresh_history(true);
 	});
 
 	$('#acui_option_level').change(function() {
@@ -881,6 +882,7 @@ $(document).ready(function() {
 		acui_options_load();
 	else
 		$('#acui_option_predef').val(5).change();
+	$('#acui_option_darktheme').change();
 	// About
 	$('#acui_version').html(ai.options.ai.version);
 	// General
