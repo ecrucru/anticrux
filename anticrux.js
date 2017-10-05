@@ -3166,7 +3166,10 @@ AntiCrux.prototype._ai_recurseTree = function(pPlayer, pDepth, pNode) {
 	}
 	for (i=pNode.nodes.length-1 ; i>=0 ; i--)
 	{
-		if (((pNode.magic & this.constants.bitmask.player) == pPlayer) && (pNode.nodes[i].moves.length > min_moves))
+		if (	((pNode.magic & this.constants.bitmask.player) == pPlayer) &&
+				(pNode.nodes[i].moves.length > min_moves) &&
+				(!this.options.ai.opportunistic || (min_moves <= 3*this.options.ai.maxReply))
+			)
 		{
 			pNode.moves.splice(i, 1);
 			pNode.nodes.splice(i, 1);
