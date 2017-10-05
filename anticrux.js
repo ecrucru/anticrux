@@ -1762,7 +1762,9 @@ AntiCrux.prototype.getHistoryHtml = function() {
  * @return {String} HTML content.
  */
 AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
-	var i, output, score;
+	var	i, j,
+		tmp, score, score2,
+		output;
 
 	//-- Self
 	if (pNode === undefined)
@@ -1771,6 +1773,29 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 	//-- Checks
 	if (!this._has(pNode, 'nodes', true) || !this._has(pNode, 'moves', true))
 		return '';
+
+	//-- Sorts the moves
+	// White will minimize the valuation
+	// Black will maximize the valuation
+	for (i=pNode.nodes.length-1 ; i>0 ; i--)
+		for (j=0 ; j<i ; j++)
+		{
+			score = this._ai_scoreDecode(pNode.nodes[i].score);
+			score2 = this._ai_scoreDecode(pNode.nodes[j].score);
+			if (	((pPlayer == this.constants.player.white) && (score < score2)) ||
+					((pPlayer == this.constants.player.black) && (score > score2))
+				)
+			{
+				//- Nodes
+				tmp = pNode.nodes[j];
+				pNode.nodes[j] = pNode.nodes[i];
+				pNode.nodes[i] = tmp;
+				//- Moves
+				tmp = pNode.moves[j];
+				pNode.moves[j] = pNode.moves[i];
+				pNode.moves[i] = tmp;
+			}
+		}
 
 	//-- Output
 	output = '';
