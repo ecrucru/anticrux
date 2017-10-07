@@ -3446,7 +3446,10 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 			}
 			minus = 0;
 			pNode.magic = (pNode.magic & ~this.constants.bitmask.opportunity) | this.constants.bitmask.opportunityPlus;
-			pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | (plusMin + (1 << this.constants.bitmask.sequenceShift));
+			if (plusMin < this.constants.bitmask.sequence)
+				pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | (plusMin + (1 << this.constants.bitmask.sequenceShift));
+			else
+				pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | plusMin;
 			score = this.constants.player.mapping_rev[pPlayer] * -this.constants.bitmask.valuationValue;
 		}
 		else
@@ -3463,7 +3466,10 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					}
 				}
 				pNode.magic = (pNode.magic & ~this.constants.bitmask.opportunity) | this.constants.bitmask.opportunityPlus;
-				pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | ((this.options.ai.opportunistic ? plusMin : plusMax) + (1 << this.constants.bitmask.sequenceShift));
+				if ((this.options.ai.opportunistic ? plusMin : plusMax) < this.constants.bitmask.sequence)
+					pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | ((this.options.ai.opportunistic ? plusMin : plusMax) + (1 << this.constants.bitmask.sequenceShift));
+				else
+					pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | (this.options.ai.opportunistic ? plusMin : plusMax);
 				score = this.constants.player.mapping_rev[pPlayer] * -this.constants.bitmask.valuationValue;
 			}
 			else
@@ -3499,7 +3505,10 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					}
 				}
 				pNode.magic = (pNode.magic & ~this.constants.bitmask.opportunity) | this.constants.bitmask.opportunityMinus;
-				pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | (minusMax + (1 << this.constants.bitmask.sequenceShift));
+				if (minusMax < this.constants.bitmask.sequence)
+					pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | (minusMax + (1 << this.constants.bitmask.sequenceShift));
+				else
+					pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | minusMax;
 				score = this.constants.player.mapping_rev[pPlayer] * this.constants.bitmask.valuationValue;
 			}
 			else
@@ -3531,7 +3540,10 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 			}
 			plus = 0;
 			pNode.magic = (pNode.magic & ~this.constants.bitmask.opportunity) | this.constants.bitmask.opportunityMinus;
-			pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | ((this.options.ai.opportunistic ? minusMax : minusMin) + (1 << this.constants.bitmask.sequenceShift));
+			if ((this.options.ai.opportunistic ? minusMax : minusMin) < this.constants.bitmask.sequence)
+				pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | ((this.options.ai.opportunistic ? minusMax : minusMin) + (1 << this.constants.bitmask.sequenceShift));
+			else
+				pNode.magic = (pNode.magic & ~this.constants.bitmask.sequence) | (this.options.ai.opportunistic ? minusMax : minusMin);
 			score = this.constants.player.mapping_rev[pPlayer] * this.constants.bitmask.valuationValue;
 		}
 	}
