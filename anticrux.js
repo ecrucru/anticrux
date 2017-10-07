@@ -138,6 +138,32 @@ AntiCrux.prototype.copyOptions = function(pObject) {
 };
 
 /**
+ * The method returns the supported chess variants. The first variant of the returned
+ * array is the default variant.
+ *
+ * @method getVariants
+ * @return {Array} Array of strings.
+ */
+AntiCrux.prototype.getVariants = function() {
+	return ['suicide', 'antichess', 'giveaway'];
+};
+
+/**
+ * The method sets the default name of the variant. It serves for the export to PGN
+ * and to ensure that AntiCrux accepts the provided name.
+ *
+ * @method setVariant
+ * @param {String} pVariant Name on the variant in lower case.
+ * @return {Boolean} *true* if the variant is accepted, else *false*.
+ */
+AntiCrux.prototype.setVariant = function(pVariant) {
+	var b = (this.getVariants().indexOf(pVariant) !== -1);
+	if (b)
+		this._variant = pVariant;
+	return b;
+};
+
+/**
  * The method returns an object which contains the different formatted parts
  * of the current date and time.
  *
@@ -2158,7 +2184,7 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 		lf_setheader('FEN', this._history_fen0);
 	}
 	lf_setheader('PlyCount', this._history.length);
-	lf_setheader('Variant', 'suicide');
+	lf_setheader('Variant', this._variant);
 	lf_setheader('TimeControl', '-');
 
 	//-- Deactivates the symbols
@@ -2475,6 +2501,7 @@ AntiCrux.prototype._init = function() {
 	//-- General variables
 	this._helper = null;								//You can't refer to that variable without calling first _initHelper()
 	this._buffer_fischer = [];							//You can't refer to that variable without calling first _initFischer()
+	this._variant = this.getVariants()[0];
 	this._startTime = Date.now();
 	this._endTime = this._startTime;
 	this._debugDepth = null;

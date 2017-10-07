@@ -43,7 +43,7 @@ var acengine = {
 
 		//=== Methods
 		process : function(pInput) {
-			var	i, j, b,
+			var	i, j, b, s,
 				input, line, tab, obj, objKey,
 				move, fen, score, stats, movePonder;
 
@@ -96,7 +96,10 @@ var acengine = {
 						acengine.send('id name AntiCrux '+acengine.instance.options.ai.version);
 						acengine.send('id author https://github.com/ecrucru/anticrux/');
 						acengine.send('option name UCI_Chess960 type check default false');
-						acengine.send('option name UCI_Variant type combo default suicide var suicide');
+						obj = acengine.instance.getVariants();
+						s = obj[0];
+						obj.forEach(function(pElement, pIndex, pArray) { pArray[pIndex] = 'var '+pElement; });
+						acengine.send('option name UCI_Variant type combo default '+s+' '+obj.join(' '));
 						acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
 						acengine.send('option name Debug type check default false');
 						acengine.send('uciok');
@@ -125,10 +128,14 @@ var acengine = {
 								continue;
 
 							// Value
-							obj[objKey] += (obj[objKey].length > 0 ? ' ' : '') + tab[j];
+							if (tab[j].length > 0)
+								obj[objKey] += (obj[objKey].length > 0 ? ' ' : '') + tab[j];
 						}
 
 						// Applies the option
+						if (obj.name == 'UCI_Variant')
+							if (!acengine.instance.setVariant(obj.value))
+								acengine.send('info string Unsupported variant name "'+obj.value+'"');
 						if (obj.name == 'Skill Level')
 							acengine.instance.setLevel(parseInt(obj.value));
 						if (obj.name == 'Debug')

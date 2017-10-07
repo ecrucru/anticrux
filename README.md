@@ -46,7 +46,7 @@ AntiCrux is a library written in JavaScript which plays a single variant of ches
 - a remote server by using the same commands than the Free Internet Chess Server (FICS)
 - a chess engine to connect with your UCI-compatible desktop application
 
-For technical reasons inherited from JavaScript and its design, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *[normal](#anticrux-helo-world)* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills with fun.
+For technical reasons inherited from JavaScript and its design, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *[normal](#anticrux-helo-world)* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills with fun !
 
 About the variant AntiChess, the objective consists in losing all your own pieces or reaching a stalemate. For that, you will probably have to force the moves. The rules are very simple and change a lot the dynamics of the game :
 
@@ -213,7 +213,7 @@ telnet localhost 5000
 
 You need first to install [Node.js](#nodejs).
 
-AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches ! The played variant is `suicide` only.
+AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches ! The played variants are `suicide`, `giveaway` and `antichess`. They all refer to the same gameplay.
 
 Some restrictions apply :
 
@@ -277,7 +277,7 @@ Then set `--expose-gc` for the parameters of the environment.
 
 The working directory is the one where the engine is stored.
 
-To start a new game, you should always use the menu "File > New game" because the home screen is unable (at the current time) to start a variant game. From the dialog of the new game, you must select the variant called "Suicide" and then select the engine.
+To start a new game, you should always use the menu "File > New game" because the home screen is unable (at the current time) to start a variant game. From the dialog of the new game, you must select the variant called "Suicide" or "Giveaway" and then select the engine.
 
 
 ## AntiCrux hELO world
@@ -446,6 +446,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: renamed option AntiCrux.options.ai.pessimisticScenario to AntiCrux.options.ai.worstCase
 	- Library: new option AntiCrux.options.ai.distance
 	- Library: new tactical strategy based on the distance between the pieces
+	- Library: the supported technical variant names are `suicide`, `giveaway` and `antichess`
 
 
 ### License
@@ -744,7 +745,8 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbols)
 - AntiCrux.getPlayer(pNode)
 - AntiCrux.getScore(pNode)
-- AntiCrux.getStatsAI()
+- AntiCrux.getStatsAI ()
+- AntiCrux.getVariants()
 - AntiCrux.getWinner(pNode)
 - AntiCrux.hasPendingPromotion(pNode)
 - AntiCrux.hasSetUp()
@@ -766,6 +768,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.resetStats()
 - AntiCrux.setLevel(pLevel)
 - AntiCrux.setPlayer(pPlayer, pNode)
+- AntiCrux.setVariant(pVariant)
 - AntiCrux.startUI()
 - AntiCrux.switchPlayer(pNode)
 - AntiCrux.toConsole(pBorder, pNode)

@@ -82,17 +82,19 @@ var enginePool = [
 
 	engineOptions = {
 		'AC' : {
-			name : 'AntiCrux',
-			xp   : false
+			name    : 'AntiCrux',
+			variant : 'suicide',
+			xp      : false
 		},
 		'SF' : {
-			name  : 'Stockfish',
+			name    : 'Stockfish',
+			variant : 'suicide',
 			//Source: @veloce/lichobile/src/js/ui/ai/engine.ts
-			skill : [   1,    3,    6,    9,   11,   14,   17,   20],
-			depth : [   1,    1,    2,    3,    5,    8,   13,   21],
-			time  : [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000],
-			elo   : [ 670,  750, 1350, 1500, 1850, 2150, 2500, 2800],	//Formerly [1350, 1420, 1500, 1600, 1700, 1900, 2200, 2500]
-			xp    : true
+			skill   : [   1,    3,    6,    9,   11,   14,   17,   20],
+			depth   : [   1,    1,    2,    3,    5,    8,   13,   21],
+			time    : [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000],
+			elo     : [ 670,  750, 1350, 1500, 1850, 2150, 2500, 2800],	//Formerly [1350, 1420, 1500, 1600, 1700, 1900, 2200, 2500]
+			xp      : true
 		}
 	},
 
@@ -204,7 +206,7 @@ function acelo_newjob() {
 	if (job.engineOne.type == 'SF')
 	{
 		job.engineOne.ai.postMessage('uci');
-		job.engineOne.ai.postMessage('setoption name UCI_Variant value suicide');
+		job.engineOne.ai.postMessage('setoption name UCI_Variant value '+engineOptions[job.engineOne.type].variant);
 		job.engineOne.ai.postMessage('setoption name Skill Level value '+job.engineOne.level);
 		job.engineOne.ai.postMessage('isready');
 		job.engineOne.ai.postMessage('ucinewgame');
@@ -212,7 +214,7 @@ function acelo_newjob() {
 	if (job.engineTwo.type == 'SF')
 	{
 		job.engineTwo.ai.postMessage('uci');
-		job.engineTwo.ai.postMessage('setoption name UCI_Variant value suicide');
+		job.engineTwo.ai.postMessage('setoption name UCI_Variant value '+engineOptions[job.engineTwo.type].variant);
 		job.engineTwo.ai.postMessage('setoption name Skill Level value '+job.engineTwo.level);
 		job.engineTwo.ai.postMessage('isready');
 		job.engineTwo.ai.postMessage('ucinewgame');
@@ -476,9 +478,10 @@ function acelo_elo() {
 		}
 
 		//- Variant
-		if ((pgn[i] == '[variant "antichess"]') || (pgn[i] == '[variant "suicide"]'))
+		regex = pgn[i].match(/^\[variant "(.*)"\]$/);
+		if (regex !== null)
 		{
-			game.variant = true;
+			game.variant = (job.referee.getVariants().indexOf(regex[1]) !== -1);
 			continue;
 		}
 
@@ -767,10 +770,10 @@ if (job.file.length === 0)
 job.running = false;
 
 //-- Main loop
+job.referee = new AntiCrux();
 if (job.genGames)
 {
 	//- Instantiates the engines
-	job.referee = new AntiCrux();
 	for (var i=0 ; i<enginePool.length ; i++)
 	{
 		if (enginePool[i].type == 'AC')
