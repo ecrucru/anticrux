@@ -881,7 +881,7 @@ $(document).ready(function() {
 	if (ui_mobile)
 		acui_options_load();
 	else
-		$('#acui_option_predef').val(5).change();
+		$('#acui_option_predef').val(8).change();
 	$('#acui_option_darktheme').change();
 	// About
 	$('#acui_version').html(ai.options.ai.version);

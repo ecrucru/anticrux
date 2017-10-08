@@ -582,16 +582,16 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 		return false;
 
 	//-- Applies the new settings
-	this.options.ai.elo					= (pLevel == 1 ? 300 : Math.round(294.8 * Math.log(pLevel) + 855.5));
-	this.options.ai.maxDepth			= [3, 4, 6, 8, 3, 5, 6, 7, 8, 9, 10, 15, 20, 30, 30, 30, 40, 40, 45, 50][pLevel-1];
-	this.options.ai.maxNodes			= [100, 50000, 40000, 30000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 200000, 300000, 400000, 500000, 600000, 750000, 1000000, 1500000][pLevel-1];
+	this.options.ai.elo					= (pLevel == 1 ? 320 : Math.round(232.8 * Math.log(pLevel) + 1024.2));
+	this.options.ai.maxDepth			= [3, 8, 6, 5, 4, 5, 6, 6, 6, 6, 8, 8, 8, 10, 10, 20, 99, 99, 99, 99][pLevel-1];
+	this.options.ai.maxNodes			= [100, 50000, 40000, 30000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 200000, 300000, 400000, 500000, 600000, 700000, 850000, 1000000][pLevel-1];
 	this.options.ai.minimizeLiberty		= (pLevel >= 8);
-	this.options.ai.maxReply			= [1, 99, 3, 3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1][pLevel-1];
+	this.options.ai.maxReply			= [1, 99, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1][pLevel-1];
 	this.options.ai.randomizedSearch	= (pLevel <= 14);
 	this.options.ai.worstCase			= (pLevel >= 10);
-	this.options.ai.opportunistic		= ((pLevel >= 6) && (pLevel <= 12));
-	this.options.ai.distance			= false;
-	this.options.ai.handicap			= [0, 80, 60, 40, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
+	this.options.ai.opportunistic		= ((pLevel >= 4) && (pLevel <= 12));
+	this.options.ai.distance			= (pLevel >= 12);
+	this.options.ai.handicap			= [0, 80, 60, 40, 20, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
 	this.options.ai.oyster				= (pLevel == 1);
 	this._lastLevel = pLevel;
 	return true;
