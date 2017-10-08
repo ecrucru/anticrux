@@ -102,6 +102,7 @@ var acengine = {
 						acengine.send('option name UCI_Variant type combo default '+s+' '+obj.join(' '));
 						acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
 						acengine.send('option name Debug type check default false');
+						acengine.send('option name Precise Score type check default false');
 						acengine.send('uciok');
 						acengine.send('copyprotection ok');
 						acengine.connected = true;
@@ -140,6 +141,8 @@ var acengine = {
 							acengine.instance.setLevel(parseInt(obj.value));
 						if (obj.name == 'Debug')
 							acengine.trace.debug = (obj.value.toLowerCase() == 'true');
+						if (obj.name == 'Precise Score')
+							acengine.instance.options.board.noStatOnForcedMove = !(obj.value.toLowerCase() == 'true');
 					}
 
 					else if (tab[0] == 'ucinewgame')

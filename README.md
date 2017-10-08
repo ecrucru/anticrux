@@ -20,6 +20,7 @@
 	- [Node.js](#nodejs)
 	- [AntiCrux Server](#anticrux-server)
 	- [AntiCrux Engine](#anticrux-engine)
+		- [Available options](#available-options)
 		- [Procedure for WinBoard](#procedure-for-winboard)
 		- [Procedure for pyChess](#procedure-for-pychess)
 	- [AntiCrux hELO world](#anticrux-helo-world)
@@ -241,6 +242,13 @@ position startpos moves a3
 go infinite
 ```
 
+#### Available options
+
+- `Debug` : this option is reserved for the developers to track all the issues that may arise during the use of the engine.
+- `Precise Score` : if the move is forced, a deep analysis doesn't occur unless you activate this option. It slows down the engine but you get a better evaluation of the score.
+- `Skill Level` : the level is the difficulty of the game. The higher, the bigger the memory footprint.
+- `UCI_Variant` : it defines the chess variants supported by the engine.
+
 #### Procedure for WinBoard
 
 You need to use at least WinBoard 4.9 else you will be told that the variant `suicide` is not supported.
@@ -446,7 +454,8 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: renamed option AntiCrux.options.ai.pessimisticScenario to AntiCrux.options.ai.worstCase
 	- Library: new option AntiCrux.options.ai.distance
 	- Library: new tactical strategy based on the distance between the pieces
-	- Library: the supported technical variant names are `suicide`, `giveaway` and `antichess`
+	- Engine: the supported technical variant names are `suicide`, `giveaway` and `antichess`
+	- Engine: new UCI option "Precise Score"
 
 
 ### License
