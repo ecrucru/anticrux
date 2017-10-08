@@ -357,10 +357,10 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 
 ### Change log
 
-- November 11th 2016 - Creation of the project
-- December 25th 2016 - Version 0.1.0
+- **November 11th 2016 - Creation of the project**
+- **December 25th 2016 - Version 0.1.0**
 	- Initial set of features
-- February 3rd 2017 - Version 0.2.0
+- **February 3rd 2017 - Version 0.2.0**
 	- Library: AntiCrux.prototype.getMoves renamed as AntiCrux.prototype.getMovesHtml
 	- Library: new mandatory parameter for AntiCrux.prototype.highlightMoves
 	- UI: highlighted target cells when requesting a detailed hint
@@ -397,7 +397,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new parameter for AntiCrux.prototype.isEndGame
 	- Library: the minimal search depth is now 1 (previously 3)
 	- UI: blind and random modes
-- In progress - Version 0.3.0 [no backwards compatibility]
+- **October 8th 2017 - Version 0.3.0** *[no backwards compatibility]*
 	- Server: new server based on Node.js
 	- Readme: update
 	- UI: button "Rematch"

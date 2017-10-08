@@ -142,7 +142,7 @@ var acengine = {
 						if (obj.name == 'Debug')
 							acengine.trace.debug = (obj.value.toLowerCase() == 'true');
 						if (obj.name == 'Precise Score')
-							acengine.instance.options.board.noStatOnForcedMove = !(obj.value.toLowerCase() == 'true');
+							acengine.instance.options.board.noStatOnForcedMove = (obj.value.toLowerCase() != 'true');
 					}
 
 					else if (tab[0] == 'ucinewgame')
