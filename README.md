@@ -456,6 +456,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new tactical strategy based on the distance between the pieces
 	- Engine: the supported technical variant names are `suicide`, `giveaway` and `antichess`
 	- Engine: new UCI option "Precise Score"
+	- Library: removed method AntiCrux.prototype.startUI
 
 
 ### License
@@ -778,7 +779,6 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.setLevel(pLevel)
 - AntiCrux.setPlayer(pPlayer, pNode)
 - AntiCrux.setVariant(pVariant)
-- AntiCrux.startUI()
 - AntiCrux.switchPlayer(pNode)
 - AntiCrux.toConsole(pBorder, pNode)
 - AntiCrux.toFen(pNode)

@@ -105,22 +105,6 @@ var AntiCrux = function() {
 //---- Public members
 
 /**
- * The method opens the web UI through the call to the file "index.html".
- * It is restricted to Node.js.
- *
- * @method startUI
- */
-AntiCrux.prototype.startUI = function() {
-	if ((typeof module !== 'undefined') && module.exports)
-	{
-		var opn = require('opn');
- 		opn('./node_modules/anticrux/index.html');
-	}
-	else
-		throw 'Error - AntiCrux.prototype.startUI() is restricted to Node.js';
-};
-
-/**
  * The method copies the options from another instance of AntiCrux.
  *
  * @method copyOptions
