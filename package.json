@@ -29,6 +29,9 @@
 		"*.css",
 		"*.js",
 		"*.html",
+		"*.url",
+		"yuidoc.json",
+		"images/*.bmp",
 		"images/*.gif",
 		"images/*.png"
 	],
