@@ -1719,6 +1719,43 @@ AntiCrux.prototype.highlightMoves = function(pRefresh) {
 };
 
 /**
+ * The method returns the current difference of material between the players.
+ *
+ * @method getMaterialDifference
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Array} The cells of the array are a piece. Black is negative. White is positive.
+ */
+AntiCrux.prototype.getMaterialDifference = function(pNode) {
+	var piece, inventory, diff;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Initializes
+	inventory = [];
+	inventory[this.constants.player.white] = [];
+	inventory[this.constants.player.black] = [];
+	diff = [];
+
+	//-- Loops on every possible piece for each player
+	for (piece=this.constants.piece.none ; piece<=this.constants.piece.king ; piece++)
+		if (piece != this.constants.piece.none)
+		{
+			inventory[this.constants.player.black][piece] = this._ai_inventory(this.constants.player.black, piece, undefined, pNode);
+			inventory[this.constants.player.white][piece] = this._ai_inventory(this.constants.player.white, piece, undefined, pNode);
+		}
+
+	//-- Diff
+	for (piece=this.constants.piece.none ; piece<=this.constants.piece.king ; piece++)
+		if (piece == this.constants.piece.none)
+			diff[piece] = 0;
+		else
+			diff[piece] = inventory[this.constants.player.white][piece] - inventory[this.constants.player.black][piece];
+	return diff;
+};
+
+/**
  * The method returns the history of the moves in an array containing the moves in their internal representation.
  *
  * @method getHistory

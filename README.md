@@ -457,6 +457,9 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Engine: the supported technical variant names are `suicide`, `giveaway` and `antichess`
 	- Engine: new UCI option "Precise Score"
 	- Library: removed method AntiCrux.prototype.startUI
+- **In progress - Version 0.3.1**
+	- Library: new method AntiCrux.prototype.getMaterialDifference
+	- UI: display of the material difference
 
 
 ### License
@@ -747,6 +750,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getInitialPosition()
 - AntiCrux.getLevel()
 - AntiCrux.getMainNode()
+- AntiCrux.getMaterialDifference(pNode)
 - AntiCrux.getMoveAI(pPlayer, pNode)
 - AntiCrux.getMovesHtml(pPlayer, pNode)
 - AntiCrux.getNewFischerId()

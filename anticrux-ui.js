@@ -81,7 +81,7 @@ function acui_reset_ui(pResetPlayer) {
 	ui_rewind = false;
 	$('#acui_tab_board_header').trigger('click');
 	$('#acui_valuation').val(0).slider('refresh');
-	$('#acui_score, #acui_lastmove, #acui_assistance, #acui_depth, #acui_nodes, #acui_nps, #acui_moves, #acui_history').html('');
+	$('#acui_score, #acui_lastmove, #acui_assistance, #acui_depth, #acui_nodes, #acui_nps, #acui_matdiff, #acui_moves, #acui_history').html('');
 	$('#acui_sect_rewind').hide();
 	$('#acui_pgn').addClass('ui-disabled');
 	ai.resetStats();
@@ -100,6 +100,7 @@ function acui_refresh_board() {
 	$('#acui_board').html(ai.toHtml());
 	$('#acui_board').css('width', (ai.options.board.coordinates?420:400) + 'px');
 	$('#acui_board').css('height', $('#acui_board').css('width'));
+	acui_refresh_matdiff();
 
 	//-- Reactivates the cells of the board
 	$('.AntiCrux-board-cell-0, .AntiCrux-board-cell-1, .AntiCrux-board-cell-hl').click(function() {
@@ -161,6 +162,36 @@ function acui_refresh_board() {
 		return true;
 	});
 	return true;
+}
+
+function acui_refresh_matdiff() {
+	var piece, diff, buffer, pro;
+
+	//-- Prepares the buffer
+	buffer = '';
+	pro = $('#acui_option_pro').prop('checked');
+	if (!pro)
+	{
+		diff = ai.getMaterialDifference();
+		for (piece=ai.constants.piece.none ; piece<=ai.constants.piece.king ; piece++)
+			if (diff[piece] != 0)
+			{
+				if (buffer.length === 0)
+					buffer += ' ';
+				buffer +=	'<span title="'+Math.abs(diff[piece])+' more">' +
+							ai.getPieceSymbol(	piece,
+												(diff[piece]<0 ? ai.constants.player.black : ai.constants.player.white),
+												ai.options.board.symbols) +
+							'</span>';
+			}
+	}
+
+	//-- Layout
+	$('#acui_matdiff').html(buffer.length > 0 ? 'Difference : '+buffer : '');
+	if (buffer.length > 0)
+		$('#acui_matdiff').show();
+	else
+		$('#acui_matdiff').hide();
 }
 
 function acui_refresh_moves() {
@@ -847,6 +878,7 @@ $(document).ready(function() {
 		$('#acui_page').removeClass('ui-page-theme-a ui-page-theme-b').addClass('ui-page-theme-' + (ai.options.board.darkTheme?'b':'a'));
 		$('#acui_rewind, #acui_switch_ui').removeClass('ui-btn-a ui-btn-b').addClass('ui-btn-' + (ai.options.board.darkTheme?'a':'b'));
 		$('#acui_lastmove, #acui_assistance').html('');
+		acui_refresh_matdiff();
 		acui_refresh_history(true);
 	});
 
