@@ -165,17 +165,19 @@ function acui_refresh_board() {
 }
 
 function acui_refresh_matdiff() {
-	var piece, diff, buffer, pro;
+	var piece, diff, cp, buffer, pro;
 
 	//-- Prepares the buffer
 	buffer = '';
 	pro = $('#acui_option_pro').prop('checked');
 	if (!pro)
 	{
-		diff = ai.getMaterialDifference();
+		diff = ai.getMaterialDifference(ui_rewind ? ai_rewind.getMainNode() : ai.getMainNode());
+		cp = 0;
 		for (piece=ai.constants.piece.none ; piece<=ai.constants.piece.king ; piece++)
 			if (diff[piece] != 0)
 			{
+				cp += diff[piece] * ai.options.ai.valuation[piece];
 				if (buffer.length === 0)
 					buffer += ' ';
 				buffer +=	'<span title="'+Math.abs(diff[piece])+' more">' +
@@ -184,10 +186,11 @@ function acui_refresh_matdiff() {
 												ai.options.board.symbols) +
 							'</span>';
 			}
+		cp = Math.round(10 * cp / ai.options.ai.valuation[ai.constants.piece.pawn]) / 10;
 	}
 
 	//-- Layout
-	$('#acui_matdiff').html(buffer.length > 0 ? 'Difference : '+buffer : '');
+	$('#acui_matdiff').html(buffer.length > 0 ? 'Difference : '+buffer+' <span title="Static centipawns">'+cp+'&nbsp;cp</span>' : '');
 	if (buffer.length > 0)
 		$('#acui_matdiff').show();
 	else
@@ -247,6 +250,7 @@ function acui_refresh_history(pScroll) {
 		acui_reset_ui(false);
 		ui_rewind = true;
 		$('#acui_player').val(ai_rewind.getPlayer()).change();
+		acui_refresh_matdiff();
 		acui_refresh_history(false);
 		$('#acui_board').html(ai_rewind.toHtml());		//No event is attached to the cells
 		return true;
