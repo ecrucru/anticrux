@@ -219,9 +219,9 @@ function acui_refresh_history(pScroll) {
 
 	//-- Events
 	$('.AntiCrux-history-item').click(function() {
-		var	index = parseInt(this.dataset.index),
-			hist = ai.getHistory(),
-			i;
+		var	i,
+			index = parseInt(this.dataset.index),
+			hist = ai.getHistory();
 
 		//-- Checks
 		if (hist.length === 0)
@@ -241,6 +241,8 @@ function acui_refresh_history(pScroll) {
 				throw 'Internal error - Report any error (#002)';
 			else
 			{
+				ai_rewind.updateHalfMoveClock();
+				ai_rewind.logMove(hist[i]);
 				ai_rewind.switchPlayer();
 				ai_rewind.highlightMove(hist[i]);
 			}
@@ -750,7 +752,7 @@ $(document).ready(function() {
 
 	$('#acui_fen_gen').click(function() {
 		acui_setMultiLines(false);
-		$('#acui_input').val(ai.toFen()).focus().click();
+		$('#acui_input').val((ui_rewind ? ai_rewind : ai).toFen()).focus().click();
 		return true;
 	});
 
@@ -787,7 +789,7 @@ $(document).ready(function() {
 
 	$('#acui_text_gen').click(function() {
 		acui_setMultiLines(true);
-		$('#acui_input').val(ai.toText()).focus().click();
+		$('#acui_input').val((ui_rewind ? ai_rewind : ai).toText()).focus().click();
 		return true;
 	});
 
