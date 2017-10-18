@@ -113,17 +113,17 @@ Note : the symbol "-" denotes that a feature is not applicable.
 
 ### Web interface
 
-As a chess player, you simply have to double-click on the file "index.html" to launch the web-interface in your default browser. The tested ones have different behaviours :
+As a chess player, you simply have to double-click on the file `index.html` to launch the web-interface in your default browser. The tested ones have different behaviours :
 
 - Chrome : light, slow
 - Firefox : memory intensive, fast
 
 You have several tabs :
 
-- "Board" : it offers the general features to move the pieces. You can't drag and drop a piece, but use 2 separate clicks.
-- "Actions" : it handles the generation of a new game. By putting aside the buttons to start a game, you will not click unexpectedly on them while you are playing.
-- "Options" : it is where you refine the settings of the game.
-- "About" : it provides the legal information about AntiCrux.
+- "*Board*" : it offers the general features to move the pieces. You can't drag and drop a piece, but use 2 separate clicks.
+- "*Actions*" : it handles the generation of a new game. By putting aside the buttons to start a game, you will not click unexpectedly on them while you are playing.
+- "*Options*" : it is where you refine the settings of the game.
+- "*About*" : it provides the legal information about AntiCrux.
 
 Without any local installation, just check online at http://ecrucru.free.fr/?page=anticrux and you will get the same enjoyment.
 
@@ -272,6 +272,8 @@ This settings will end up with an equivalent line added to the list of engines :
 Restart WinBoard. On the main dialog "WinBoard Startup", select AntiCrux from the drop-down lists to start a new game against it.
 
 During the game, if you do an incorrect move under certain conditions, the engine will probably leave the game because WinBoard doesn't send a correct position to analyze.
+
+To start an AntiChess960 game, go to "File > New shuffle game..." and pick a number random. This will not launch a game with the classical rules.
 
 To activate the logo in WinBoard, copy the picture located at `images/anticrux.bmp` to the same folder as the file `anticrux-engine.js`, then rename the copied picture as `logo.bmp`.
 
@@ -460,6 +462,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 - **In progress - Version 0.3.1**
 	- Library: new method AntiCrux.prototype.getMaterialDifference
 	- UI: display of the material difference and centipawns
+	- Engine: removed UCI option UCI_Chess960
 
 
 ### License

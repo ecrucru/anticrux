@@ -95,7 +95,6 @@ var acengine = {
 					{
 						acengine.send('id name AntiCrux '+acengine.instance.options.ai.version);
 						acengine.send('id author https://github.com/ecrucru/anticrux/');
-						acengine.send('option name UCI_Chess960 type check default false');
 						obj = acengine.instance.getVariants();
 						s = obj[0];
 						obj.forEach(function(pElement, pIndex, pArray) { pArray[pIndex] = 'var '+pElement; });
