@@ -1810,7 +1810,7 @@ AntiCrux.prototype.getHistoryHtml = function() {
  */
 AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 	var	i, j,
-		tmp, score, score2,
+		tmp, score, score2, cp,
 		output;
 
 	//-- Self
@@ -1864,6 +1864,10 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 			output += '<span title="'+(score.type==this.constants.bitmask.valuationStatic?'Static':'Deep')+'">' + score.valuePercent + '%</span>';
 		output += '</td>';
 
+		//- Centipawns
+		cp = (score.mate ? '-' : Math.round(100 * score.value / this.options.ai.valuation[this.constants.piece.pawn]));
+		output += '<td title="'+(score.type==this.constants.bitmask.valuationStatic?'Static':'Deep')+'">'+cp+'</td>';
+
 		//- Hidden opportunity
 		output += '<td>';
 		if (	((pNode.nodes[i].magic & this.constants.bitmask.opportunity) != this.constants.bitmask.none) &&
@@ -1892,11 +1896,20 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 
 	//-- Final text
 	return (output.length === 0 ? '' :
-				'<table class="ui-table" data-role="table" data-mode="table">' +
-				'<thead><tr><th data-priority="1">Move</th><th data-priority="2">Score</th><th data-priority="3">&nbsp;</th></tr></thead>' +
-				'<tbody>' +
-				output +
-				'</tbody></table>');
+				'<table class="ui-table" data-role="table" data-mode="table"> \
+				<thead> \
+					<tr> \
+						<th data-priority="1">Move</th> \
+						<th data-priority="2">Score</th> \
+						<th data-priority="3" title="Centipawns">cp</th> \
+						<th data-priority="4">&nbsp;</th> \
+					</tr> \
+				</thead> \
+				<tbody>' +
+					output +
+				'</tbody> \
+				</table>'
+			);
 };
 
 /**
@@ -2512,7 +2525,7 @@ AntiCrux.prototype._init = function() {
 	//-- Valuations (maximal value = 2047)
 	//Documentation : http://www.ke.tu-darmstadt.de/publications/papers/ICGA-ChessVariants.pdf
 	this.options.ai.valuation[this.constants.piece.none  ] =   0;
-	this.options.ai.valuation[this.constants.piece.pawn  ] = 240;
+	this.options.ai.valuation[this.constants.piece.pawn  ] = 240;		//Never equal to zero
 	this.options.ai.valuation[this.constants.piece.rook  ] = 500;
 	this.options.ai.valuation[this.constants.piece.knight] = 320;
 	this.options.ai.valuation[this.constants.piece.bishop] = 440;

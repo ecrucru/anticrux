@@ -459,7 +459,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: removed method AntiCrux.prototype.startUI
 - **In progress - Version 0.3.1**
 	- Library: new method AntiCrux.prototype.getMaterialDifference
-	- UI: display of the material difference
+	- UI: display of the material difference and centipawns
 
 
 ### License

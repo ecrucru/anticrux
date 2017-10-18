@@ -186,7 +186,7 @@ function acui_refresh_matdiff() {
 												ai.options.board.symbols) +
 							'</span>';
 			}
-		cp = Math.round(10 * cp / ai.options.ai.valuation[ai.constants.piece.pawn]) / 10;
+		cp = Math.round(100 * cp / ai.options.ai.valuation[ai.constants.piece.pawn]);
 	}
 
 	//-- Layout
