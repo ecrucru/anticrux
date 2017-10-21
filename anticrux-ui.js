@@ -115,6 +115,10 @@ function acui_refresh_board() {
 			ui_move = '';
 		else
 		{
+			//- Reselects a cell for the first click if it was a blank cell
+			if ((ui_move.length == 2) && (ai.getPieceByCoordinate(ui_move).piece == ai.constants.piece.none))
+				ui_move = '';
+
 			//- Overrides the existing selection if it is the same player
 			if (ui_move.length == 2)
 			{
