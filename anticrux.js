@@ -936,7 +936,7 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 		this._ai_recurseTree(pPlayer, 0, pNode);
 		this._reachedDepth = curDepth;
 		if (this._numNodes === 0)
-			throw 'Internal error - Report any error (#001)';
+			throw this._btod(1, pNode);
 
 		//- Callback
 		if (this.callbackExploration !== null)
@@ -1020,7 +1020,7 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 		//- Next position
 		this._helper.freeMemory();
 		if (this._helper.movePiece(move, true) == this._helper.constants.noMove)
-			throw 'Internal error - Report any error (#012)';
+			throw this._helper._btod(12);
 		else
 			this._helper.switchPlayer();
 	}
@@ -1162,7 +1162,7 @@ AntiCrux.prototype.undoMove = function() {
 	for (i=0 ; i<hist.length ; i++)
 	{
 		if (this.movePiece(hist[i], true, this.constants.player.none) == this.constants.noMove)
-			throw 'Internal error - Report any error (#004)';
+			throw this._btod(4);
 		else
 		{
 			this.updateHalfMoveClock();
@@ -1522,7 +1522,7 @@ AntiCrux.prototype.isDraw = function(pCriteria, pNode) {
 			for (i=0 ; i<this._history.length ; i++)
 			{
 				if (this._helper.movePiece(this._history[i], true, this._helper.getPlayer()) == this._helper.constants.noMove)
-					throw 'Internal error - Report any error (#017)';
+					throw this._helper._btod(17);
 				else
 				{
 					fen = this._helper.toFen();
@@ -1791,7 +1791,7 @@ AntiCrux.prototype.getHistoryHtml = function() {
 			output += '<tr><th>' + Math.floor((i+2)/2) + '</th>';
 		output += '<td class="AntiCrux-history-item" data-index="'+i+'" title="Click to review this past move">' + this._helper.moveToString(this._history[i]) + '</td>';
 		if (this._helper.movePiece(this._history[i], true, this._helper.constants.player.none) == this._helper.constants.noMove)
-			throw 'Internal error - Report any error (#010)';
+			throw this._helper._btod(10);
 		if (i % 2 == 1)
 			output += '</tr>';
 	}
@@ -1886,7 +1886,7 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 					output += '<img src="images/opportunity_2.png" title="Opportunity of victory" />';
 					break;
 				default:
-					throw 'Internal error - Report any error (#016)';
+					throw this._btod(16, pNode);
 			}
 		}
 		else
@@ -2146,7 +2146,7 @@ AntiCrux.prototype.toText = function(pNode) {
 					car = ' otmvwl'[pNode.board[i] & this.constants.bitmask.piece];
 					break;
 				default:
-					throw 'Internal error - Report any error (#009)';
+					throw this._btod(9, pNode);
 			}
 			if (b)
 				car = car.toUpperCase();
@@ -2242,7 +2242,7 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 		//- Move
 		moveStr = this._helper.moveToString(this._history[i]);
 		if (this._helper.movePiece(this._history[i], true, this._helper.getPlayer()) == this._helper.constants.noMove)
-			throw 'Internal error - Report any error (#011)';
+			throw this._helper._btod(11);
 		else
 		{
 			pgnItem += ' ' + moveStr;
@@ -2701,6 +2701,41 @@ AntiCrux.prototype._explainNodeTable = function(pNode) {
 };
 
 /**
+ * The method generates the "black text of death".
+ *
+ * @private
+ * @method _btod
+ * @param {Integer} pCode Error code.
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} Formatted string.
+ */
+AntiCrux.prototype._btod = function(pCode, pNode) {
+	var obj, keys;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Simplified node
+	obj = Object.create(null);
+	keys = Object.keys(pNode);
+	keys.forEach(function(element, index, array) {
+						if (array[index] != 'nodes')	//Ultra big object
+							obj[array[index]] = pNode[array[index]];
+					});
+
+	//-- Final text
+	return	'AntiCrux has faced the internal error #'+pCode+" that you are invited to report online with the help of the following dump state. Thank you !\n" +
+			"Go to ==> https://github.com/ecrucru/anticrux/issues/\n\n" +
+			'FEN : ' + this.toFen(pNode) + "\n" +
+			"Position : \n" +
+			this.toConsole(pNode) +
+			'Node : '+JSON.stringify(obj) + "\n" +
+			'Explanation : '+JSON.stringify(this._explainNode(obj)) + "\n" +
+			"Stack : \n    "+(new Error().stack.trim().split("\n").join("\n    ")) + "\n";
+}
+
+/**
  * The method duplicates a node. Only the basic fields are copied.
  *
  * @private
@@ -3156,7 +3191,7 @@ AntiCrux.prototype._ai_moves = function(pNode) {
 			}
 
 			default:
-				throw 'Internal error - Report any error (#003)';
+				throw this._btod(3, pNode);
 		}
 	}
 
@@ -3198,7 +3233,7 @@ AntiCrux.prototype._ai_createNodes = function(pNode) {
 		//- Moves the piece
 		node = this._ai_copy(pNode, false);
 		if (this.movePiece(pNode.moves[i], false, (pNode.magic & this.constants.bitmask.player), node) == this.constants.noMove)
-			throw 'Internal error - Report any error (#013)';
+			throw this._btod(13, pNode);
 		this.switchPlayer(node);
 		pNode.nodes.push(node);
 	}
@@ -3748,7 +3783,7 @@ AntiCrux.prototype._ai_pick = function(pPlayer, pNode) {
 	//-- Final move
 	switch (moves.length)
 	{
-		case 0 : throw 'Internal error - Report any error (#002)';
+		case 0 : throw this._btod(2, pNode);
 		case 1 : return moves[0];
 		default: return moves[Math.round(Math.random() * (moves.length-1))];
 	}
@@ -3785,7 +3820,7 @@ AntiCrux.prototype._ai_assistance = function(pNode, pUCI, pDepth) {
 
 	//-- Moves the piece for the next level
 	if (this._helper.movePiece(move, true) == this.constants.noMove)
-		throw 'Internal error - Report any error (#018)';
+		throw this._helper._btod(18);
 	this._helper.switchPlayer();
 
 	//-- Recursive search
