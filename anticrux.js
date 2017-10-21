@@ -1317,18 +1317,18 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 
 	//-- Initial position
 	if ((this._ai_inventory(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
-									(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
-									undefined,
-									pNode
-								) > 1) ||
+								(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+								null,
+								pNode
+							) > 1) ||
 		(taken && ((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn))
 	) {
 		buffer = 'abcdefgh'.charAt(move_fromX);
 		if (this._ai_inventory(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
-									(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
-									move_fromX,
-									pNode
-								) > 1)
+								(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+								move_fromX,
+								pNode
+							) > 1)
 			buffer += 8-move_fromY;
 	}
 	else
@@ -1338,10 +1338,10 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	if (!taken && ((pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece) == this.constants.piece.pawn) && (move_fromX == move_toX))
 		buffer = '';
 	if (!taken && (this._ai_inventory(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
-											(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
-											undefined,
-											pNode
-										) == 1))
+										(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+										null,
+										pNode
+									) == 1))
 		buffer = '';
 	if (taken)
 	   buffer += 'x';
@@ -1591,8 +1591,8 @@ AntiCrux.prototype.isPossibleDraw = function(pNode) {
 	return (	(this._reachedDepth >= 5) &&																		//Sufficient depth for the valuation
 				((pNode.score & this.constants.bitmask.valuationType) == this.constants.bitmask.valuationDeep) &&	//Expected deep score
 				((pNode.score & this.constants.bitmask.valuationValue) === 0) &&									//Equal game on both side or no deep opportunity
-				(this._ai_inventory(this.constants.player.black, null, undefined, pNode) <= 5) &&				//Few remaining pieces
-				(this._ai_inventory(this.constants.player.white, null, undefined, pNode) <= 5)					//Few remaining pieces
+				(this._ai_inventory(this.constants.player.black, null, null, pNode) <= 5) &&						//Few remaining pieces
+				(this._ai_inventory(this.constants.player.white, null, null, pNode) <= 5)							//Few remaining pieces
 			);
 };
 
@@ -1742,8 +1742,8 @@ AntiCrux.prototype.getMaterialDifference = function(pNode) {
 	for (piece=this.constants.piece.none ; piece<=this.constants.piece.king ; piece++)
 		if (piece != this.constants.piece.none)
 		{
-			inventory[this.constants.player.black][piece] = this._ai_inventory(this.constants.player.black, piece, undefined, pNode);
-			inventory[this.constants.player.white][piece] = this._ai_inventory(this.constants.player.white, piece, undefined, pNode);
+			inventory[this.constants.player.black][piece] = this._ai_inventory(this.constants.player.black, piece, null, pNode);
+			inventory[this.constants.player.white][piece] = this._ai_inventory(this.constants.player.white, piece, null, pNode);
 		}
 
 	//-- Diff
@@ -2759,7 +2759,7 @@ AntiCrux.prototype._ai_shrink = function(pNode, pResetMask) {
  * @method _ai_inventory
  * @param {AntiCrux.constants.player} pPlayer Player or *null* if not relevant.
  * @param {AntiCrux.constants.piece} pPiece Piece or *null* if not relevant.
- * @param {Integer} pColumn (Optional) Column to check between 0 and 7.
+ * @param {Integer} pColumn Column to check between 0 and 7, or *null* if inapplicable.
  * @param {Object} pNode (Optional) Reference node.
  * @return {Integer} Number of pieces.
  */
@@ -2776,7 +2776,7 @@ AntiCrux.prototype._ai_inventory = function(pPlayer, pPiece, pColumn, pNode) {
 		if (	(((pNode.board[i] & this.constants.bitmask.player) == pPlayer) || (pPlayer === null)) &&
 				(((pNode.board[i] & this.constants.bitmask.piece ) == pPiece ) || (pPiece  === null))
 		) {
-			if (pColumn !== undefined)
+			if (pColumn !== null)
 				if (i%8 != pColumn)
 					continue;
 			counter++;

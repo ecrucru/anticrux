@@ -1334,8 +1334,8 @@ server.acsrv_endGame = function(pSocket) {
 				server.acsrv_stats.win++;
 			else
 				server.acsrv_stats.loss++;
-			stalemate =	(pSocket.acsrv_ai._ai_inventory(pSocket.acsrv_ai.constants.player.white, null) !== 0) &&
-						(pSocket.acsrv_ai._ai_inventory(pSocket.acsrv_ai.constants.player.black, null) !== 0);
+			stalemate =	(pSocket.acsrv_ai._ai_inventory(pSocket.acsrv_ai.constants.player.white, null, null) !== 0) &&
+						(pSocket.acsrv_ai._ai_inventory(pSocket.acsrv_ai.constants.player.black, null, null) !== 0);
 
 			//- Output
 			pSocket.write(
