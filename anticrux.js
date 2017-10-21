@@ -1896,19 +1896,19 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 
 	//-- Final text
 	return (output.length === 0 ? '' :
-				'<table class="ui-table" data-role="table" data-mode="table"> \
-				<thead> \
-					<tr> \
-						<th data-priority="1">Move</th> \
-						<th data-priority="2">Score</th> \
-						<th data-priority="3" title="Centipawns">cp</th> \
-						<th data-priority="4">&nbsp;</th> \
-					</tr> \
-				</thead> \
-				<tbody>' +
+				'<table class="ui-table AntiCrux-table" data-role="table" data-mode="table">' +
+				'<thead>' +
+				'	<tr>' +
+				'		<th data-priority="1">Move</th>' +
+				'		<th data-priority="2">Score</th>' +
+				'		<th data-priority="3" title="Centipawns">cp</th>' +
+				'		<th data-priority="4">&nbsp;</th>' +
+				'	</tr>' +
+				'</thead>' +
+				'<tbody>' +
 					output +
-				'</tbody> \
-				</table>'
+				'</tbody>' +
+				'</table>'
 			);
 };
 
@@ -2733,7 +2733,7 @@ AntiCrux.prototype._btod = function(pCode, pNode) {
 			'Node : '+JSON.stringify(obj) + "\n" +
 			'Explanation : '+JSON.stringify(this._explainNode(obj)) + "\n" +
 			"Stack : \n    "+(new Error().stack.trim().split("\n").join("\n    ")) + "\n";
-}
+};
 
 /**
  * The method duplicates a node. Only the basic fields are copied.
