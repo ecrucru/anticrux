@@ -464,6 +464,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- UI: display of the material difference and centipawns
 	- Engine: removed UCI option UCI_Chess960
 	- Engine: detailed dumps
+	- Engine: new start positions (pushed pawns)
 
 
 ### License

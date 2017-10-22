@@ -227,7 +227,7 @@ AntiCrux.prototype.getNewFischerId = function() {
  * @return {Boolean} *true* if successful, else *false*.
  */
 AntiCrux.prototype.defaultBoard = function(pFischer) {
-	var i, imin, imax, x, y, z, p, krn, pieces;
+	var i, imin, imax, j, k, x, y, z, p, krn, pieces, exchanges;
 
 	//-- Self
 	if (pFischer === undefined)
@@ -292,26 +292,49 @@ AntiCrux.prototype.defaultBoard = function(pFischer) {
 	if (this.options.variant.randomizedPosition !== 0)
 	{
 		this.fischer = null;
-		for (y=0 ; y<8 ; y++)
+		exchanges = [];
+		switch (this.options.variant.randomizedPosition)
 		{
-			for (x=0 ; x<8 ; x++)
-			{
-				i = 8*y + x;
+			case 5:
+				exchanges = [[1,3], [6,4]];
+				//No break
+			case 6:
+				if (exchanges.length === 0)
+					exchanges = [[1,4], [6,3]];
+				for (k=0 ; k<2 ; k++)
+					for (x=0 ; x<8 ; x++)
+					{
+						i = 8*exchanges[k][0] + x;
+						j = 8*exchanges[k][1] + x;
+						z = this._root_node.board[i];
+						this._root_node.board[i] = this._root_node.board[j];
+						this._root_node.board[j] = z;
+					}
+				break;
 
-				//- Finds the authorized boundaries
-				imin = (y<=1 ? [-1,0, 0, 0, 0] : [-1,56,48,32, 0])[this.options.variant.randomizedPosition];
-				imax = (y<=1 ? [-1,7,15,31,63] : [-1,63,63,63,63])[this.options.variant.randomizedPosition];
+			default:
+				for (y=0 ; y<8 ; y++)
+				{
+					for (x=0 ; x<8 ; x++)
+					{
+						i = 8*y + x;
 
-				//- A piece belongs to the scope of the shuffle
-				if ((i < imin) || (i > imax))
-					continue;
+						//- Finds the authorized boundaries
+						imin = (y<=1 ? [-1,0, 0, 0, 0,-1,-1] : [-1,56,48,32, 0,-1,-1])[this.options.variant.randomizedPosition];
+						imax = (y<=1 ? [-1,7,15,31,63,-1,-1] : [-1,63,63,63,63,-1,-1])[this.options.variant.randomizedPosition];
 
-				//- Exchanges the pieces
-				p = Math.round(Math.random() * (imax - imin)) + imin;
-				z = this._root_node.board[p];
-				this._root_node.board[p] = this._root_node.board[i];
-				this._root_node.board[i] = z;
-			}
+						//- A piece belongs to the scope of the shuffle
+						if ((i < imin) || (i > imax))
+							continue;
+
+						//- Exchanges the pieces
+						p = Math.round(Math.random() * (imax - imin)) + imin;
+						z = this._root_node.board[p];
+						this._root_node.board[p] = this._root_node.board[i];
+						this._root_node.board[i] = z;
+					}
+				}
+				break;
 		}
 	}
 
@@ -2505,7 +2528,7 @@ AntiCrux.prototype._init = function() {
 			promoteQueen : false,						//TRUE only promotes pawns as queen
 			superQueen : false,							//TRUE allows the queen for horse riding
 			pieces : 0,									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
-			randomizedPosition : 0						//Variant for the position: 0=normal, 1=main pieces, 2=one's side, 3=half board, 4=full board
+			randomizedPosition : 0						//Variant for the position: 0=normal, 1=asymmetric main pieces, 2=shuffled side, 3=shuffled half board, 4=shuffled full board, 5=pushed pawns, 6=reverse pushed pawns
 		},
 		board : {
 			fischer : this.getNewFischerId(),			//Default layout (519=classical)
