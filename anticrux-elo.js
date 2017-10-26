@@ -253,7 +253,7 @@ function acelo_play() {
 		else
 		{
 			job.referee.updateHalfMoveClock();
-			job.referee.logMove(move);
+			job.referee.logMove(move, null);
 			if (job.debugLevel >= 1)
 				console.log('- '+player.name+' : ' + moveStr);
 			player.ai.freeMemory();
@@ -300,7 +300,7 @@ function acelo_parseSfmv(pText) {
 		else
 		{
 			job.referee.updateHalfMoveClock();
-			job.referee.logMove(move);
+			job.referee.logMove(move, null);
 			if (job.debugLevel >= 1)
 				console.log('- '+player.name+' : ' + (job.debugLevel >= 1 ? job.referee.moveToString(move, node) : move));
 		}
@@ -366,7 +366,7 @@ function acelo_nextTurn() {
 		pgnHeader.BlackElo = engineOptions[job.engineTwo.type].elo[job.engineTwo.level-1];
 	if (job.disqualified !== null)
 		pgnHeader.Termination = 'rules infraction';
-	pgn = job.referee.toPgn(pgnHeader);
+	pgn = job.referee.toPgn(pgnHeader, false);
 
 	//-- Saves the PGN file
 	fs.appendFile(job.file, pgn+"\n\n", function(pError) {

@@ -89,7 +89,8 @@
 
 								<div data-role="navbar">
 									<ul>
-										<li><a href="#acui_tab_board_evaluation" class="ui-btn-active">Evaluation</a></li>
+										<li><a href="#acui_tab_board_evaluation" id="acui_tab_board_evaluation_header" class="ui-btn-active">Evaluation</a></li>
+										<li><a href="#acui_tab_board_score" id="acui_tab_board_score_header">Score</a></li>
 										<li><a href="#acui_tab_board_history" id="acui_tab_board_history_header">History</a></li>
 									</ul>
 								</div>
@@ -103,7 +104,13 @@
 										<span class="acui_block" id="acui_nps"></span>
 										<span class="acui_block" id="acui_matdiff"></span>
 									</div>
-									<div id="acui_moves"></div>
+									<div id="acui_score_scrollbox">
+										<div id="acui_moves"></div>
+									</div>
+								</div>
+
+								<div id="acui_tab_board_score" class="ui-body-d ui-content">
+									<canvas id="acui_graph_score"></canvas>
 								</div>
 
 								<div id="acui_tab_board_history" class="ui-body-d ui-content">

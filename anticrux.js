@@ -194,9 +194,11 @@ AntiCrux.prototype.clearBoard = function() {
 	this._highlight = [];
 	this._history = [];
 	this._history_fen0 = '';
+	this._scoreHistory = [];
 	this._lastDrawReason = '';
 	this._halfmoveclock = 0;
 	this._halfmoveclock_status = -1;		//-1=undef, 0=reset, 1=increment
+	this.freeMemory();
 	this._root_node = Object.create(null);
 	this._root_node.board = [];
 	this._root_node.magic = this.constants.bitmask.none | this.constants.player.white;
@@ -467,10 +469,15 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 		.fail(function(data) {
 			})
 		.done(function(data) {
-			var moves, move, playerIndication, i;
+			var	b, i,
+				variants, moves, move, playerIndication;
 
 			//-- Checks the variant
-			if (!that._has(data, 'variant', 'antichess'))
+			b = false;
+			variants = that.getVariants();
+			for (i=0 ; i<variants.length ; i++)
+				b |= that._has(data, 'variant', variants[i]);
+			if (!b)
 				return false;
 
 			//-- Sets the initial position of the board
@@ -497,6 +504,7 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 
 			//-- Processes the moves
 			that._history = [];
+			that._scoreHistory = [];
 			for (i=0 ; i<moves.length ; i++)
 			{
 				move = that.movePiece(moves[i], true, playerIndication);
@@ -505,7 +513,7 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 				else
 				{
 					that.updateHalfMoveClock();
-					that.logMove(move);
+					that.logMove(move, null);
 					that.highlightMove(move);
 					playerIndication = (playerIndication == that.constants.player.white ? that.constants.player.black : that.constants.player.white);
 				}
@@ -1121,21 +1129,54 @@ AntiCrux.prototype.resetStats = function() {
  *
  * @method logMove
  * @param {Integer} pMove A valid move fetched from *getMoveAI()* or *movePiece()*.
+ * @param {Integer} pScore Score of the position between -100 and 100. Providing *null* will 
+ *                         determine the score automatically without running a deep analysis.
  * @return {Boolean} *true* if successful, else *false*.
  */
-AntiCrux.prototype.logMove = function(pMove) {
+AntiCrux.prototype.logMove = function(pMove, pScore) {
+	var i, score, val;
+
 	//-- Checks
-	if ((pMove === undefined) || (pMove === 0))
+	if ((typeof pMove !== 'number') || (pMove === this.constants.noMove))
 		return false;
 
 	//-- Logs the move
-	if (typeof pMove !== 'number')
-		return false;
+	this._history.push(pMove);
+
+	//- Initializes the score to log
+	score = Object.create(null);
+	score.type = this.constants.bitmask.valuationStatic;
+	score.value = 0;
+
+	//- Automatic determination of the score
+	if (pScore === null)
+	{
+		// Retrieves the current data
+		val = null;
+		if (this._has(this._root_node, 'moves', true) && this._has(this._root_node, 'nodes', true))
+		{
+			i = this._root_node.moves.indexOf(pMove);
+			if (i !== -1)
+				val = this.getScore(this._root_node.nodes[i]);
+		}
+		if (val === null)
+			val = this.getScore(this._root_node);
+
+		// Saves the value
+		score.type = val.type;
+		score.value = val.valuePercent;
+	}
 	else
 	{
-		this._history.push(pMove);
-		return true;
+		if (typeof pScore != 'number')
+			pScore = 0;
+		score.type = this.constants.bitmask.valuationDeep;		//Assumed to be deep when the value is explicitly specified
+		score.value = Math.min(Math.max(pScore, -100), 100);
 	}
+
+	//- Saves the score
+	this._scoreHistory.push(score);
+	return true;
 };
 
 /**
@@ -1170,7 +1211,7 @@ AntiCrux.prototype.updateHalfMoveClock = function() {
  * @return {Boolean} *true* if successful, else *false*.
  */
 AntiCrux.prototype.undoMove = function() {
-	var i, hist;
+	var i, hist, scoreHist;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
@@ -1179,6 +1220,8 @@ AntiCrux.prototype.undoMove = function() {
 	//-- Prepares the board
 	hist = this._history.slice(0);
 	hist.pop();
+	scoreHist = this._scoreHistory.slice(0);
+	scoreHist.pop();
 	this.loadFen(this._history_fen0);
 
 	//-- Builds the new board
@@ -1193,6 +1236,7 @@ AntiCrux.prototype.undoMove = function() {
 		}
 	}
 	this._history = hist;
+	this._scoreHistory = scoreHist;
 	return true;
 };
 
@@ -1824,6 +1868,16 @@ AntiCrux.prototype.getHistoryHtml = function() {
 };
 
 /**
+ * The method returns the history of the scores in an array.
+ *
+ * @method getScoreHistory
+ * @return {Array} All the evaluations.
+ */
+AntiCrux.prototype.getScoreHistory = function() {
+	return this._scoreHistory.slice(0);
+};
+
+/**
  * The method returns the possible moves and their valuation in HTML format.
  *
  * @method getMovesHtml
@@ -2191,12 +2245,13 @@ AntiCrux.prototype.toText = function(pNode) {
  * The specification is <a href="https://www.chessclub.com/user/help/PGN-spec">available online</a>.
  *
  * @method toPgn
- * @param {Object} pHeader (Optional) The object is composed of keys and values related to the PGN specification.
+ * @param {Object} pHeader The object is composed of keys and values related to the PGN specification.
+ * @param {Boolean} pScore This will add the deep score in the comment of every move.
  * @return {String} PGN content.
  */
-AntiCrux.prototype.toPgn = function(pHeader) {
+AntiCrux.prototype.toPgn = function(pHeader, pScore) {
 	var	lf_setheader, pgnHead, pgnItem,
-		i, e, turn, moveStr, symbols;
+		i, e, mark, turn, moveStr, symbols;
 
 	//-- Checks
 	if (!this._has(this, '_history', true) || !this._has(this, '_history_fen0', true))
@@ -2256,6 +2311,7 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	//-- Moves the pieces
 	pgnItem = '';
 	turn = 0;
+	mark = 0;
 	for (i=0 ; i<this._history.length ; i++)
 	{
 		//- Next turn
@@ -2269,8 +2325,18 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 		else
 		{
 			pgnItem += ' ' + moveStr;
+
+			//- The termination mark cannot be after the comment
+			if (i == this._history.length-1)
+				mark = pgnItem.length;
+
+			//- Comment
+			if (pScore && (this._scoreHistory[i].type == this.constants.bitmask.valuationDeep))
+				pgnItem += ' {'+this._scoreHistory[i].value+'%}';
+
+			//- Other updates
 			this._helper.updateHalfMoveClock();
-			this._helper.logMove(this._history[i]);
+			this._helper.logMove(this._history[i], this._scoreHistory[i]);
 			this._helper.switchPlayer();
 		}
 	}
@@ -2279,27 +2345,24 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	this.options.board.symbols = symbols;
 
 	//-- Marks the termination of the game
-	if (pHeader.Result != '*')
-		pgnItem += '# ' + pHeader.Result;
-	else
+	if (pHeader.Result == '*')
+	{
 		switch (this._helper.getWinner())
 		{
 			case this._helper.constants.player.white:
-				pgnItem += '# 1-0';
 				pHeader.Result = '1-0';
 				break;
 			case this._helper.constants.player.black:
-				pgnItem += '# 0-1';
 				pHeader.Result = '0-1';
 				break;
 			case this._helper.constants.player.none:
 				if (this._helper.isDraw())
-				{
-					pgnItem += '# 1/2-1/2';
 					pHeader.Result = '1/2-1/2';
-				}
 				break;
 		}
+	}
+	if ((pHeader.Result != '') && (pHeader.Result != '*'))
+		pgnItem = pgnItem.substring(0, mark) + '#' + pgnItem.substring(mark) + ' ' + pHeader.Result;
 	lf_setheader('Termination', (pHeader.Result != '*' ? 'normal' : 'unterminated'));
 
 	//-- Builds the header
@@ -2314,7 +2377,7 @@ AntiCrux.prototype.toPgn = function(pHeader) {
 	pgnHead += "\n";
 
 	//-- Result
-	return pgnHead + pgnItem;
+	return pgnHead + pgnItem + "\n";
 };
 
 /**

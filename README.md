@@ -465,6 +465,10 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Engine: removed UCI option UCI_Chess960
 	- Engine: detailed dumps
 	- Engine: new start positions (pushed pawns)
+	- Engine: new parameter for AntiCrux.prototype.logMove
+	- Engine: new method AntiCrux.prototype.getScoreHistory
+	- UI: new graph to display the historical score
+	- Engine: new parameter for AntiCrux.prototype.toPgn
 
 
 ### License
@@ -764,6 +768,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getPieceSymbol(pPiece, pPlayer, pSymbols)
 - AntiCrux.getPlayer(pNode)
 - AntiCrux.getScore(pNode)
+- AntiCrux.getScoreHistory()
 - AntiCrux.getStatsAI ()
 - AntiCrux.getVariants()
 - AntiCrux.getWinner(pNode)
@@ -778,7 +783,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.isPossibleDraw(pNode)
 - AntiCrux.loadFen(pFen)
 - AntiCrux.loadLichess(pKey)
-- AntiCrux.logMove(pMove)
+- AntiCrux.logMove(pMove, pScore)
 - AntiCrux.movePiece(pMove, pCheckLegit, pPlayerIndication, pNode)
 - AntiCrux.moveToString(pMove, pNode)
 - AntiCrux.moveToUCI(pMove)
@@ -792,7 +797,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.toConsole(pBorder, pNode)
 - AntiCrux.toFen(pNode)
 - AntiCrux.toHtml(pNode)
-- AntiCrux.toPgn(pHeader)
+- AntiCrux.toPgn(pHeader, pScore)
 - AntiCrux.toText(pNode)
 - AntiCrux.undoMove()
 - AntiCrux.updateHalfMoveClock()

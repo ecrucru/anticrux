@@ -78,6 +78,8 @@ function acui_options_load() {
 }
 
 function acui_reset_ui(pResetPlayer) {
+	var element;
+
 	ui_rewind = false;
 	$('#acui_tab_board_header').trigger('click');
 	$('#acui_valuation').val(0).slider('refresh');
@@ -85,6 +87,11 @@ function acui_reset_ui(pResetPlayer) {
 	$('#acui_sect_rewind').hide();
 	$('#acui_pgn').addClass('ui-disabled');
 	ai.resetStats();
+
+	element = document.getElementById('acui_graph_score');
+	element.getContext('2d').fillStyle = '#FFFFFF';
+	element.getContext('2d').fillRect(0, 0, element.width, element.height);
+
 	if (pResetPlayer)
 		$('#acui_player').val(ai.constants.player.white).change();
 }
@@ -142,6 +149,7 @@ function acui_refresh_board() {
 
 				// Explicit move for the user
 				move = ai.movePiece(ui_move, true, player);
+				acui_refresh_stats(move);
 				if (move != ai.constants.noMove)
 					acui_promote(move);
 				else
@@ -206,6 +214,82 @@ function acui_refresh_moves() {
 	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistical data with the professional mode.</div>' : ai.getMovesHtml(parseInt($('#acui_player').val())));
 }
 
+function acui_refresh_score() {
+	var	i, h, w, maxW=10, eW,
+		element, context,
+		data, smooth;
+
+	//-- Library
+	smooth = function(pValue) {
+		//* Linear */		return -pValue/100;
+		/* Exponential */	return Math.sign(pValue) * (Math.exp(-0.05*Math.abs(pValue))-1);
+	};
+
+	//-- Elements
+	element = document.getElementById('acui_graph_score');
+	context = element.getContext('2d');
+	h = element.height;
+	w = element.width;
+	data = ai.getScoreHistory();
+
+	//-- Clears the background
+	context.fillStyle = (ai.options.board.darkTheme ? '#000000' : '#FFFFFF');
+	context.fillRect(0, 0, w, h);
+
+	//-- 10% line
+	context.setLineDash([3, 8]);
+	context.strokeStyle = (ai.options.board.darkTheme ? 'white' : 'gray');
+	
+	context.beginPath();
+	context.moveTo(0, h/2 * (1+smooth(10)));
+	context.lineTo(w, h/2 * (1+smooth(10)));
+	context.closePath();
+	context.stroke();
+
+	context.beginPath();
+	context.moveTo(0, h/2 * (1+smooth(-10)));
+	context.lineTo(w, h/2 * (1+smooth(-10)));
+	context.closePath();
+	context.stroke();
+
+	//-- 50% line
+	context.beginPath();
+	context.moveTo(0, h/2 * (1+smooth(50)));
+	context.lineTo(w, h/2 * (1+smooth(50)));
+	context.closePath();
+	context.stroke();
+
+	context.beginPath();
+	context.moveTo(0, h/2 * (1+smooth(-50)));
+	context.lineTo(w, h/2 * (1+smooth(-50)));
+	context.closePath();
+	context.stroke();
+
+	//-- Width of the bar element
+	eW = w/data.length;
+	eW = (eW > maxW ? maxW : Math.floor(eW));
+
+	//-- Draw the graph
+	for (i=0 ; i<data.length ; i++)
+	{
+		//- Checks the value
+		if (data[i] === 0)
+			continue;
+
+		//- Bar
+		context.fillStyle = (data[i].type == ai.constants.bitmask.valuationDeep ? '#80F080' : '#F08040');
+		context.fillRect(eW*i, h/2, eW, (h/2) * smooth(data[i].value));
+	}
+
+	//-- Middle line
+	context.setLineDash([]);
+	context.beginPath();
+	context.moveTo(0, h/2);
+	context.lineTo(w, h/2);
+	context.closePath();
+	context.stroke();
+}
+
 function acui_refresh_history(pScroll) {
 	//-- Main table
 	var hist = ai.getHistoryHtml();
@@ -225,7 +309,8 @@ function acui_refresh_history(pScroll) {
 	$('.AntiCrux-history-item').click(function() {
 		var	i,
 			index = parseInt(this.dataset.index),
-			hist = ai.getHistory();
+			hist = ai.getHistory(),
+			scores = ai.getScoreHistory();
 
 		//-- Checks
 		if (hist.length === 0)
@@ -246,7 +331,7 @@ function acui_refresh_history(pScroll) {
 			else
 			{
 				ai_rewind.updateHalfMoveClock();
-				ai_rewind.logMove(hist[i]);
+				ai_rewind.logMove(hist[i], scores[i]);
 				ai_rewind.switchPlayer();
 				ai_rewind.highlightMove(hist[i]);
 			}
@@ -257,18 +342,28 @@ function acui_refresh_history(pScroll) {
 		ui_rewind = true;
 		$('#acui_player').val(ai_rewind.getPlayer()).change();
 		acui_refresh_matdiff();
+		acui_refresh_score();
 		acui_refresh_history(false);
 		$('#acui_board').html(ai_rewind.toHtml());		//No event is attached to the cells
 		return true;
 	});
 }
 
-function acui_refresh_stats() {
-	//Method to be called after the move is done because the score is partially evaluated with the static view
-	var score, stats, objs, obj, i;
+function acui_refresh_stats(pMove) {
+	//The method has to be called after that the move is done
+	var node, score, stats, objs, obj, i;
+
+	//-- Gets the node
+	node = ai.getMainNode();
+	if (ai._has(node, 'moves', true) && ai._has(node, 'nodes', true) && (pMove !== ai.constants.noMove))
+	{
+		i = node.moves.indexOf(pMove);
+		if (i !== -1)
+			node = node.nodes[i];
+	}
 
 	//-- Sets the texts
-	score = ai.getScore();
+	score = ai.getScore(node);
 	stats = ai.getStatsAI();
 	$('#acui_valuation').val($('#acui_option_pro').prop('checked') ? 0 : score.valuePercent).slider('refresh');
 	$('#acui_score').html($('#acui_option_pro').prop('checked') ? 0 : score.valuePercent);
@@ -307,10 +402,11 @@ function acui_promote(pMove) {
 }
 
 function acui_afterHumanMove() {
-	ui_move = '';
 	ai.updateHalfMoveClock();
-	ai.logMove(ui_move_pending);
+	ai.logMove(ui_move_pending, null);
+	ui_move = '';
 	ui_move_pending = ai.constants.noMove;
+	acui_refresh_score();
 	acui_refresh_history(true);
 	acui_refresh_board();
 	if (ai.isEndGame(true))
@@ -471,15 +567,15 @@ $(document).ready(function() {
 	});
 
 	$('#acui_play_ai').click(function() {
-		var buffer;
+		var buffer, player, move;
 
 		//-- Checks the current mode
 		if (acui_isRewind())
 			return false;
 
 		//-- Inputs
-		var	player = parseInt($('#acui_player').val()),
-			move = ai.getMoveAI(player);
+		player = parseInt($('#acui_player').val());
+		move = ai.getMoveAI(player);
 
 		//-- Checks
 		if (move == ai.constants.noMove)
@@ -497,12 +593,13 @@ $(document).ready(function() {
 		acui_refresh_moves();
 		if (ai.movePiece(move, true, player) != ai.constants.noMove)
 		{
-			acui_refresh_stats();
-			ui_move = '';
 			ai.updateHalfMoveClock();
-			ai.logMove(move);
-			acui_refresh_history(true);
 			ai.highlightMove(move);
+			ai.logMove(move, null);
+			ui_move = '';
+			acui_refresh_stats(move);
+			acui_refresh_score();
+			acui_refresh_history(true);
 			if (ai.isEndGame(true))
 				acui_showWinner();
 			else
@@ -541,8 +638,7 @@ $(document).ready(function() {
 
 		//-- Explicit move for the user
 		move = ai.movePiece(move, true, player);
-		if (!ai.options.board.noStatOnOwnMove)
-			acui_refresh_stats();
+		acui_refresh_stats(move);
 		if (move != ai.constants.noMove)
 			acui_promote(move);
 		else
@@ -573,9 +669,10 @@ $(document).ready(function() {
 		ui_move = '';
 		ai.highlightMoves(false);
 		acui_refresh_moves();
-		acui_refresh_stats();
+		acui_refresh_stats(ai.constants.noMove);
 		acui_refresh_board();
 		ai.freeMemory();
+		$('#acui_tab_board_evaluation_header').trigger('click');
 		return true;
 	});
 
@@ -604,7 +701,8 @@ $(document).ready(function() {
 			ui_possibledraw = false;
 			acui_reset_ui(false);
 			acui_refresh_moves();
-			acui_refresh_stats();
+			acui_refresh_stats(ai.constants.noMove);
+			acui_refresh_score();
 			acui_refresh_history(true);
 			hist = ai.getHistory();
 			if (hist.length > 0)
@@ -634,7 +732,7 @@ $(document).ready(function() {
 		var dl, pgn, obj;
 
 		//-- Gets the PGN data
-		pgn = ai.toPgn({});
+		pgn = ai.toPgn({}, false);
 		if (pgn.length === 0)
 			acui_popup('No data to export to PGN.');
 		else
@@ -672,6 +770,7 @@ $(document).ready(function() {
 		ui_possibledraw = false;
 		acui_reset_ui(true);
 		acui_refresh_board();
+		acui_refresh_score();
 		return true;
 	});
 
@@ -889,6 +988,7 @@ $(document).ready(function() {
 		$('#acui_rewind, #acui_switch_ui').removeClass('ui-btn-a ui-btn-b').addClass('ui-btn-' + (ai.options.board.darkTheme?'a':'b'));
 		$('#acui_lastmove, #acui_assistance').html('');
 		acui_refresh_matdiff();
+		acui_refresh_score();
 		acui_refresh_history(true);
 	});
 
