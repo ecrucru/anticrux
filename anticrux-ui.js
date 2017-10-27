@@ -87,11 +87,7 @@ function acui_reset_ui(pResetPlayer) {
 	$('#acui_sect_rewind').hide();
 	$('#acui_pgn').addClass('ui-disabled');
 	ai.resetStats();
-
-	element = document.getElementById('acui_graph_score');
-	element.getContext('2d').fillStyle = '#FFFFFF';
-	element.getContext('2d').fillRect(0, 0, element.width, element.height);
-
+	$('#acui_graph_score').empty();
 	if (pResetPlayer)
 		$('#acui_player').val(ai.constants.player.white).change();
 }
@@ -215,79 +211,74 @@ function acui_refresh_moves() {
 }
 
 function acui_refresh_score() {
-	var	i, h, w, maxW=10, eW,
-		element, context,
-		data, smooth;
+	var canvas, i, h, w, eW, v, data, smooth;
 
 	//-- Library
 	smooth = function(pValue) {
-		//* Linear */		return -pValue/100;
-		/* Exponential */	return Math.sign(pValue) * (Math.exp(-0.05*Math.abs(pValue))-1);
+		/* Linear */		return -pValue/101;
+		//* Exponential */	return (pValue < 0 ? -1 : 1) * (Math.exp(-0.05*Math.abs(pValue))-1);
 	};
 
-	//-- Elements
-	element = document.getElementById('acui_graph_score');
-	context = element.getContext('2d');
-	h = element.height;
-	w = element.width;
+	//-- Initializes
+	canvas = $('#acui_graph_score');
+	h = canvas.height();
+	w = canvas.width();
 	data = ai.getScoreHistory();
 
-	//-- Clears the background
-	context.fillStyle = (ai.options.board.darkTheme ? '#000000' : '#FFFFFF');
-	context.fillRect(0, 0, w, h);
-
-	//-- 10% line
-	context.setLineDash([3, 8]);
-	context.strokeStyle = (ai.options.board.darkTheme ? 'white' : 'gray');
-	
-	context.beginPath();
-	context.moveTo(0, h/2 * (1+smooth(10)));
-	context.lineTo(w, h/2 * (1+smooth(10)));
-	context.closePath();
-	context.stroke();
-
-	context.beginPath();
-	context.moveTo(0, h/2 * (1+smooth(-10)));
-	context.lineTo(w, h/2 * (1+smooth(-10)));
-	context.closePath();
-	context.stroke();
-
-	//-- 50% line
-	context.beginPath();
-	context.moveTo(0, h/2 * (1+smooth(50)));
-	context.lineTo(w, h/2 * (1+smooth(50)));
-	context.closePath();
-	context.stroke();
-
-	context.beginPath();
-	context.moveTo(0, h/2 * (1+smooth(-50)));
-	context.lineTo(w, h/2 * (1+smooth(-50)));
-	context.closePath();
-	context.stroke();
+	//-- Draws the reference lines
+	canvas.empty();
+	canvas.append($(document.createElement('div'))
+							.css('position',			'absolute')
+							.css('width',				w+'px')
+							.css('height',				Math.round(h * Math.abs(smooth(50)))+'px')
+							.css('top',					Math.round((h/2) * (1 + smooth(50)))+'px')
+							.css('left',				'0px')
+							.css('border-top',			'1px dashed gray')
+							.css('border-bottom',		'1px dashed gray')
+				);
+	canvas.append($(document.createElement('div'))
+							.css('position',			'absolute')
+							.css('width',				w+'px')
+							.css('height',				Math.round(h * Math.abs(smooth(10)))+'px')
+							.css('top',					Math.round((h/2) * (1 + smooth(10)))+'px')
+							.css('left',				'0px')
+							.css('border-top',			'1px dashed gray')
+							.css('border-bottom',		'1px dashed gray')
+				);
 
 	//-- Width of the bar element
 	eW = w/data.length;
-	eW = (eW > maxW ? maxW : Math.floor(eW));
+	eW = (eW > 10 ? 10 : Math.floor(eW));
 
-	//-- Draw the graph
+	//-- Draws the bars
 	for (i=0 ; i<data.length ; i++)
 	{
 		//- Checks the value
-		if (data[i] === 0)
+		if (data[i].value === 0)
 			continue;
 
 		//- Bar
-		context.fillStyle = (data[i].type == ai.constants.bitmask.valuationDeep ? '#80F080' : '#F08040');
-		context.fillRect(eW*i, h/2, eW, (h/2) * smooth(data[i].value));
+		v = (h/2) * (1 + smooth(data[i].value));
+		canvas.append($(document.createElement('div'))
+								.css('position',							'absolute')
+								.css('left',								(eW*i)+'px')
+								.css('top',									Math.round(v<h/2 ? v : h/2)+'px')
+								.css('width',								eW+'px')
+								.css('height',								Math.round(Math.abs(h/2-v))+'px')
+								.css('border-'+(v<h/2 ? 'top' :'bottom'),	'1px solid '+(ai.options.board.darkTheme ? 'white' : 'black'))
+								.css('background-color',					(data[i].type==ai.constants.bitmask.valuationDeep ? '#A6ABD6' : '#F08040'))
+					);
 	}
 
-	//-- Middle line
-	context.setLineDash([]);
-	context.beginPath();
-	context.moveTo(0, h/2);
-	context.lineTo(w, h/2);
-	context.closePath();
-	context.stroke();
+	//-- Draws the middle line
+	canvas.append($(document.createElement('div'))
+							.css('position',			'absolute')
+							.css('width',				w+'px')
+							.css('height',				'1px')
+							.css('top',					Math.round(h/2)+'px')
+							.css('left',				'0px')
+							.css('background-color',	(ai.options.board.darkTheme ? 'white' : 'black'))
+				);
 }
 
 function acui_refresh_history(pScroll) {
