@@ -23,6 +23,14 @@
 
 /*===== General styles =====*/
 
+.AntiCrux-background-black {
+	background-color:black;
+}
+
+.AntiCrux-background-white {
+	background-color:white;
+}
+
 .AntiCrux-hSizer {
 	overflow:hidden;
 }
@@ -92,6 +100,15 @@
 	height:20px;
 	width:20px;
 	background-color:#A6ABD6;
+	position:relative;
+}
+.AntiCrux-board-coordinates-corner-player {
+	position:absolute;
+	left:4px;
+	top:4px;
+	width:10px;
+	height:10px;
+	border:1px solid black;
 }
 
 .AntiCrux-board-line {

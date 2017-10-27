@@ -553,7 +553,10 @@ $(document).ready(function() {
 	//-- Events (Board)
 	$('#acui_player').change(function() {
 		if (!ui_rewind)
+		{
 			ai.setPlayer(parseInt($('#acui_player').val()));
+			acui_refresh_board();
+		}
 		return !ui_rewind;
 	});
 

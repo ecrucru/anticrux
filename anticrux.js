@@ -2056,7 +2056,7 @@ AntiCrux.prototype.toHtml = function(pNode) {
 	{
 		abc = abc.toUpperCase();
 		output += '<div class="AntiCrux-board-line">';
-		output += '<div class="AntiCrux-board-coordinates-corner"></div>';
+		output += '<div class="AntiCrux-board-coordinates-corner"><div class="AntiCrux-board-coordinates-corner-player AntiCrux-background-'+(((pNode.magic & this.constants.bitmask.player) == this.constants.player.white)?'white':'black')+'"></div></div>';
 		for (x=0 ; x<abc.length ; x++)
 			output += '<div class="AntiCrux-board-coordinates-horizontal">' + abc[rotated?7-x:x] + '</div>';
 		output += '</div>';
