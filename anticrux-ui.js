@@ -834,6 +834,7 @@ $(document).ready(function() {
 			ui_move = '';
 			ui_possibledraw = false;
 			acui_reset_ui(true);
+			$('#acui_option_rotated').prop('checked', player==ai.constants.player.black).checkboxradio('refresh').change();
 			acui_refresh_board();
 			$('#acui_tab_board_header').trigger('click');
 			$('#acui_player').val(player).change();

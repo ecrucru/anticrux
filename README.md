@@ -470,6 +470,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- UI: new graph to display the historical score
 	- Engine: new parameter for AntiCrux.prototype.toPgn
 	- UI: player displayed on the board
+	- UI: rotated board after a FEN is loaded
 
 
 ### License
