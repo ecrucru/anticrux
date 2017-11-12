@@ -101,10 +101,10 @@ var server = net.createServer(function(pSocket) {
 			pSocket.acsrv_datastream += data;
 			server.acsrv_process(pSocket);
 		})
-		.on('error', function(err) {
+		.on('error', function(/*err*/) {
 			//throw err;
 		})
-		.on('close', function(had_error) {
+		.on('close', function(/*had_error*/) {
 			server.acsrv_connections--;
 		});
 	})

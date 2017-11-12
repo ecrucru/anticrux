@@ -79,8 +79,6 @@ function acui_options_load() {
 }
 
 function acui_reset_ui(pResetPlayer) {
-	var element;
-
 	ui_rewind = false;
 	$('#acui_tab_board_header').trigger('click');
 	$('#acui_valuation').val(0).slider('refresh');

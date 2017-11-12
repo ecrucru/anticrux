@@ -438,7 +438,7 @@ AntiCrux.prototype.loadFen = function(pFen) {
 	}
 	this.clearBoard();
 	that = this;
-	board.forEach(function(element, index, array) {
+	board.forEach(function(element, index/*, array*/) {
 						that._root_node.board[index] = element;
 					});
 
@@ -503,9 +503,9 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 	that = this;
 	$.ajaxSetup({ cache: false });
 	$.get(	'https://lichess.org/api/game/'+pKey+'?with_fens=1&with_moves=1',
-			function(data) {
+			function(/*data*/) {
 			})
-		.fail(function(data) {
+		.fail(function(/*data*/) {
 			})
 		.done(function(data) {
 			var	b, i,
