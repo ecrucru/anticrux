@@ -478,7 +478,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 
 ### License
 
-AntiCrux is released under the terms of the **GNU Affero General Public License version 3**.
+AntiCrux is released under the terms of the "GNU Affero General Public License version 3".
 
 - https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -505,6 +505,22 @@ AntiCrux is released under the terms of the **GNU Affero General Public License 
 */
 ```
 
+Some files of the package contain derivative works subject to the following licenses :
+
+```javascript
+/*
+	Copyright (C) 2002-2006 Catalin Francu <cata@francu.com>
+	Some files of the package contain a derivative work based on Nilatac released under GPL v2+.
+
+		https://github.com/CatalinFrancu/nilatac/
+		http://catalin.francu.com/nilatac/
+*/
+```
+
+The beautiful chess pieces made by Colin Burnett on Wikipedia are released under the terms of the "Creative Commons Attribution-ShareAlike license version 3.0" (CC BY-SA 3.0).
+
+- https://creativecommons.org/licenses/by-sa/3.0/
+- https://en.wikipedia.org/wiki/Chess_piece
 
 
 ## Corner for developers
