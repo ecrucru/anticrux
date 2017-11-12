@@ -471,6 +471,9 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Engine: new parameter for AntiCrux.prototype.toPgn
 	- UI: player displayed on the board
 	- UI: rotated board after a FEN is loaded
+	- Library: new method AntiCrux.prototype.loadOpeningBook
+	- Library: new option AntiCrux.options.ai.openingBook
+	- Library: opening book based on Nilatac
 
 
 ### License
@@ -701,24 +704,14 @@ Please note that the web-interface offers all the options individually and fewer
 | worstCase        | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X    | X  |
 | opportunistic    | -   | -   | -   | X   | X   | X   | X   | X   | X   | X   | X   | X    | -    | -    | -    | -    | -    | -    | -    | -  |
 | distance         | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X    | X    | X    | X    | X    | X    | X    | X    | X  |
+| openingBook      | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 2   | 2   | 4    | 4    | 6    | 6    | 8    | 10   | 12   | 12   | 12 |
 | handicap         | 0   | 80  | 60  | 40  | 20  | 10  | 5   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  |
 | oyster           | X   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -    | -    | -    | -    | -    | -    | -    | -    | -  |
 
 
 ### Notations
 
-The board is a mono-dimensional array of 64 cells. Black is at the top and White is at the bottom, whatever the rotation of the board.
-
-|     | A  | B  | C  | D  | E  | F  | G  | H  |
-|:---:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-|**8**|  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-|**7**|  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 |
-|**6**| 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 |
-|**5**| 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 |
-|**4**| 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 |
-|**3**| 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 |
-|**2**| 48 | 49 | 50 | 51 | 52 | 53 | 54 | 55 |
-|**1**| 56 | 57 | 58 | 59 | 60 | 61 | 62 | 63 |
+The board is a mono-dimensional 8x8 array of 64 cells. Black is at the top and White is at the bottom, whatever the rotation of the board.
 
 The pieces are represented with an arbitrary internal identifier :
 
@@ -732,15 +725,52 @@ The pieces are represented with an arbitrary internal identifier :
 
 The pieces are owned by a player :
 
-- AntiCrux.constants.player.black
+- AntiCrux.constants.player.black (negative values)
 - AntiCrux.constants.player.none
-- AntiCrux.constants.player.white
+- AntiCrux.constants.player.white (positive values)
 
-The moves are identified by 3 notation systems :
+The moves are identified by different notation systems :
 
-- Algebraic notation : e3, Ra6, Nfxe5, h8=Q... This classical notation is practical for the human players but necessitates a complex processing to convert it into X/Y coordinates. It is used to register the moves and to show their history.
-- Index-based notation : 0=A8 and 63=H1 as seen above. When looping an the mono-dimensional array of the board, the analysis is very simple to mark cells. It is then used internally to highlight the cells.
-- XY notation : massively used internally for the processing of the moves, X and Y are concatenated. The first figure is X from 0 to 7. The second figure is Y from 0 to 7. For example, 56=G3. You can combine up to 5 figures to build a move : the first one is the promotion based on *AntiCrux.constants.piece*, the following 2 figures describe the source position, the following 2 figures describe the target position. For example, 51201 is "cxb8=Q".
+- Algebraic notation : `e3`, `Ra6`, `Nfxe5`, `h8=Q`... This classical notation for the moves is practical for the human players but it necessitates a complex processing to convert it into 2 couples of X/Y coordinates. It is used when the moves have to be publicly displayed or exported.
+
+- Index-based notation : every cell is assigned to a sequential counter. It starts with `0` (A8) and ends with `63` (H1). This notation is internally used to highlight the moves because it requires no conversion when AntiCrux loops on a mono-dimensional array.
+
+|     | A  | B  | C  | D  | E  | F  | G  | H  |
+|:---:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|**8**|  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+|**7**|  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|**6**| 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 |
+|**5**| 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 |
+|**4**| 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 |
+|**3**| 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 |
+|**2**| 48 | 49 | 50 | 51 | 52 | 53 | 54 | 55 |
+|**1**| 56 | 57 | 58 | 59 | 60 | 61 | 62 | 63 |
+
+- XY notation : this is the standard notation for all the internal processings because it is readable by the development team even if it may not have the best performances. To describe a cell, the format concatenates Y and X, both ranging from 0 to 7. To describe a move, the source and target cells are concatened. To describe a promotion, there is a leading figure matching with a piece. For example, `51201` (5+12+01) is equal to `cxb8=Q`.
+
+|     | A  | B  | C  | D  | E  | F  | G  | H  |
+|:---:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|**8**| 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 |
+|**7**| 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 |
+|**6**| 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 |
+|**5**| 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 |
+|**4**| 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 |
+|**3**| 50 | 51 | 52 | 53 | 54 | 55 | 56 | 57 |
+|**2**| 60 | 61 | 62 | 63 | 64 | 65 | 66 | 67 |
+|**1**| 70 | 71 | 72 | 73 | 74 | 75 | 76 | 77 |
+
+- Character-based notation : for the reasons of being compact and parseable by JSON, the opening book is heavily compressed. Each cell matches with a character compatible with JavaScript. The current mapping is arbitrary and may evolve at any moment for the purpose of providing the most compact JSON-like structure for the opening book. A move is described by the concatenation of 2 of these characters.
+
+|     | A  | B  | C  | D  | E  | F  | G  | H  |
+|:---:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|**8**| A  | B  | C  | D  | E  | F  | G  | H  |
+|**7**| I  | J  | K  | L  | M  | N  | O  | P  |
+|**6**| Q  | R  | S  | T  | U  | V  | W  | X  |
+|**5**| X  | Z  | _  | µ  | 0  | 1  | 2  | 3  |
+|**4**| 4  | 5  | 6  | 7  | 8  | 9  | a  | b  |
+|**3**| c  | d  | e  | f  | g  | h  | i  | j  |
+|**2**| k  | l  | m  | n  | o  | p  | q  | r  |
+|**1**| s  | t  | u  | v  | w  | x  | y  | z  |
 
 
 ### API
@@ -785,6 +815,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.isPossibleDraw(pNode)
 - AntiCrux.loadFen(pFen)
 - AntiCrux.loadLichess(pKey)
+- AntiCrux.loadOpeningBook()
 - AntiCrux.logMove(pMove, pScore)
 - AntiCrux.movePiece(pMove, pCheckLegit, pPlayerIndication, pNode)
 - AntiCrux.moveToString(pMove, pNode)
@@ -804,6 +835,6 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.undoMove()
 - AntiCrux.updateHalfMoveClock()
 
-A *node* is an object which represents a state of the board with additional information. It is linked with other nodes to describe the possible target positions through a network of moves. The principal node is the *root node* (a private attribute), so by using the public methods of the library, you should not have to handle the nodes on your own. That's why the parameter *pNode* is generally optional.
+A node is an object which represents a state of the board with additional information. It is linked with other nodes to describe the possible target positions through a network of moves. The principal node is the "*root node*" (a private attribute), so by using the public methods of the library, you should not have to handle the nodes on your own. That's why the parameter *pNode* is generally optional.
 
-To get an extended help about the API, you can refer to the comments written in the library itself. They can be read from a web-browser by using YuiDoc. Run the script `run_yuidoc_server.bat` (Windows) or `run_yuidoc_server.sh` (Linux), then access to http://localhost:3000
+**Note :** to get an extended help about the API, you can refer to the comments written in the library itself. Or they can be read from a web-browser by using YuiDoc. Run the script `run_yuidoc_server.bat` (Windows) or `run_yuidoc_server.sh` (Linux), then access to http://localhost:3000

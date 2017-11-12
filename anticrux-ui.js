@@ -25,7 +25,7 @@
 
 var	ai = new AntiCrux(),
 	ai_rewind = new AntiCrux(),
-	ui_mobile, ui_cordova, ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
+	ui_mobile, ui_cordova, ui_loaded, ui_move, ui_move_pending, ui_possibledraw, ui_rewind, ui_rematch;
 
 ai.options.board.symbols = true;
 ai.defaultBoard();
@@ -56,6 +56,7 @@ function acui_options_load() {
 		$('#acui_option_worstcase').prop('checked', ai.options.ai.worstCase);
 		$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
 		$('#acui_option_distance').prop('checked', ai.options.ai.distance);
+		$('#acui_option_openingbook').val(ai.options.ai.openingBook).slider('refresh');
 		$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
 		$('#acui_option_oyster').prop('checked', ai.options.ai.oyster);
 
@@ -215,8 +216,8 @@ function acui_refresh_score() {
 
 	//-- Library
 	smooth = function(pValue) {
-		/* Linear */		return -pValue/101;
-		//* Exponential */	return (pValue < 0 ? -1 : 1) * (Math.exp(-0.05*Math.abs(pValue))-1);
+		return -pValue/101;															//Linear
+		//return (pValue < 0 ? -1 : 1) * (Math.exp(-0.05*Math.abs(pValue))-1);		//Exponential
 	};
 
 	//-- Initializes
@@ -513,6 +514,7 @@ $(document).ready(function() {
 	//-- Initialization
 	ui_mobile = ($('#acui_ismobile').length > 0);
 	ui_cordova = (window.cordova !== undefined);
+	ui_loaded = false;
 	ui_move = '';
 	ui_move_pending = ai.constants.noMove;
 	ui_possibledraw = false;
@@ -538,6 +540,9 @@ $(document).ready(function() {
 		$('<option/>').val(i).html('Level '+i + (ai.options.ai.elo>0 ? ' ('+ai.options.ai.elo+')' : '')).appendTo('#acui_option_predef');
 	}
 	ai.setLevel(defaultLevel);
+
+	//-- Updates the maximal depth of the opening book
+	$('#acui_option_openingbook').attr('max', ai._openingBookDepth).slider('refresh');
 
 	//-- Events (General)
 	$('textarea').on('click', function () {
@@ -928,6 +933,10 @@ $(document).ready(function() {
 	});
 
 	$('.AntiCrux-ui-option').change(function() {
+		//-- Checks
+		if (!ui_loaded)
+			return false;
+
 		//-- Common elements
 		ai.options.board.darkTheme = $('#acui_option_darktheme').prop('checked');
 		ai.options.board.rotated = $('#acui_option_rotated').prop('checked');
@@ -947,6 +956,7 @@ $(document).ready(function() {
 			ai.options.ai.worstCase					= $('#acui_option_worstcase').prop('checked');
 			ai.options.ai.opportunistic				= $('#acui_option_opportunistic').prop('checked');
 			ai.options.ai.distance					= $('#acui_option_distance').prop('checked');
+			ai.options.ai.openingBook				= parseInt($('#acui_option_openingbook').val());
 			ai.options.ai.handicap					= parseInt($('#acui_option_handicap').val());
 			ai.options.ai.oyster					= $('#acui_option_oyster').prop('checked');
 
@@ -1029,4 +1039,5 @@ $(document).ready(function() {
 	$(document).on('contextmenu', function() {
 		return ai.options.board.debug;	//By default, no right click to not pollute the screen
 	});
+	ui_loaded = true;
 });
