@@ -1,3 +1,5 @@
+cd ..
+
 mkdir node_modules\anticrux\images
 
 copy package.json node_modules\anticrux
@@ -9,7 +11,5 @@ copy *.js         node_modules\anticrux
 copy *.html       node_modules\anticrux
 copy images\*.gif node_modules\anticrux\images
 copy images\*.png node_modules\anticrux\images
-
-npm install opn
 
 pause
