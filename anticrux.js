@@ -2058,7 +2058,7 @@ AntiCrux.prototype.toHtml = function(pNode) {
 	//-- Builds the output
 	rotated = this.options.board.rotated;		//Shortened syntax
 	output = '';
-	color = 1;
+	color = (this.options.variant.misplacedBoard ? 0 : 1);
 	abc = this.constants.mABC;
 	for (y=(rotated?7:0) ; (!rotated&&(y<8)) || (rotated&&(y>=0)) ; (rotated?y--:y++))
 	{
@@ -2646,6 +2646,7 @@ AntiCrux.prototype._init = function() {
 			enPassant : true,							//TRUE activates the move "en passant" (some AI doesn't manage IT)
 			promoteQueen : false,						//TRUE only promotes pawns as queen
 			superQueen : false,							//TRUE allows the queen for horse riding
+			misplacedBoard : false,						//TRUE rotates the board by 90° to change the color of every cell of the board
 			pieces : 0,									//Variant for the pieces: 0=normal, 1=white pieces, 2=black pieces, 3=blind, 4=random
 			randomizedPosition : 0						//Variant for the position: 0=normal, 1=asymmetric main pieces, 2=shuffled side, 3=shuffled half board, 4=shuffled full board, 5=pushed pawns, 6=reverse pushed pawns
 		},

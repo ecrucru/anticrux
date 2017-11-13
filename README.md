@@ -474,6 +474,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new method AntiCrux.prototype.loadOpeningBook
 	- Library: new option AntiCrux.options.ai.openingBook
 	- Library: opening book based on Nilatac
+	- Library: new option AntiCrux.options.variant.misplacedBoard
 
 
 ### License
@@ -680,6 +681,10 @@ With this option, you immediately promote paws as queen. You cannot choose for a
 - **AntiCrux.options.variant.superQueen**
 
 The queen can move also like the knight. It doesn't affect the weight used for the valuation of this piece.
+
+- **AntiCrux.options.variant.misplacedBoard**
+
+This option rotates the board by 90° to simulate an error in the preparation of the game. Every cell of the board has then the wrong color.
 
 - **AntiCrux.options.variant.pieces**
 

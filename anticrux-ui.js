@@ -73,6 +73,7 @@ function acui_options_load() {
 		$('#acui_option_enpassant').prop('checked', ai.options.variant.enPassant);
 		$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
 		$('#acui_option_superqueen').prop('checked', ai.options.variant.superQueen);
+		$('#acui_option_misplacedboard').prop('checked', ai.options.variant.misplacedBoard);
 		$('#acui_option_pieces').val(ai.options.variant.pieces).change();
 		$('#acui_option_randomizedposition').val(ai.options.variant.randomizedPosition).change();
 	}
@@ -971,6 +972,7 @@ $(document).ready(function() {
 			ai.options.variant.enPassant			= $('#acui_option_enpassant').prop('checked');
 			ai.options.variant.promoteQueen			= $('#acui_option_promotequeen').prop('checked');
 			ai.options.variant.superQueen			= $('#acui_option_superqueen').prop('checked');
+			ai.options.variant.misplacedBoard		= $('#acui_option_misplacedboard').prop('checked');
 			ai.options.variant.pieces				= parseInt($('#acui_option_pieces').val());
 			ai.options.variant.randomizedPosition	= parseInt($('#acui_option_randomizedposition').val());
 		}
