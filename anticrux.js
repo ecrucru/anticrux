@@ -1360,39 +1360,17 @@ AntiCrux.prototype.promote = function(pPiece, pNode) {
  * @return {String} Symbol as a string.
  */
 AntiCrux.prototype.getPieceSymbol = function(pPiece, pPlayer, pSymbols) {
-	var output;
+	var code;
 	if (!pSymbols)
 		return (pPiece == this.constants.piece.pawn ? '' : this.constants.piece.mapping_rev[pPiece].toUpperCase());
 	else
 	{
 		if (((pPlayer == this.constants.player.white) && !this.options.board.darkTheme) ||
 			((pPlayer == this.constants.player.black) &&  this.options.board.darkTheme))
-		{
-			switch (pPiece)
-			{
-				case this.constants.piece.pawn   : output = '&#9817;'; break;
-				case this.constants.piece.rook   : output = '&#9814;'; break;
-				case this.constants.piece.knight : output = '&#9816;'; break;
-				case this.constants.piece.bishop : output = '&#9815;'; break;
-				case this.constants.piece.queen  : output = '&#9813;'; break;
-				case this.constants.piece.king   : output = '&#9812;'; break;
-				default                          : output = '';        break;
-			}
-		}
+			code = [0, 9817, 9814, 9816, 9815, 9813, 9812][pPiece];
 		else
-		{
-			switch (pPiece)
-			{
-				case this.constants.piece.pawn   : output = '&#9823;'; break;
-				case this.constants.piece.rook   : output = '&#9820;'; break;
-				case this.constants.piece.knight : output = '&#9822;'; break;
-				case this.constants.piece.bishop : output = '&#9821;'; break;
-				case this.constants.piece.queen  : output = '&#9819;'; break;
-				case this.constants.piece.king   : output = '&#9818;'; break;
-				default                          : output = '';        break;
-			}
-		}
-		return (output.length===0 ? '' : '<span class="AntiCrux-big">'+output+'</span>');
+			code = [0, 9823, 9820, 9822, 9821, 9819, 9818][pPiece];
+		return (code === 0 ? '' : String.fromCharCode(code));
 	}
 };
 
@@ -1424,10 +1402,12 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	move_toX   =            move        % 10;
 
 	//-- Piece
-	output = this.getPieceSymbol(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
-									(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
-									this.options.board.symbols
-								);
+	output = '<span class="AntiCrux-big">' +
+				this.getPieceSymbol(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+										(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
+										this.options.board.symbols
+									) +
+			'</span>';
 
 	//-- Taken piece
 	taken = ((pNode.board[8*move_toY+move_toX] & this.constants.bitmask.player) != (pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player)) &&
@@ -1475,10 +1455,12 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 
 	//-- Promotion
 	if (move_promo != this.constants.piece.none)
-		output += '=' + this.getPieceSymbol(	move_promo,
+		output += '=<span class="AntiCrux-big">' +
+						this.getPieceSymbol(	move_promo,
 												(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
 												this.options.board.symbols
-											);
+											) +
+					'</span>';
 
 	//-- Result
 	return output;
@@ -2052,7 +2034,7 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
  * @return {String} HTML content.
  */
 AntiCrux.prototype.toHtml = function(pNode) {
-	var x, y, rotated, color, abc, player, output;
+	var x, y, rotated, color, abc, output;
 
 	//-- Self
 	if (pNode === undefined)
@@ -2072,33 +2054,7 @@ AntiCrux.prototype.toHtml = function(pNode) {
 		for (x=(rotated?7:0) ; (!rotated&&(x<8)) || (rotated&&(x>=0)) ; (rotated?x--:x++))
 		{
 			color = 1 - color;
-			switch (this.options.variant.pieces)
-			{
-				case 1:
-					player = ((pNode.board[8*y+x] & this.constants.bitmask.player) != this.constants.player.none ? this.constants.player.white : (pNode.board[8*y+x] & this.constants.bitmask.player));
-					break;
-				case 2:
-					player = ((pNode.board[8*y+x] & this.constants.bitmask.player) != this.constants.player.none ? this.constants.player.black : (pNode.board[8*y+x] & this.constants.bitmask.player));
-					break;
-				case 3:
-					player = this.constants.player.none;
-					break;
-				case 4:
-					if ((pNode.board[8*y+x] & this.constants.bitmask.player) == this.constants.player.none)
-						player = this.constants.player.none;
-					else
-					{
-						if (Math.round(Math.random() * 99) % 2 === 0)
-							player = this.constants.player.black;
-						else
-							player = this.constants.player.white;
-					}
-					break;
-				default:
-					player = (pNode.board[8*y+x] & this.constants.bitmask.player);
-					break;
-			}
-			output += '<div class="AntiCrux-board-cell-' + (this._highlight.indexOf(8*y+x) != -1 ? 'hl' : color) + ' AntiCrux-board-piece-' + player + (pNode.board[8*y+x] & this.constants.bitmask.piece) + '" data-xy="' + abc[x] + (8-y) + '">';
+			output += '<div class="AntiCrux-board-cell-' + (this._highlight.indexOf(8*y+x) != -1 ? 'hl' : color) + ' AntiCrux-board-piece-' + this._ct_getPlayer(pNode, 8*y+x) + (pNode.board[8*y+x] & this.constants.bitmask.piece) + '" data-xy="' + abc[x] + (8-y) + '">';
 			if (this.options.board.debug)
 				output += y + '/' + x + '<br/>' + (8*y+x);
 			output += '</div>';
@@ -2205,14 +2161,54 @@ AntiCrux.prototype.toFen = function(pNode) {
 };
 
 /**
- * The method renders the board in plain text. You need a chess font to see the result
- * and some of them may be <a href="http://www.enpassant.dk/chess/fonteng.htm">found here</a>.
+ * The method renders the board in plain text with the help of Unicode symbols.
  *
  * @method toText
  * @param {Object} pNode (Optional) Reference node.
- * @return {String} FEN string.
+ * @return {String} Symbolic string.
  */
 AntiCrux.prototype.toText = function(pNode) {
+	var x, y, rotated, i, b, buffer, player;
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Builds the board
+	rotated = this.options.board.rotated;		//Shortened syntax
+	buffer = '';
+	for (y=(rotated?7:0) ; (!rotated&&(y<8)) || (rotated&&(y>=0)) ; (rotated?y--:y++))
+		for (x=(rotated?7:0) ; (!rotated&&(x<8)) || (rotated&&(x>=0)) ; (rotated?x--:x++))
+		{
+			//- Prepares the position
+			i = 8*y+x;
+			b = ((x+y)%2 == 1);
+			player = this._ct_getPlayer(pNode, i);
+
+			//- Nature of the position
+			if (player == this.constants.player.none)
+				buffer += (b ? '.' : ' ');
+			else
+				buffer += this.getPieceSymbol(pNode.board[i] & this.constants.bitmask.piece, player, true);
+
+			//- End of line
+			if (x === (rotated?0:7))
+				buffer += "\n";
+		}
+
+	//-- Result
+	return buffer.trim();
+};
+
+/**
+ * The method renders the board in plain text. You need a chess font to see the result
+ * and some of them may be <a href="http://www.enpassant.dk/chess/fonteng.htm">found here</a>.
+ *
+ * @method toChessText
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {String} Encoded string.
+ */
+AntiCrux.prototype.toChessText = function(pNode) {
 	var x, y, rotated, i, b, car, buffer, player;
 
 	//-- Self
@@ -2225,8 +2221,10 @@ AntiCrux.prototype.toText = function(pNode) {
 	for (y=(rotated?7:0) ; (!rotated&&(y<8)) || (rotated&&(y>=0)) ; (rotated?y--:y++))
 		for (x=(rotated?7:0) ; (!rotated&&(x<8)) || (rotated&&(x>=0)) ; (rotated?x--:x++))
 		{
+			//- Prepares the node
 			i = 8*y+x;
 			b = ((x+y)%2 == 1);
+			player = this._ct_getPlayer(pNode, i);
 
 			//- Left margin
 			if (x === (rotated?7:0))
@@ -2235,34 +2233,6 @@ AntiCrux.prototype.toText = function(pNode) {
 					buffer += 'àáâãäåæç'[7-y];
 				else
 					buffer += '$';
-			}
-
-			//- Player
-			switch (this.options.variant.pieces)
-			{
-				case 1:
-					player = ((pNode.board[i] & this.constants.bitmask.player) != this.constants.player.none ? this.constants.player.white : (pNode.board[i] & this.constants.bitmask.player));
-					break;
-				case 2:
-					player = ((pNode.board[i] & this.constants.bitmask.player) != this.constants.player.none ? this.constants.player.black : (pNode.board[i] & this.constants.bitmask.player));
-					break;
-				case 3:
-					player = this.constants.player.none;
-					break;
-				case 4:
-					if ((pNode.board[i] & this.constants.bitmask.player) == this.constants.player.none)
-						player = this.constants.player.none;
-					else
-					{
-						if (Math.round(Math.random() * 99) % 2 === 0)
-							player = this.constants.player.black;
-						else
-							player = this.constants.player.white;
-					}
-					break;
-				default:
-					player = (pNode.board[i] & this.constants.bitmask.player);
-					break;
 			}
 
 			//- Nature of the position
@@ -4152,6 +4122,36 @@ AntiCrux.prototype._ob_read_opening_book = function() {
 	}
 	return result;
 };
+
+/**
+ * The method gives the real player to consider for the display of a piece
+ * which is dependant on the variant of the board. No verification is done
+ * for the parameters.
+ *
+ * @private
+ * @method _ct_getPlayer
+ * @param {Object} pNode Reference node.
+ * @param {Integer} pIndex Identifier of the cell of the board
+ * @return {Integer} Player to consider.
+ */
+AntiCrux.prototype._ct_getPlayer = function(pNode, pIndex) {
+	switch (this.options.variant.pieces)
+	{
+		case 1:
+			return ((pNode.board[pIndex] & this.constants.bitmask.player) != this.constants.player.none ? this.constants.player.white : (pNode.board[pIndex] & this.constants.bitmask.player));
+		case 2:
+			return ((pNode.board[pIndex] & this.constants.bitmask.player) != this.constants.player.none ? this.constants.player.black : (pNode.board[pIndex] & this.constants.bitmask.player));
+		case 3:
+			return this.constants.player.none;
+		case 4:
+			if ((pNode.board[pIndex] & this.constants.bitmask.player) == this.constants.player.none)
+				return this.constants.player.none;
+			else
+				return (Math.round(Math.random() * 99) % 2 === 0 ? this.constants.player.black : this.constants.player.white);
+		default:
+			return (pNode.board[pIndex] & this.constants.bitmask.player);
+	}
+}
 
 
 //---- Node.js

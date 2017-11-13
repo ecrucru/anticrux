@@ -188,10 +188,11 @@ function acui_refresh_matdiff() {
 				cp += diff[piece] * ai.options.ai.valuation[piece];
 				if (buffer.length === 0)
 					buffer += ' ';
-				buffer +=	'<span title="'+Math.abs(diff[piece])+' more">' +
-							ai.getPieceSymbol(	piece,
-												(diff[piece]<0 ? ai.constants.player.black : ai.constants.player.white),
-												ai.options.board.symbols) +
+				buffer +=	'<span class="AntiCrux-big" title="'+Math.abs(diff[piece])+' more">' +
+								ai.getPieceSymbol(	piece,
+													(diff[piece]<0 ? ai.constants.player.black : ai.constants.player.white),
+													ai.options.board.symbols
+												) +
 							'</span>';
 			}
 		cp = Math.round(100 * cp / ai.options.ai.valuation[ai.constants.piece.pawn]);
@@ -889,9 +890,15 @@ $(document).ready(function() {
 		}
 	});
 
-	$('#acui_text_gen').click(function() {
+	$('#acui_chesstext_symbols').click(function() {
 		acui_setMultiLines(true);
 		$('#acui_input').val((ui_rewind ? ai_rewind : ai).toText()).focus().click();
+		return true;
+	});
+
+	$('#acui_chesstext_font').click(function() {
+		acui_setMultiLines(true);
+		$('#acui_input').val((ui_rewind ? ai_rewind : ai).toChessText()).focus().click();
 		return true;
 	});
 

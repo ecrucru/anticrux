@@ -151,7 +151,7 @@
 							<a id="acui_fen_load" href="#" data-role="button">Load FEN</a>
 							<a id="acui_fen_gen" href="#" data-role="button">Generate FEN</a>
 							<a id="acui_lichess_load" href="#" data-role="button">Load from Lichess.org</a>
-							<a id="acui_text_gen" href="#" data-role="button">Generate chess text</a>
+							<a href="#acui_chesstext_popup" data-role="button" data-rel="popup" data-transition="slideup">Generate chess text</a>
 						</div>
 						<div>
 							<textarea id="acui_input" cols="80"></textarea>
@@ -168,6 +168,15 @@
 						<ul data-role="listview">
 							<li id="acui_fischer_new"><a href="#" data-rel="back">New identifier</a></li>
 							<li id="acui_fischer_current"><a href="#" data-rel="back">Current identifier</a></li>
+							<li><a href="#" data-rel="back">Exit</a></li>
+						</ul>
+					</div>
+
+					<!-- Menu item for Chess text -->
+					<div data-role="popup" id="acui_chesstext_popup">
+						<ul data-role="listview">
+							<li id="acui_chesstext_symbols"><a href="#" data-rel="back">Unicode symbols</a></li>
+							<li id="acui_chesstext_font"><a href="#" data-rel="back">Based on a chess font</a></li>
 							<li><a href="#" data-rel="back">Exit</a></li>
 						</ul>
 					</div>
@@ -272,7 +281,7 @@
 			</div>
 
 
-			<!-- Popup -->
+			<!-- Popup for information -->
 			<div id="acui_popup" data-role="popup" data-transition="slide" class="ui-corner-all">
 				<div data-role="header" class="ui-corner-top">
 					<h1>Information</h1>

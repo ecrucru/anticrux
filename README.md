@@ -475,6 +475,8 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new option AntiCrux.options.ai.openingBook
 	- Library: opening book based on Nilatac
 	- Library: new option AntiCrux.options.variant.misplacedBoard
+	- Library: new method AntiCrux.prototype.toChessText
+	- UI: export the board with Unicode symbols
 
 
 ### License
@@ -848,6 +850,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.setPlayer(pPlayer, pNode)
 - AntiCrux.setVariant(pVariant)
 - AntiCrux.switchPlayer(pNode)
+- AntiCrux.toChessText(pNode)
 - AntiCrux.toConsole(pBorder, pNode)
 - AntiCrux.toFen(pNode)
 - AntiCrux.toHtml(pNode)
