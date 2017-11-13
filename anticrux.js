@@ -1000,14 +1000,17 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	}
 
 	//-- Applies the opening book for the first upcoming move
-	book = this._ob_read_opening_book();
-	if (book.length > 0)
+	if (!this.options.variant.superQueen)
 	{
-		for (i=pNode.moves.length-1 ; i>=0 ; i--)
-			if (book.indexOf(pNode.moves[i]) == -1)
-				pNode.moves.splice(i, 1);
-		if (pNode.moves.length === 0)
-			this._ai_moves(pNode);
+		book = this._ob_read_opening_book();
+		if (book.length > 0)
+		{
+			for (i=pNode.moves.length-1 ; i>=0 ; i--)
+				if (book.indexOf(pNode.moves[i]) == -1)
+					pNode.moves.splice(i, 1);
+			if (pNode.moves.length === 0)
+				this._ai_moves(pNode);
+		}
 	}
 
 	//-- Builds the decision tree level by level
