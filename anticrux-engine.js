@@ -198,7 +198,7 @@ var acengine = {
 							}
 							if (b)
 							{
-								if (acengine.instance.movePiece(tab[j]) == acengine.instance.constants.noMove)
+								if (acengine.instance.movePiece(tab[j], true) == acengine.instance.constants.noMove)
 								{
 									acengine.send('info string Invalid move history');
 									acengine.positionOK = false;

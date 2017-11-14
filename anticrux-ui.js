@@ -318,7 +318,7 @@ function acui_refresh_history(pScroll) {
 			return false;
 		for (i=0 ; i<=index ; i++)
 		{
-			if (ai_rewind.movePiece(hist[i], false, ai_rewind.constants.player.none) == ai_rewind.constants.noMove)
+			if (ai_rewind.movePiece(hist[i], false) == ai_rewind.constants.noMove)
 				throw 'Internal error - Report any error (#002)';
 			else
 			{
