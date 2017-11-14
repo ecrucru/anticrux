@@ -34,62 +34,6 @@
 "use strict";
 
 
-/*======== Library of positions
-// Interesting positions for playing with AntiCrux :
-//		r1bqk1nr/p2npp1p/1p4p1/8/4P3/6P1/P4b1P/5BR1 w - -			Uncertain game
-//		3q1b2/4p1pr/4P3/8/6b1/8/5P2/8 w - -							Quick win or deep loss
-//		8/6k1/3p3p/1p5P/1P6/5p2/1p3P2/8 b - -						Pawn game
-//		2b1R1n1/5pp1/8/8/8/5P1P/8/5r2 w - -							Mate in 4 to be found (Rxg8)
-//		1r6/4npb1/n4k2/7P/P6R/P4K2/2P2P2/2R5 w - -					Mate in 6 to be found (Rb1)
-//		8/5pb1/n5k1/8/P6R/PP6/4KP2/8 w - -							Variant of the previous mate (Rd4)
-//		1nb1k3/4Q3/6pn/8/8/8/2PqPP2/4K1N1 b - -						Mate in 7 to be found (Rxe7)
-//		r7/p7/n4B2/8/8/4PN2/P7/RN2K3 w - -							Mate in 8 to be found with several possibilities (Bd8 or Bh8)
-//		2r1k1nr/p1pp1ppp/8/8/P7/1R3P2/2PP2PP/1NB1K1NR b - -			Mate in 9 to be found (Rb8)
-//		1n1qk1n1/r1pp1p1r/1p6/8/8/1P4P1/2PK1P1P/1N3BNR w - -		Mate in 10 to be found (Na3)
-//		rnb4r/p1pk3p/5P2/8/1p6/1P3P2/P1PNP1P1/R3KBN1 b - -			Mate in 10 to be found (Ke7)
-//		rn2k2r/ppp2p1p/5p2/8/8/N6P/PPPKPP1P/R1B2BNR b - -			Mate in 11 to be found (b5)
-//		6n1/p7/2B2p2/8/8/4K3/P1P2PPR/RN6 w - -						Mate in 12 to be found (Rh6)
-//		rnb4K/pppp1k1p/5p2/2b5/4n3/8/8/8 b - -						Mate in 13 to be found
-//		1brqkn2/p1pppBp1/8/1p6/8/2P5/PP1PPP1r/B1RQKNNb w - -		Mate in 13 to be found in AntiChess 689 (Nh2)
-//		1nbqkbnr/r1pp1ppp/4p3/1p6/1P6/2P5/P2PPPPP/RNB1KBNR b - b3	Mate in 15 to be found (Bxb4, Rxa2)
-//		rnb1kb1r/p1pp1ppp/7n/4P3/1p5R/1P6/P1P1PPP1/RNBQKBN1 w - -	Mate in 15 to be found (Bh6)
-//		4k2r/pppn2pp/4p3/8/8/N3PN2/PPP1K1P1/R1B5 w - -				Mate to find g4 and Nb5 (Ne5-g4)
-
-// Interesting positions which illustrate the implemented features :
-//		8/7p/8/8/8/b7/1P6/1N6 w - -									Originating piece in movePiece() : xa3, bxa3, b2a3, b2xa3, b1a3, b1xa3, Na3, Nxa3 are OK
-//		8/3P4/8/2P5/4P3/8/8/6r1 w - -								Average valuation for weak levels : ignoring the infinite values makes a blunder if promoted to bishop
-//		7K/p1p1p3/7b/7p/8/2k1p3/8/8 b - -							Average valuation for weak levels : ignoring the infinite values makes a blunder when not playing Bg7
-//		2Rn1b1r/1ppppppq/1k3n1p/8/1P6/6P1/2PPPPNP/1KBN1BQR w - -	Minimization of the liberty (Rxd8=minimization, Rxc7=no minimization)
-//		4k1nr/7Q/8/8/8/3P4/6PP/6rR b - -							Minimization of the liberty and its negative effect (Rxg7=minimization but loses)
-//		8/4p3/8/4P3/4P1R1/2p1P3/4P3/8 b - -							Minimization of the liberty and its negative effect (e6=minimization but loses)
-//		1nbqkr2/r1pppp1p/1p6/8/3P4/1P2P3/2P4P/5BN1 w - -			Minimization of the liberty (Ba6=minimization but it is not the best move)
-//		8/8/4kn2/8/1K6/8/2P5/8 w - -								Levels of game (hard to find Kc4 ?)
-//		8/5k2/8/3P4/8/8/8/8 b - -									Accelerated end of game
-//		8/P7/1p6/8/8/8/8/8 w - -									Accelerated end of game
-//		k7/1p6/1P6/8/8/8/8/8 b - -									Accelerated end of game
-//		8/8/8/1P6/8/8/8/5r2 b - -									Accelerated end of game : Rf7, Rc1 or Ra1
-//		5R2/8/2k5/8/8/8/8/8 w - -									Accelerated end of game : Rc8 and Rf6 are forbidden
-//		8/8/8/8/2r5/8/K7/8 w - -									Accelerated end of game : only Ka1 should matter to delay the loss
-//		8/1k6/8/8/5R2/8/8/8 w - -									Opportunism removes some moves
-//		r2qk1nr/p2npp1p/b5p1/p3b1P1/8/8/8/8 b - -					Best static move (Nh6 and Bg7 are the right moves)
-//		8/8/1P2P1K1/8/3k4/8/8/8 b - -								Deep move (Kc5)
-//		8/5P2/8/8/4k1p1/8/8/8 w - -									Promotion
-//		8/2p5/8/3P4/8/8/8/8 b - -									En passant is a forced move
-//		7r/7p/8/8/8/5R2/8/8 b - -									En passant if no impact on the other pieces
-//		rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - -			En passant with no failed undo after "e3 c5 b4"
-//		1rbqk2r/Rppppp2/8/5n2/4P3/2P5/2P2PPP/1N2K1NR w - -			Highlight the evaluated moves only (see highlightMoves)
-//		3R4/8/8/8/8/8/2p5/8 w - -									Option "No statistic on forced moves" : immediate classical result
-//		rnb5/pppp1k2/5p1K/8/4n3/8/8/8 b - -							Option "No statistic on forced moves" : in the previous version, Ng5 was a blunder
-//		6R1/8/8/8/8/2k5/8/8 w - -									Hard to finish (maximal number of nodes, no game strategy)
-//		8/6p1/4K3/8/7r/8/8/8 b - -									Hard to finish (maximal number of nodes)
-//		8/4P3/6P1/7P/8/8/8/1k6 b - -								Deep promotions push the score to ±100% but it is not a mate
-//		k7/8/8/2R5/8/8/8/8 w - -									Exploration level by level
-//		1n1k4/8/5n2/5p2/3P1P2/1P6/8/8 b - -							Nfd7 is the move of 1 knight only
-//		8/8/8/8/5B2/8/1p6/8 b - -									Draw by position : choose a bishop for the black pawn
-*/
-
-
-
 /**
  * This module is the main library.
  *
@@ -4151,7 +4095,7 @@ AntiCrux.prototype._ct_getPlayer = function(pNode, pIndex) {
 		default:
 			return (pNode.board[pIndex] & this.constants.bitmask.player);
 	}
-}
+};
 
 
 //---- Node.js

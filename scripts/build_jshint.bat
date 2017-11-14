@@ -4,4 +4,5 @@ start /b jshint anticrux-ui.js
 start /b jshint anticrux-server.js
 start /b jshint anticrux-engine.js
 start /b jshint anticrux-elo.js
+start /b jshint anticrux-quality.js
 pause

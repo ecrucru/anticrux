@@ -107,6 +107,7 @@ git clone https://github.com/ecrucru/anticrux.git
 | Engine UCI                  | Yes     | Yes   | Yes       | Yes    | Yes   | -       | -   | -                |
 | Server                      | Yes     | Yes   | Yes       | Yes    | No    | -       | -   | -                |
 | ELO                         | Yes     | Yes   | Yes       | Yes    | No    | -       | -   | -                |
+| Quality                     | Yes     | Yes   | Yes       | Yes    | No    | -       | -   | -                |
 
 Note : the symbol "-" denotes that a feature is not applicable.
 
@@ -477,6 +478,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new option AntiCrux.options.variant.misplacedBoard
 	- Library: new method AntiCrux.prototype.toChessText
 	- UI: export the board with Unicode symbols
+	- Quality: tool to verify some positions
 
 
 ### License
