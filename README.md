@@ -479,6 +479,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- Library: new method AntiCrux.prototype.toChessText
 	- UI: export the board with Unicode symbols
 	- Quality: tool to verify some positions
+	- Library: new method AntiCrux.prototype.moveToStringHtml
 
 
 ### License
@@ -844,6 +845,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.logMove(pMove, pScore)
 - AntiCrux.movePiece(pMove, pCheckLegit, pPlayerIndication, pNode)
 - AntiCrux.moveToString(pMove, pNode)
+- AntiCrux.moveToStringHtml(pMove, pNode)
 - AntiCrux.moveToUCI(pMove)
 - AntiCrux.predictMoves(pNode)
 - AntiCrux.promote(pPiece, pNode)

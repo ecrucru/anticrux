@@ -189,10 +189,10 @@ function acui_refresh_matdiff() {
 				if (buffer.length === 0)
 					buffer += ' ';
 				buffer +=	'<span class="AntiCrux-big" title="'+Math.abs(diff[piece])+' more">' +
-								ai.getPieceSymbol(	piece,
-													(diff[piece]<0 ? ai.constants.player.black : ai.constants.player.white),
-													ai.options.board.symbols
-												) +
+							ai.getPieceSymbol(	piece,
+												(diff[piece]<0 ? ai.constants.player.black : ai.constants.player.white),
+												true
+											) +
 							'</span>';
 			}
 		cp = Math.round(100 * cp / ai.options.ai.valuation[ai.constants.piece.pawn]);
@@ -208,7 +208,7 @@ function acui_refresh_matdiff() {
 
 function acui_refresh_moves() {
 	//Method to be called before the move is done else we can't display the moves with a nice format
-	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistical data with the professional mode.</div>' : ai.getMovesHtml(parseInt($('#acui_player').val())));
+	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistical data with the professional mode.</div>' : ai.moveToStringHtml(ai.getMovesHtml(parseInt($('#acui_player').val()))));
 }
 
 function acui_refresh_score() {
@@ -284,7 +284,7 @@ function acui_refresh_score() {
 
 function acui_refresh_history(pScroll) {
 	//-- Main table
-	var hist = ai.getHistoryHtml();
+	var hist = ai.moveToStringHtml(ai.getHistoryHtml());
 	$('#acui_history').html(hist);
 	if (hist.length === 0)
 		$('#acui_pgn').addClass('ui-disabled');
@@ -585,9 +585,9 @@ $(document).ready(function() {
 		}
 
 		//-- Moves
-		buffer = ai.moveToString(move);
+		buffer = ai.moveToStringHtml(move);
 		$('#acui_lastmove').html(buffer.length>0 ? 'Last move : '+buffer : '');
-		buffer = ($('#acui_option_pro').prop('checked') || !ai.options.board.assistance ? '' : ai.getAssistance(null, false));
+		buffer = ($('#acui_option_pro').prop('checked') || !ai.options.board.assistance ? '' : ai.moveToStringHtml(ai.getAssistance(null, false)));
 		$('#acui_assistance').html(buffer.length>0 ? 'Assistance : '+buffer : '');
 		acui_refresh_moves();
 		if (ai.movePiece(move, true, player) != ai.constants.noMove)
@@ -681,7 +681,7 @@ $(document).ready(function() {
 			return false;
 
 		//-- Suggestion
-		acui_popup(ai.predictMoves().split("\n").join('<br/>'));
+		acui_popup(ai.moveToStringHtml(ai.predictMoves()).split("\n").join('<br/>'));
 		return true;
 	});
 

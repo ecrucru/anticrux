@@ -486,8 +486,8 @@ AntiCrux.prototype.loadLichess = function(pKey) {
 				playerIndication = that.constants.player.white;
 
 			//-- Processes the moves
-			that._history = [];
-			that._scoreHistory = [];
+			that._history.length = 0;
+			that._scoreHistory.length = 0;
 			for (i=0 ; i<moves.length ; i++)
 			{
 				move = that.movePiece(moves[i], true, playerIndication);
@@ -737,7 +737,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 			node.magic = (node.magic & ~this.constants.bitmask.player) | pPlayerIndication;
 			this._ai_moves(node);
 		}
-		moves.splice(0, moves.length);
+		moves.length = 0;
 
 		//- Move from : validates the originating positions
 		for (i=0 ; i<node.moves.length ; i++)
@@ -825,7 +825,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 		}
 		if (!valid)
 		{
-			this._highlight.splice(0, this._highlight.length);
+			this._highlight.length = 0;
 			return this.constants.noMove;
 		}
 	}
@@ -889,7 +889,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	}
 
 	//-- Result
-	this._highlight.splice(0, this._highlight.length);
+	this._highlight.length = 0;
 	return pMove;
 };
 
@@ -1300,7 +1300,7 @@ AntiCrux.prototype.promote = function(pPiece, pNode) {
  * @method getPieceSymbol
  * @param {AntiCrux.constants.piece} pPiece The piece.
  * @param {AntiCrux.constants.player} pPlayer The player.
- * @param {Boolean} pSymbols Use Unicode symbols.
+ * @param {Boolean} pSymbols Use the Unicode symbols.
  * @return {String} Symbol as a string.
  */
 AntiCrux.prototype.getPieceSymbol = function(pPiece, pPlayer, pSymbols) {
@@ -1346,12 +1346,10 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 	move_toX   =            move        % 10;
 
 	//-- Piece
-	output = '<span class="AntiCrux-big">' +
-				this.getPieceSymbol(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
-										(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
-										this.options.board.symbols
-									) +
-			'</span>';
+	output = this.getPieceSymbol(	(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.piece),
+									(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
+									this.options.board.symbols
+								);
 
 	//-- Taken piece
 	taken = ((pNode.board[8*move_toY+move_toX] & this.constants.bitmask.player) != (pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player)) &&
@@ -1399,15 +1397,44 @@ AntiCrux.prototype.moveToString = function(pMove, pNode) {
 
 	//-- Promotion
 	if (move_promo != this.constants.piece.none)
-		output += '=<span class="AntiCrux-big">' +
-						this.getPieceSymbol(	move_promo,
+		output += '=' + this.getPieceSymbol(	move_promo,
 												(pNode.board[8*move_fromY+move_fromX] & this.constants.bitmask.player),
 												this.options.board.symbols
-											) +
-					'</span>';
+											);
 
 	//-- Result
 	return output;
+};
+
+/**
+ * The method enriches a move or a string of moves with an HTML decoration.
+ *
+ * @method moveToStringHtml
+ * @param {Integer/String} pMoves The move with an internal representation, or the moves as a complex string.
+ * @param {Object} pNode (Optional) Reference node if you provide the move as an internal representation.
+ * @return {String} Moves as an enriched string.
+ */
+AntiCrux.prototype.moveToStringHtml = function(pMoves, pNode) {
+	var i, moves, car;
+
+	//-- Converts to string
+	if (typeof pMoves === 'number')
+		moves = this.moveToString(pMoves, pNode);
+	else
+		if (typeof pMoves === 'string')
+			moves = pMoves
+		else
+			return '';
+
+	//-- Apply the HTML marks
+	for (i=9812 ; i<=9823 ; i++)
+	{
+		car = String.fromCharCode(i);
+		if (moves.indexOf(car) == -1)
+			continue;
+		moves = moves.split(car).join('<span class="AntiCrux-big">'+car+'</span>');
+	}
+	return moves;
 };
 
 /**
@@ -1683,7 +1710,7 @@ AntiCrux.prototype.highlight = function(pReset, pPosition) {
 	if (pPosition === undefined)
 		pPosition = null;
 	if (pReset || (pPosition === null))
-		this._highlight = [];
+		this._highlight.length = 0;
 
 	//-- Applies the highlighted cells (no check of unicity)
 	if (pPosition === null)
@@ -1720,7 +1747,7 @@ AntiCrux.prototype.highlightMove = function(pMove) {
 
 	//-- No move resets the highlight
 	if (pMove == this.constants.noMove)
-		this._highlight = [];
+		this._highlight.length = 0;
 	else
 	{
 		//-- Decodes the move
@@ -1744,7 +1771,7 @@ AntiCrux.prototype.highlightMoves = function(pRefresh) {
 	var node, i, position;
 
 	//-- Resets the current board
-	this._highlight = [];
+	this._highlight.length = 0;
 
 	//-- Gets the possible moves
 	if (pRefresh)
@@ -2976,7 +3003,7 @@ AntiCrux.prototype._ai_moves = function(pNode) {
 		var take = (board[pI] == 4);
 		if (take && !forced)
 		{
-			moves.splice(0, moves.length);
+			moves.length = 0;
 			forced = true;
 		}
 		if (!forced || (/* (same effect) forced &&*/ take))
@@ -3780,7 +3807,7 @@ AntiCrux.prototype._ai_pick = function(pPlayer, pNode) {
 		//- Selects the move
 		if (better)
 		{
-			moves = [];
+			moves.length = 0;
 			threshold = val;
 		}
 		if (same || better)

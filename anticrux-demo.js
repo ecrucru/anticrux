@@ -30,7 +30,7 @@ var AntiCrux = require('anticrux');
 var ai = new AntiCrux();
 
 //-- Options
-// Refer to the default settings in "ai.options"
+ai.setLevel(15);			// Refer to the default settings in "ai.options"
 
 //-- Suggested move
 try {
