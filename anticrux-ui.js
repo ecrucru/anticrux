@@ -55,6 +55,7 @@ function acui_options_load() {
 		$('#acui_option_randomizedsearch').prop('checked', ai.options.ai.randomizedSearch);
 		$('#acui_option_worstcase').prop('checked', ai.options.ai.worstCase);
 		$('#acui_option_opportunistic').prop('checked', ai.options.ai.opportunistic);
+		$('#acui_option_tolerance').val(ai.options.ai.tolerance).slider('refresh');
 		$('#acui_option_distance').prop('checked', ai.options.ai.distance);
 		$('#acui_option_openingbook').val(ai.options.ai.openingBook).slider('refresh');
 		$('#acui_option_handicap').val(ai.options.ai.handicap).slider('refresh');
@@ -961,6 +962,7 @@ $(document).ready(function() {
 			ai.options.ai.randomizedSearch			= $('#acui_option_randomizedsearch').prop('checked');
 			ai.options.ai.worstCase					= $('#acui_option_worstcase').prop('checked');
 			ai.options.ai.opportunistic				= $('#acui_option_opportunistic').prop('checked');
+			ai.options.ai.tolerance					= parseInt($('#acui_option_tolerance').val());
 			ai.options.ai.distance					= $('#acui_option_distance').prop('checked');
 			ai.options.ai.openingBook				= parseInt($('#acui_option_openingbook').val());
 			ai.options.ai.handicap					= parseInt($('#acui_option_handicap').val());

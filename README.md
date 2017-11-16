@@ -480,6 +480,7 @@ The ELO is shown here relatively to an offset equal to 0. But if the offset is e
 	- UI: export the board with Unicode symbols
 	- Quality: tool to verify some positions
 	- Library: new method AntiCrux.prototype.moveToStringHtml
+	- Library: new option AntiCrux.options.ai.tolerance
 
 
 ### License
@@ -596,6 +597,10 @@ When it is not up to you to play, you can expect your opponent to play his best 
 This option weakens the AI because it relies on the systematic mistake of the opponent to take an advantage if there is an opportunity to win or lose.
 
 It is often used in coordination with the option AntiCrux.options.ai.worstCase.
+
+- **AntiCrux.options.ai.tolerance"
+
+The best move is assigned a certain score. However, the second best move may be not so different. The tolerance makes additional moves eligible for the best move to play. The higher the tolerance, the less effective the strategy, the more interesting the gameplay.
 
 - **AntiCrux.options.ai.distance**
 
@@ -729,6 +734,7 @@ Please note that the web-interface offers all the options individually and fewer
 | randomizedSearch | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X   | X    | X    | X    | -    | -    | -    | -    | -    | -  |
 | worstCase        | -   | -   | -   | -   | -   | -   | -   | -   | -   | X   | X   | X    | X    | X    | X    | X    | X    | X    | X    | X  |
 | opportunistic    | -   | -   | -   | X   | X   | X   | X   | X   | X   | X   | X   | X    | -    | -    | -    | -    | -    | -    | -    | -  |
+| tolerance        | 100 | 20  | 18  | 16  | 14  | 12  | 10  | 9   | 8   | 7   | 6   | 5    | 3    | 1    | 0    | 0    | 0    | 0    | 0    | 0  |
 | distance         | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | -   | X    | X    | X    | X    | X    | X    | X    | X    | X  |
 | openingBook      | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 2   | 2   | 4    | 4    | 6    | 6    | 8    | 10   | 12   | 12   | 12 |
 | handicap         | 0   | 80  | 60  | 40  | 20  | 10  | 5   | 0   | 0   | 0   | 0   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0  |

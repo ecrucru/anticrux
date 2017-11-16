@@ -588,6 +588,7 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 	this.options.ai.randomizedSearch	= (pLevel <= 14);
 	this.options.ai.worstCase			= (pLevel >= 10);
 	this.options.ai.opportunistic		= ((pLevel >= 4) && (pLevel <= 12));
+	this.options.ai.tolerance			= [100, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 3, 1, 0, 0, 0, 0, 0, 0][pLevel-1];
 	this.options.ai.distance			= (pLevel >= 12);
 	this.options.ai.openingBook			= [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 4, 4, 6, 6, 8, 10, 12, 12, 12][pLevel-1];
 	this.options.ai.handicap			= [0, 80, 60, 40, 20, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0][pLevel-1];
@@ -1024,6 +1025,7 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 	this._helper.setLevel(20);
 	this._helper.options.ai.maxDepth = 3;
 	this._helper.options.ai.maxNodes = 0;
+	this._helper.options.ai.tolerance = 0;
 	if (!this._helper.loadFen(this.toFen(pNode)))
 		return 'Error : the position cannot be loaded.';
 
@@ -1422,7 +1424,7 @@ AntiCrux.prototype.moveToStringHtml = function(pMoves, pNode) {
 		moves = this.moveToString(pMoves, pNode);
 	else
 		if (typeof pMoves === 'string')
-			moves = pMoves
+			moves = pMoves;
 		else
 			return '';
 
@@ -1895,7 +1897,7 @@ AntiCrux.prototype.getScoreHistory = function() {
  */
 AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 	var	i, j,
-		tmp, score, score2, cp,
+		tmp, score, score2, cp, tMin, tMax,
 		output;
 
 	//-- Self
@@ -1929,12 +1931,36 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 			}
 		}
 
+	//-- Determines the limit of pickability
+	if (pNode.moves.length < 2)
+		tMin = tMax = null;
+	else
+	{
+		tmp = this._ai_scoreDecode(pNode.nodes[0].score);
+		tMin = tmp * (100 - (tmp<0 ? -1 : 1) * this.options.ai.tolerance)/100;
+		tMax = tmp * (100 + (tmp<0 ? -1 : 1) * this.options.ai.tolerance)/100;
+	}
+
 	//-- Output
 	output = '';
 	for (i=0 ; i<pNode.moves.length ; i++)
 	{
-		output += '<tr><td>' + this.moveToString(pNode.moves[i], pNode) + '</td>';
 		score = this.getScore(pNode.nodes[i]);
+
+		//- Separator
+		if (	(tMin !== null) &&
+				(tMax !== null) &&
+				(	(score.value < tMin) ||
+					(score.value > tMax)
+				)
+			)
+		{
+			output += '<tr><td colspan="4"><hr/></td></tr>';
+			tMin = tMax = null;
+		}
+
+		//- Move
+		output += '<tr><td>' + this.moveToString(pNode.moves[i], pNode) + '</td>';
 
 		//- Score
 		output += '<td>';
@@ -2581,6 +2607,7 @@ AntiCrux.prototype._init = function() {
 			randomizedSearch : false,					//TRUE helps the game to not played the same pieces
 			worstCase : false,							//TRUE makes the algorithm stronger because it considers the best move of the opponent, FALSE is easier to beat
 			opportunistic : false,						//TRUE helps to find a winning position at the cost of a risk of defeat
+			tolerance : 0,								//Percentage of tolerance from 0 to 100 for the choice of the best move : the higher, the weaker the strategy
 			distance : false,							//TRUE favors the boards with pieces close together
 			openingBook : 0,							//Maximal depth of the opening book (the deeper, the stronger)
 			handicap : 0,								//To weaken the algorithm, remove between 0% and 100% of the moves above a fixed number of moves
@@ -3783,7 +3810,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 AntiCrux.prototype._ai_pick = function(pPlayer, pNode) {
 	var	i, j, k,
 		node, moves,
-		threshold, val, better, same,
+		threshold, tMin, tMax, val,
 		points, total;
 
 	//-- Self
@@ -3793,24 +3820,22 @@ AntiCrux.prototype._ai_pick = function(pPlayer, pNode) {
 	//-- Lists the eligible moves
 	// White will minimize the valuation
 	// Black will maximize the valuation
-	moves = [];
 	threshold = this.constants.player.mapping_rev[pPlayer] * this.constants.bitmask.valuationValue;
 	for (i=0 ; i<pNode.nodes.length ; i++)
 	{
-		//- Comparison
 		val = this._ai_scoreDecode(pNode.nodes[i].score);
-		better = ((pPlayer == this.constants.player.white) && (val < threshold)) ||
-				 ((pPlayer == this.constants.player.black) && (val > threshold));
-		same   = ((pPlayer == this.constants.player.white) && (val == threshold)) ||
-				 ((pPlayer == this.constants.player.black) && (val == threshold));
-
-		//- Selects the move
-		if (better)
-		{
-			moves.length = 0;
+		if (	((pPlayer == this.constants.player.white) && (val < threshold)) ||
+				((pPlayer == this.constants.player.black) && (val > threshold))
+		)
 			threshold = val;
-		}
-		if (same || better)
+	}
+	tMin = threshold * (100 - (threshold<0 ? -1 : 1) * this.options.ai.tolerance)/100;
+	tMax = threshold * (100 + (threshold<0 ? -1 : 1) * this.options.ai.tolerance)/100;
+	moves = [];
+	for (i=0 ; i<pNode.nodes.length ; i++)
+	{
+		val = this._ai_scoreDecode(pNode.nodes[i].score);
+		if ((tMin <= val) && (val <= tMax))
 			moves.push(pNode.moves[i]);
 	}
 
@@ -4119,6 +4144,7 @@ AntiCrux.prototype._ct_getPlayer = function(pNode, pIndex) {
 				return this.constants.player.none;
 			else
 				return (Math.round(Math.random() * 99) % 2 === 0 ? this.constants.player.black : this.constants.player.white);
+			break;
 		default:
 			return (pNode.board[pIndex] & this.constants.bitmask.player);
 	}
