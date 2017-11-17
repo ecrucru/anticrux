@@ -172,8 +172,6 @@ AntiCrux.prototype.clearBoard = function() {
 	var i;
 
 	//-- Clears the board
-	this.freeMemory();
-	this._buffer = '';
 	this._highlight = [];
 	this._history = [];
 	this._history_fen0 = '';
@@ -722,7 +720,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 		move_toY = 8 - parseInt(regex[5].charAt(1));
 
 		//- Move from : establishes the possible moves
-		node = this._ai_copy(pNode, false);
+		node = this._sy_copy(pNode, false);
 		moves = [];
 		if (pPlayerIndication == this.constants.player.none)
 		{
@@ -811,7 +809,7 @@ AntiCrux.prototype.movePiece = function(pMove, pCheckLegit, pPlayerIndication, p
 	//-- Verifies if the move is legit
 	if (pCheckLegit)
 	{
-		node = this._ai_copy(pNode, false);
+		node = this._sy_copy(pNode, false);
 		node.magic = (node.magic & ~this.constants.bitmask.player) | player;
 		this._ai_moves(node);
 		valid = false;
@@ -922,8 +920,8 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 		return this.constants.noMove;
 	if (this.options.ai.maxReply < 1)
 		this.options.ai.maxReply = 1;
-	this._ai_freeMemory(pNode);				//Should be done by the calling program in any case
-	this._ai_shrink(pNode, true);
+	this._sy_freeMemory(pNode);				//Should be done by the calling program in any case
+	this._sy_shrink(pNode, true);
 	pNode.magic = (pNode.magic & ~this.constants.bitmask.player) | pPlayer;
 	maxDepth = this.options.ai.maxDepth;
 
@@ -988,7 +986,7 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	this.options.ai.maxDepth = maxDepth;								//Restores the initial setting
 
 	//-- Valuates the decision tree entirely
-	this._ai_gc();
+	this._sy_gc(true);
 	//*
 	if (this.options.board.debug)
 		debugger;
@@ -1020,7 +1018,7 @@ AntiCrux.prototype.predictMoves = function(pNode) {
 		return 'Error : the position is waiting for a promotion.';
 
 	//-- Duplicates the game
-	this._ai_freeMemory(pNode);
+	this._sy_freeMemory(pNode);
 	this._initHelper();
 	this._helper.setLevel(20);
 	this._helper.options.ai.maxDepth = 3;
@@ -1529,7 +1527,7 @@ AntiCrux.prototype.switchPlayer = function(pNode) {
  * @return {AntiCrux.constants.player} Internal identifier of the winner.
  */
 AntiCrux.prototype.getWinner = function(pNode) {
-	var node = this._ai_copy((pNode === undefined ? this._root_node : pNode), true);
+	var node = this._sy_copy((pNode === undefined ? this._root_node : pNode), true);
 
 	//-- Tests for White
 	node.magic = (node.magic & ~this.constants.bitmask.player) | this.constants.player.white;
@@ -1692,7 +1690,7 @@ AntiCrux.prototype.getDrawReason = function() {
  * @return {Boolean} *true* if the game has ended, else *false*.
  */
 AntiCrux.prototype.isEndGame = function(pSwitchPlayer, pNode) {
-	var node = this._ai_copy((pNode===undefined ? this._root_node : pNode), false);
+	var node = this._sy_copy((pNode === undefined ? this._root_node : pNode), false);
 	if (pSwitchPlayer)
 		this.switchPlayer(node);
 	this._ai_moves(node);
@@ -1778,7 +1776,7 @@ AntiCrux.prototype.highlightMoves = function(pRefresh) {
 	//-- Gets the possible moves
 	if (pRefresh)
 	{
-		node = this._ai_copy(this._root_node, false);
+		node = this._sy_copy(this._root_node, false);
 		this._ai_moves(node);
 	}
 	else
@@ -2487,11 +2485,13 @@ AntiCrux.prototype.toConsole = function(pBorder, pNode) {
  * @return {Integer} Number of processed nodes.
  */
 AntiCrux.prototype.freeMemory = function() {
-	var count;
 	this._buffer = '';
-	count = this._ai_freeMemory(this._root_node);
-	this._ai_gc();
-	return count;
+	this._gc_counter = 0;
+	this._sy_freeMemory(this._root_node);
+	delete this._root_node.nodes;
+	delete this._root_node.moves;
+	this._sy_gc(false);
+	return this._gc_counter;
 };
 
 
@@ -2654,6 +2654,7 @@ AntiCrux.prototype._init = function() {
 	this._endTime = this._startTime;
 	this._debugDepth = null;
 	this._debugIterator = null;
+	this._gc_counter = 0;
 	this.resetStats();
 	this.loadOpeningBook();
 };
@@ -2848,58 +2849,6 @@ AntiCrux.prototype._btod = function(pCode, pNode) {
 			'Node : '+JSON.stringify(obj) + "\n" +
 			'Explanation : '+JSON.stringify(this._explainNode(obj)) + "\n" +
 			"Stack : \n    "+(new Error().stack.trim().split("\n").join("\n    ")) + "\n";
-};
-
-/**
- * The method duplicates a node. Only the basic fields are copied.
- *
- * @private
- * @method _ai_copy
- * @param {Object} pNode Node to copy.
- * @param {Boolean} pFull Copy all the necessary nodes.
- * @return {Object} New copied node.
- */
-AntiCrux.prototype._ai_copy = function(pNode, pFull) {
-	//-- Clones the node
-	var	newNode = Object.create(null);
-	newNode.board = pNode.board.slice(0);
-	newNode.magic = this.constants.bitmask.none | (pNode.magic & this.constants.bitmask.player);
-	if (typeof pNode.enpassant !== 'undefined')
-		newNode.enpassant = pNode.enpassant;
-
-	//-- Extends the copy
-	if (pFull)
-	{
-		newNode.score = pNode.score;
-		if (typeof pNode.moves !== 'undefined')
-			newNode.moves = pNode.moves.slice(0);
-		if (typeof pNode._pendingPromotion !== 'undefined')
-			newNode._pendingPromotion = pNode._pendingPromotion;
-	}
-
-	//-- Result
-	return newNode;
-};
-
-/**
- * The method removes the unwanted fields within an existing node
- * and resets the masks if needed.
- *
- * @private
- * @method _ai_shrink
- * @param {Object} pNode Node to shrink.
- * @param {Boolean} pResetMask Resets the mask.
- */
-AntiCrux.prototype._ai_shrink = function(pNode, pResetMask) {
-	var f;
-	for (f in pNode)
-		if (['board', 'magic', 'score', 'enpassant', '_pendingPromotion'].indexOf(f) === -1)
-			delete pNode[f];
-	if (pResetMask)
-	{
-		pNode.magic = (pNode.magic & this.constants.bitmask.player);
-		pNode.score = this.constants.bitmask.none;
-	}
 };
 
 /**
@@ -3346,7 +3295,7 @@ AntiCrux.prototype._ai_createNodes = function(pNode) {
 	for (i=0 ; i<pNode.moves.length ; i++)
 	{
 		//- Moves the piece
-		node = this._ai_copy(pNode, false);
+		node = this._sy_copy(pNode, false);
 		if (this.movePiece(pNode.moves[i], false, (pNode.magic & this.constants.bitmask.player), node) == this.constants.noMove)
 			throw this._btod(13, pNode);
 		this.switchPlayer(node);
@@ -3651,7 +3600,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					)
 				{
 					pNode.moves.splice(i, 1);
-					this._ai_freeMemory(pNode.nodes[i]);
+					this._sy_freeMemory(pNode.nodes[i]);
 					pNode.nodes.splice(i, 1);
 				}
 			}
@@ -3672,7 +3621,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					if ((pNode.nodes[i].magic & this.constants.bitmask.sequence) != plusMax)
 					{
 						pNode.moves.splice(i, 1);
-						this._ai_freeMemory(pNode.nodes[i]);
+						this._sy_freeMemory(pNode.nodes[i]);
 						pNode.nodes.splice(i, 1);
 					}
 				}
@@ -3690,7 +3639,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					if ((pNode.nodes[i].magic & this.constants.bitmask.opportunityPlus) == this.constants.bitmask.opportunityPlus)
 					{
 						pNode.moves.splice(i, 1);
-						this._ai_freeMemory(pNode.nodes[i]);
+						this._sy_freeMemory(pNode.nodes[i]);
 						pNode.nodes.splice(i, 1);
 					}
 				}
@@ -3711,7 +3660,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					if ((pNode.nodes[i].magic & this.constants.bitmask.sequence) != minusMax)
 					{
 						pNode.moves.splice(i, 1);
-						this._ai_freeMemory(pNode.nodes[i]);
+						this._sy_freeMemory(pNode.nodes[i]);
 						pNode.nodes.splice(i, 1);
 					}
 				}
@@ -3729,7 +3678,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					if ((pNode.nodes[i].magic & this.constants.bitmask.opportunityMinus) == this.constants.bitmask.opportunityMinus)
 					{
 						pNode.moves.splice(i, 1);
-						this._ai_freeMemory(pNode.nodes[i]);
+						this._sy_freeMemory(pNode.nodes[i]);
 						pNode.nodes.splice(i, 1);
 					}
 				}
@@ -3745,7 +3694,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 					)
 				{
 					pNode.moves.splice(i, 1);
-					this._ai_freeMemory(pNode.nodes[i]);
+					this._sy_freeMemory(pNode.nodes[i]);
 					pNode.nodes.splice(i, 1);
 				}
 			}
@@ -3941,16 +3890,69 @@ AntiCrux.prototype._ai_assistance = function(pNode, pUCI, pDepth) {
 		this._ai_assistance(pNode.nodes[pNode.moves.indexOf(move)], pUCI, pDepth+1);
 };
 
+
+/**
+ * The method duplicates a node. Only the basic fields are copied.
+ *
+ * @private
+ * @method _sy_copy
+ * @param {Object} pNode Node to copy.
+ * @param {Boolean} pFull Copy all the necessary nodes.
+ * @return {Object} New copied node.
+ */
+AntiCrux.prototype._sy_copy = function(pNode, pFull) {
+	//-- Clones the node
+	var	newNode = Object.create(null);
+	newNode.board = pNode.board.slice(0);
+	newNode.magic = this.constants.bitmask.none | (pNode.magic & this.constants.bitmask.player);
+	if (typeof pNode.enpassant !== 'undefined')
+		newNode.enpassant = pNode.enpassant;
+
+	//-- Extends the copy
+	if (pFull)
+	{
+		newNode.score = pNode.score;
+		if (typeof pNode.moves !== 'undefined')
+			newNode.moves = pNode.moves.slice(0);
+		if (typeof pNode._pendingPromotion !== 'undefined')
+			newNode._pendingPromotion = pNode._pendingPromotion;
+	}
+
+	//-- Result
+	return newNode;
+};
+
+/**
+ * The method removes the unwanted fields within an existing node
+ * and resets the masks if needed.
+ *
+ * @private
+ * @method _sy_shrink
+ * @param {Object} pNode Node to shrink.
+ * @param {Boolean} pResetMask Resets the mask.
+ */
+AntiCrux.prototype._sy_shrink = function(pNode, pResetMask) {
+	var f;
+	for (f in pNode)
+		if ((f != 'board') && (f != 'magic') && (f != 'score') && (f != 'enpassant') && (f != '_pendingPromotion'))
+			delete pNode[f];
+	if (pResetMask)
+	{
+		pNode.magic = (pNode.magic & this.constants.bitmask.player);
+		pNode.score = this.constants.bitmask.none;
+	}
+};
+
 /**
  * The method reduces the maximal number of nodes to destroy the links between them.
  *
  * @private
- * @method _ai_freeMemory
+ * @method _sy_freeMemory
  * @param {Object} pNode (Optional) Reference node.
  * @return {Integer} Count of released nodes.
  */
-AntiCrux.prototype._ai_freeMemory = function(pNode) {
-	var i, count;
+AntiCrux.prototype._sy_freeMemory = function(pNode) {
+	var i;
 
 	//-- Self
 	if (pNode === null)
@@ -3960,26 +3962,30 @@ AntiCrux.prototype._ai_freeMemory = function(pNode) {
 
 	//-- Checks
 	if (typeof pNode.nodes === 'undefined')
-		return 1;
+	{
+		this._gc_counter++;
+		return;
+	}
 
 	//-- Atomization to remove the links between every object
-	count = 0;
 	for (i=0 ; i<pNode.nodes.length ; i++)
-		count += this._ai_freeMemory(pNode.nodes[i]);
-	delete pNode.nodes;
-	delete pNode.moves;
-	return count;
+		this._sy_freeMemory(pNode.nodes[i]);
+	pNode.nodes.length = 0;
+	pNode.moves.length = 0;
 };
 
 /**
  * The method calls the garbage collector (if available).
  *
  * @private
- * @method _ai_gc
+ * @method _sy_gc
+ * @param {Boolean} pForced Forced call
  */
-AntiCrux.prototype._ai_gc = function() {
+AntiCrux.prototype._sy_gc = function(pForced) {
 	//-- Garbage collector for V8 if run with the right option
-	if ((typeof global == 'object') && (typeof global.gc == 'function'))
+	if (	(pForced || (this._gc_counter >= 75000)) &&
+			(typeof global == 'object') &&
+			(typeof global.gc == 'function'))
 		global.gc();
 };
 

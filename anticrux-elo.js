@@ -106,8 +106,9 @@ var enginePool = [
 		engineTwo		: null,
 		disqualified	: null,
 		running			: false,
+		lastMessage		: '',
 		//- Options
-		debugLevel		: 1,							//0=none, 1=activity, 2=trace, 3=detailed trace
+		debugLevel		: 1,							//0=none, 1=activity, 2=calls, 3=detailed trace
 		file			: 'anticrux-elo.pgn',			//Output file to store the games
 		fileElo			: 'anticrux-elo.csv',			//Output file to store the evolution of the ELO rating (blank name = no generation)
 		genGames    	: true,							//Will the job generate new games in PGN format ?
@@ -119,22 +120,29 @@ var enginePool = [
 
 //======== Library
 
+function acelo_write(pMessage) {
+	if (pMessage == job.lastMessage)
+		return;
+	console.log(pMessage);
+	job.lastMessage = pMessage;
+}
+
 function acelo_welcome() {
 	//-- Trace
 	if (job.debugLevel >= 2)
-		console.log('> Trace : calling acelo_welcome()');
+		acelo_write('> Trace : calling acelo_welcome()');
 
 	//-- Header
-	console.log('');
-	console.log('AntiCrux hELO world');
-	console.log('http://github.com/ecrucru/anticrux/');
-	console.log('License: GNU Affero General Public License version 3');
-	console.log('');
-	console.log('Press Ctrl+C to kill the execution.');
-	console.log('Run the script again to use your other CPU (beware of the required memory).');
-	console.log('');
-	console.log('Running... It may take several hours, so take a drink...');
-	console.log('');
+	acelo_write('');
+	acelo_write('AntiCrux hELO world');
+	acelo_write('http://github.com/ecrucru/anticrux/');
+	acelo_write('License: GNU Affero General Public License version 3');
+	acelo_write('');
+	acelo_write('Press Ctrl+C to kill the execution.');
+	acelo_write('Run the script again to use your other CPU (beware of the required memory).');
+	acelo_write('');
+	acelo_write('Running... It may take several hours, so take a drink...');
+	acelo_write('');
 }
 
 function acelo_newjob() {
@@ -145,7 +153,7 @@ function acelo_newjob() {
 
 	//-- Trace
 	if (job.debugLevel >= 2)
-		console.log('> Trace : calling acelo_newjob()');
+		acelo_write('> Trace : calling acelo_newjob()');
 
 	//-- Next match
 	job.numGames--;
@@ -202,7 +210,7 @@ function acelo_newjob() {
 
 	//-- Initialization of Stockfish Multi-Variant
 	if (job.debugLevel >= 1)
-		console.log('** New game : '+job.engineOne.name+' vs. '+job.engineTwo.name);
+		acelo_write('** New game : '+job.engineOne.name+' vs. '+job.engineTwo.name);
 	if (job.engineOne.type == 'SF')
 	{
 		job.engineOne.ai.postMessage('uci');
@@ -229,7 +237,7 @@ function acelo_play() {
 
 	//-- Trace
 	if (job.debugLevel >= 2)
-		console.log('> Trace : calling acelo_play()');
+		acelo_write('> Trace : calling acelo_play()');
 
 	//-- Finds the player
 	player = (job.referee.getPlayer() == job.referee.constants.player.white ? job.engineOne : job.engineTwo);
@@ -243,11 +251,11 @@ function acelo_play() {
 			moveStr = player.ai.moveToString(move);
 		if (job.referee.movePiece(move, true) == job.referee.constants.noMove)
 		{
-			console.log('Internal error : Invalid move by "'+player.name+'", disqualified');
-			console.log('   - FEN : ' + job.referee.toFen());
-			console.log('   - Move : ' + move);
+			acelo_write('Internal error : Invalid move by "'+player.name+'", disqualified');
+			acelo_write('   - FEN : ' + job.referee.toFen());
+			acelo_write('   - Move : ' + move);
 			if (player.type == 'AC')
-				console.log('   - Please report the issue on GitHub');
+				acelo_write('   - Please report the issue on GitHub');
 			job.disqualified = player;
 		}
 		else
@@ -255,7 +263,7 @@ function acelo_play() {
 			job.referee.updateHalfMoveClock();
 			job.referee.logMove(move, null);
 			if (job.debugLevel >= 1)
-				console.log('- '+player.name+' : ' + moveStr);
+				acelo_write('- '+player.name+' : ' + moveStr);
 			player.ai.freeMemory();
 			acelo_nextTurn();
 		}
@@ -274,7 +282,10 @@ function acelo_parseSfmv(pText) {
 	if (pText.length === 0)
 		return;
 	if (job.debugLevel >= 2)
-		console.log('> Trace : calling acelo_parseSfmv("'+pText+'")');
+		acelo_write('> Trace : calling acelo_parseSfmv()');
+	else
+		if (job.debugLevel >= 3)
+			acelo_write('> Trace : calling acelo_parseSfmv("'+pText+'")');
 
 	//-- Finds the player
 	player = (job.referee.getPlayer() == job.referee.constants.player.white ? job.engineOne : job.engineTwo);
@@ -288,13 +299,13 @@ function acelo_parseSfmv(pText) {
 	if (list[0] == 'bestmove')
 	{
 		if (job.debugLevel >= 1)
-			node = job.referee._ai_copy(job.referee.getMainNode(), false);
+			node = job.referee._sy_copy(job.referee.getMainNode(), false);
 		move = job.referee.movePiece(list[1], true);
 		if (move == job.referee.constants.noMove)
 		{
-			console.log('External error : Invalid move by "'+player.name+'", disqualified');
-			console.log('   - FEN : ' + job.referee.toFen());
-			console.log('   - Move : ' + list[1]);
+			acelo_write('External error : Invalid move by "'+player.name+'", disqualified');
+			acelo_write('   - FEN : ' + job.referee.toFen());
+			acelo_write('   - Move : ' + list[1]);
 			job.disqualified = player;
 		}
 		else
@@ -302,7 +313,7 @@ function acelo_parseSfmv(pText) {
 			job.referee.updateHalfMoveClock();
 			job.referee.logMove(move, null);
 			if (job.debugLevel >= 1)
-				console.log('- '+player.name+' : ' + (job.debugLevel >= 1 ? job.referee.moveToString(move, node) : move));
+				acelo_write('- '+player.name+' : ' + (job.debugLevel >= 1 ? job.referee.moveToString(move, node) : move));
 		}
 		acelo_nextTurn();
 	}
@@ -313,7 +324,7 @@ function acelo_nextTurn() {
 
 	//-- Trace
 	if (job.debugLevel >= 2)
-		console.log('> Trace : calling acelo_nextTurn()');
+		acelo_write('> Trace : calling acelo_nextTurn()');
 
 	//-- Prepares the next turn
 	job.referee.switchPlayer();
@@ -322,38 +333,38 @@ function acelo_nextTurn() {
 	if (job.disqualified !== null)
 	{
 		if (job.debugLevel >= 3)
-			console.log('> Trace : end of game, '+job.disqualified.name+' is disqualified');
+			acelo_write('> Trace : end of game, '+job.disqualified.name+' is disqualified');
 		result = (job.disqualified.player == job.referee.constants.player.black ? '1-0' : '0-1');
 	}
 	else
 		if (job.referee.isEndGame(false))
 		{
 			if (job.debugLevel >= 3)
-				console.log('> Trace : end of game, winner=' + (job.referee.getWinner() == job.referee.constants.player.white ? job.engineOne.name : job.engineTwo.name));
+				acelo_write('> Trace : end of game, winner=' + (job.referee.getWinner() == job.referee.constants.player.white ? job.engineOne.name : job.engineTwo.name));
 			result = (job.referee.getWinner() == job.referee.constants.player.white ? '1-0' : '0-1');
 		}
 		else
 			if (job.referee.isDraw() || (job.referee.getHistory().length >= 150))
 			{
 				if (job.debugLevel >= 3)
-					console.log('> Trace : end of game, draw');
+					acelo_write('> Trace : end of game, draw');
 				result = '1/2-1/2';
 			}
 			else
 			{
-				if (job.debugLevel >= 3)
+				if (job.debugLevel >= 2)
 				{
-					console.log('> Trace : current position "'+job.referee.toFen()+'"');
-					console.log(job.referee.toConsole(true));
+					acelo_write('> Trace : current position "'+job.referee.toFen()+'"');
+					acelo_write(job.referee.toConsole(true));
 				}
 				acelo_play();
 				return;
 			}
-	console.log(job.engineOne.name+' vs. '+job.engineTwo.name+' ('+result+')');
+	acelo_write(job.engineOne.name+' vs. '+job.engineTwo.name+' ('+result+')');
 
 	//-- Builds the PGN
 	if (job.debugLevel >= 3)
-		console.log('> Trace : saving the PGN file');
+		acelo_write('> Trace : saving the PGN file');
 	pgnHeader = {
 		White		: job.engineOne.name,
 		Black		: job.engineTwo.name,
@@ -371,12 +382,12 @@ function acelo_nextTurn() {
 	//-- Saves the PGN file
 	fs.appendFile(job.file, pgn+"\n\n", function(pError) {
 		if (pError !== null)
-			console.log('Error : ' + pError);
+			acelo_write('Error : ' + pError);
 	});
 
 	//-- Job ended
 	if (job.debugLevel >= 3)
-		console.log('> Trace : ended job');
+		acelo_write('> Trace : ended job');
 	job.running = false;
 } 
 
@@ -391,12 +402,12 @@ function acelo_elo() {
 
 	//-- Trace
 	if (job.debugLevel >= 2)
-		console.log('> Trace : calling acelo_elo()');
+		acelo_write('> Trace : calling acelo_elo()');
 
 	//-- Loads the PGN file
 	if (!fs.existsSync(job.file))
 	{
-		console.log('Error : no PGN file to analyze');
+		acelo_write('Error : no PGN file to analyze');
 		return false;
 	}
 	pgn = fs.readFileSync(job.file, 'utf8');
@@ -503,7 +514,7 @@ function acelo_elo() {
 		}
 	}
 	if (job.debugLevel >= 2)
-		console.log('> Trace : '+games.length+' games loaded');
+		acelo_write('> Trace : '+games.length+' games loaded');
 
 	//-- Determines the initial ratings Rn
 	eloData = {};
@@ -700,11 +711,11 @@ function acelo_elo() {
 	//-- Final display of the statistics
 	for (e in eloData)
 	{
-		console.log('');
-		console.log('The ratings for the engine "'+e+'" are :');
+		acelo_write('');
+		acelo_write('The ratings for the engine "'+e+'" are :');
 		for (i=0 ; i<eloData[e].rating.length ; i++)
 			if (eloData[e].rating[i] !== undefined)
-				console.log('   - '+e+' Level '+(i+1)+' is rated '+(eloData[e].rating[i][eloData[e].rating[i].length-1])+' (initially '+eloData[e].rating[i][0]+') after '+(eloData[e].win[i]+eloData[e].draw[i]+eloData[e].loss[i])+' games (+'+eloData[e].win[i]+'/='+eloData[e].draw[i]+'/-'+eloData[e].loss[i]+').');
+				acelo_write('   - '+e+' Level '+(i+1)+' is rated '+(eloData[e].rating[i][eloData[e].rating[i].length-1])+' (initially '+eloData[e].rating[i][0]+') after '+(eloData[e].win[i]+eloData[e].draw[i]+eloData[e].loss[i])+' games (+'+eloData[e].win[i]+'/='+eloData[e].draw[i]+'/-'+eloData[e].loss[i]+').');
 	}
 
 	//-- Saves the CSV file
@@ -746,12 +757,12 @@ function acelo_elo() {
 		//- Saves the data
 		fs.writeFile(job.fileElo, csv.join("\r\n")+"\r\n", function(pError) {
 			if (pError !== null)
-				console.log('Error : ' + pError);
+				acelo_write('Error : ' + pError);
 		});
 		if (job.debugLevel >= 1)
 		{
-			console.log('');
-			console.log('CSV file saved under "'+job.fileElo+'".');
+			acelo_write('');
+			acelo_write('CSV file saved under "'+job.fileElo+'".');
 		}
 	}
 	return true;
@@ -764,7 +775,7 @@ function acelo_elo() {
 acelo_welcome();
 if (job.file.length === 0)
 {
-	console.log('Error : missing name for the PGN file');
+	acelo_write('Error : missing name for the PGN file');
 	return;
 }
 job.running = false;

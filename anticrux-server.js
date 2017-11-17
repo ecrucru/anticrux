@@ -779,7 +779,7 @@ server.acsrv_process = function(pSocket) {
 						if (pSocket.acsrv_ai.getPlayer() == pSocket.acsrv_aicolor)
 							throw 'Internal error';
 
-						node = pSocket.acsrv_ai._ai_copy(pSocket.acsrv_ai.getMainNode(), false);
+						node = pSocket.acsrv_ai._sy_copy(pSocket.acsrv_ai.getMainNode(), false);
 						move = pSocket.acsrv_ai.movePiece(line, true, pSocket.acsrv_ai.getPlayer());
 						if (move == pSocket.acsrv_ai.constants.noMove)
 						{
