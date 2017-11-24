@@ -2382,7 +2382,7 @@ AntiCrux.prototype.toPgn = function(pHeader, pScore) {
 		}
 	}
 	if ((pHeader.Result != '') && (pHeader.Result != '*'))
-		pgnItem = pgnItem.substring(0, mark) + '#' + pgnItem.substring(mark) + ' ' + pHeader.Result;
+		pgnItem = pgnItem.substring(0, mark) + (['1-0','0-1'].indexOf(pHeader.Result)!==-1?'#':'') + pgnItem.substring(mark) + ' ' + pHeader.Result;
 	lf_setheader('Termination', (pHeader.Result != '*' ? 'normal' : 'unterminated'));
 
 	//-- Builds the header
