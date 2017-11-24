@@ -299,22 +299,11 @@ To get reliable games, the processing will take hours (or days !). To accelerate
 
 The script has 3 main changeable parameters :
 
-- job.genGames : should the script play games and append the result to the PGN file ?
-- job.numGames : how many games should be generated per CPU ?
-- job.genStats : should the script estimate AntiCrux's rating based on the rules provided by the chess federation FIDE ?
+- `job.genGames` : should the script play games and append the result to the PGN file ?
+- `job.numGames` : how many games should be generated per CPU ?
+- `job.genStats` : should the script estimate AntiCrux's rating based on the rules provided by the chess federation FIDE ?
 
-The following rules apply to make the determination possible :
-
-- The player is identified by its name : 2 different levels are 2 separate players even if the engine is the same
-- The level of Stockfish AntiChess is assumed to be known : the taken reference is lichess.org
-	- Please note that lichess.org uses [Glicko](https://en.wikipedia.org/wiki/Glicko_rating_system) which is assumed not being the same than ELO
-- A player must compete with at least 3 different players having known ratings
-- AntiCrux doesn't compete with itself
-- Stockfish AntiChess can compete with itself
-- A player should play at least 9 times
-- A player must win at least one time
-
-You will read such an output at the end :
+At the end, you get the following output in the console :
 
 ```
 The ratings for the engine "AC" are :
@@ -329,7 +318,23 @@ The ratings for the engine "SF" are :
    - SF Level 6 is rated 2501 (initially 2150) after 346 games (+293/=1/-52).
 ```
 
-If you don't have enough data, you can rely on another statistical method with the tool named "[BayesElo](https://www.remi-coulom.fr/Bayesian-Elo/)". Download it and type the following commands :
+These results are composed of :
+- the latest estimated rating of the engine
+- the initial rating of the engine determined during the ramp-up phase
+- the number of played games and their results
+
+The estimations follow the rules edicted by the chess federation FIDE. The principles are :
+- The player is identified by its name : 2 different levels are 2 separate players even if the engine is the same
+- The level of Stockfish AntiChess is assumed to be known (carefully estimated here)
+- A player must compete with at least 3 different players having known ratings
+- AntiCrux doesn't compete with itself
+- Stockfish AntiChess can compete with itself
+- A player should play at least 9 times
+- A player must win at least one time
+
+When the statistics are displayed, a CSV file `anticrux-elo.csv` is generated in the background (refer to the options of the script). It is built to allow you to draw the evolution of the ELO rating in a spreadsheet. You can then decide visually what is the most suitable rating for a given level.
+
+To improve the reliability of the determination, we can use a statistical approach with "[BayesElo](https://www.remi-coulom.fr/Bayesian-Elo/)". This application takes a PGN file and calculates the ELO rating :
 
 ```
 > bayeselo.exe
@@ -352,7 +357,10 @@ ResultSet-EloRating>x
 ResultSet>x
 ```
 
-The ELO is shown here relatively to an offset equal to 0. But if the offset is equal to 1500, then you add that offset to the displayed ELO to get the final estimation. After many games played automatically and some adjustments done in the configuration, the ELO rating of AntiCrux approximately follows a logarithmic rule.
+The calculated ELO is displayed according to an offset equal to zero. To get the *absolute* ELO, we should add a value. By choice, this value is determined by the minimization of the difference between FIDE and BayesElo.
+
+Finally, in the library, the ELO is given by a formula based on the natural logarithm.
+
 
 
 ## Information
