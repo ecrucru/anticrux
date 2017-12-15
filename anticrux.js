@@ -1142,15 +1142,15 @@ AntiCrux.prototype.logMove = function(pMove, pScore) {
 	//-- Logs the move
 	this._history.push(pMove);
 
-	//- Initializes the score to log
+	//-- Initializes the score to log
 	score = Object.create(null);
 	score.type = this.constants.bitmask.valuationStatic;
 	score.value = 0;
 
-	//- Automatic determination of the score
+	//-- Automatic determination of the score
 	if (pScore === null)
 	{
-		// Retrieves the current data
+		//- Retrieves the current data
 		val = null;
 		if (this._has(this._root_node, 'moves', true) && this._has(this._root_node, 'nodes', true))
 		{
@@ -1161,7 +1161,7 @@ AntiCrux.prototype.logMove = function(pMove, pScore) {
 		if (val === null)
 			val = this.getScore(this._root_node);
 
-		// Saves the value
+		//- Saves the value
 		score.type = val.type;
 		score.value = val.valuePercent;
 	}
@@ -1173,7 +1173,7 @@ AntiCrux.prototype.logMove = function(pMove, pScore) {
 		score.value = Math.min(Math.max(pScore, -100), 100);
 	}
 
-	//- Saves the score
+	//-- Saves the score
 	this._scoreHistory.push(score);
 	return true;
 };
@@ -2346,15 +2346,15 @@ AntiCrux.prototype.toPgn = function(pHeader, pScore) {
 		{
 			pgnItem += ' ' + moveStr;
 
-			//- The termination mark cannot be after the comment
+			// The termination mark cannot be after the comment
 			if (i == this._history.length-1)
 				mark = pgnItem.length;
 
-			//- Comment
+			// Comment
 			if (pScore && (this._scoreHistory[i].type == this.constants.bitmask.valuationDeep))
-				pgnItem += ' {'+this._scoreHistory[i].value+'%}';
+				pgnItem += ' {[%eval '+this._scoreHistory[i].value+'/1]}';
 
-			//- Other updates
+			// Other updates
 			this._helper.updateHalfMoveClock();
 			this._helper.logMove(this._history[i], this._scoreHistory[i]);
 			this._helper.switchPlayer();
@@ -3889,7 +3889,6 @@ AntiCrux.prototype._ai_assistance = function(pNode, pUCI, pDepth) {
 	if (this._has(pNode, 'nodes', true) && this._has(pNode, 'moves', true))
 		this._ai_assistance(pNode.nodes[pNode.moves.indexOf(move)], pUCI, pDepth+1);
 };
-
 
 /**
  * The method duplicates a node. Only the basic fields are copied.

@@ -280,7 +280,7 @@ To activate the logo in WinBoard, copy the picture located at `images/anticrux.b
 
 #### Procedure for pyChess
 
-The following procedure applies from pyChess 0.99 released on September 2017.
+The following procedure applies from pyChess 0.99 released on September 2017. Any use of earlier versions is not recommended.
 
 Run pyChess. In the menu "Edit > Engines", add a new engine by selecting `anticrux-engine.js`.
 
@@ -288,7 +288,7 @@ Then set `--expose-gc` for the parameters of the environment.
 
 The working directory is the one where the engine is stored.
 
-To start a new game, you should always use the menu "File > New game" because the home screen is unable (at the current time) to start a variant game. From the dialog of the new game, you must select the variant called "Suicide" or "Giveaway" and then select the engine.
+To start a new game, you must use the menu "File > New game" or click on the big weather icon of the welcome screen. You may not find the engine in the drop-down list of the welcome screen because it doesn't play the classical chess. From the dialog of the new game, do select the variant called "Suicide" or "Giveaway", then select the engine and the applicable level with the slider.
 
 
 ## AntiCrux hELO world
