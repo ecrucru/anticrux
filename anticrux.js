@@ -2218,7 +2218,7 @@ AntiCrux.prototype.toChessText = function(pNode) {
 		{
 			//- Prepares the node
 			i = 8*y+x;
-			b = ((x+y)%2 == 1);
+			b = ((x+y)%2 == (this.options.variant.misplacedBoard ? 0 : 1));
 			player = this._ct_getPlayer(pNode, i);
 
 			//- Left margin
