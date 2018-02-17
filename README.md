@@ -489,6 +489,8 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Quality: tool to verify some positions
 	- Library: new method AntiCrux.prototype.moveToStringHtml
 	- Library: new option AntiCrux.options.ai.tolerance
+	- Server: enhanced communication and debugging features
+	- Server: new supported commands `debug`, `history`, `journal`, `shutdown` and `stored`
 
 
 ### License

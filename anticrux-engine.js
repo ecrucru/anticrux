@@ -284,7 +284,7 @@ if (acengine.jsUCI)
 	importScripts('anticrux.js');
 else
 {
-	var	AntiCrux = require('anticrux');
+	var AntiCrux = require('anticrux');
 	var fs = require('fs');									//https://nodejs.org/api/fs.html
 }
 

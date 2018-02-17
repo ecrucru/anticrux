@@ -1,6 +1,6 @@
 /*
 	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
-	Copyright (C) 2016-2017, ecrucru
+	Copyright (C) 2016-2018, ecrucru
 
 		https://github.com/ecrucru/anticrux/
 		http://ecrucru.free.fr/?page=anticrux
@@ -52,13 +52,25 @@ var server = net.createServer(function(pSocket) {
 
 		//-- Default options
 		pSocket.acsrv_options = {
-			style : 1,
-			level : 5,
-			mode960 : false,
-			noticePossibleVictory : true,
-			_maxLevel : 20,					//The level impacts the memory, especially when you have multiple players
-			_playOnConnect : false,
-			_consoleInboundFlow : false
+			// Changeable options
+			style : 1,								//Format to send the board
+			block : false,							//Use blocks to parse the output of a sent command
+			defprompt : false,						//Display "fics%" when a prompt is needed
+			seekinfo : false,						//Receive the games waiting for a new player
+			seekremove : false,						//Receive notifications for games no more waiting for players
+			level : 5,								//Strength of the AI
+			mode960 : false,						//Use predefined start positions
+			noticePossibleVictory : true,			//Use kibitz to tell that the AI will win the current game
+			// Internal variables (do not change)
+			_lastBlock : '',						//Identifier of the last received block
+			_pendingChallenge : false,				//Is accept/decline pending ?
+			// Protected options
+			_maxLevel : 20,							//The level impacts the memory, especially when you have multiple players
+			_playOnConnect : false,					//Proposition of a new game on startup
+			_enableDebug : false,					//Debug: enable some extra commands
+			_consoleInboundFlow : false,			//Debug: show all the received commands
+			_consoleOutboundFlow : false,			//Debug: show all the emitted commands
+			_shutdownPassword : ''					//Password to shutdown the server remotely (disabled if blank)
 		};
 
 		//-- New AI
@@ -66,8 +78,67 @@ var server = net.createServer(function(pSocket) {
 		pSocket.acsrv_ai.setLevel(pSocket.acsrv_options.level);
 		pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.none;
 
+		//-- Functions
+		pSocket.acsrv_send_seeks = function() {
+			if (this.acsrv_options.seekinfo && (this.acsrv_state !== 'playing'))
+			{
+				this.acsrv_post_raw('<sc>');
+				if (!this.acsrv_options._pendingChallenge)
+					this.acsrv_post_raw('<s> '+this.acsrv_session+' w=AntiCrux ti=02 rt='+this.acsrv_ai.options.ai.elo+'E t=180 i=180 r=u tp=suicide c=? rr=0-9999 a=t f=t');
+				return true;
+			}
+			else
+				return false;
+		};
+
+		pSocket.acsrv_remove_seeks = function() {
+			if (this.acsrv_options.seekremove)
+			{
+				this.acsrv_post_raw('<sr> '+this.acsrv_session);
+				return true;
+			}
+			else
+				return false;
+		};
+
+		pSocket.acsrv_post = function(pContent, pDefPrompt) {
+			var buffer;
+
+			// Data to the client
+			buffer = pContent;
+			if (buffer.length > 0)
+				buffer += "\r\n";
+			if (this.acsrv_options.block && (this.acsrv_options._lastBlock.length > 0))
+				buffer = String.fromCharCode(15) + this.acsrv_options._lastBlock + String.fromCharCode(16) + buffer + String.fromCharCode(17) + "\r\n";
+			this.acsrv_options._lastBlock = '';
+			if (pDefPrompt && this.acsrv_options.defprompt)
+				buffer += 'fics% ';
+			this.write(buffer);
+
+			// Data to the console
+			if (pSocket.acsrv_options._consoleOutboundFlow)
+			{
+				buffer = pContent.split("\r").join('').split("\n").join("\\n");
+				if (buffer.length > 0)
+					server.acsrv_console(pSocket, '> '+buffer);
+			}
+		};
+
+		pSocket.acsrv_post_raw = function(pContent) {
+			var tmp = this.acsrv_options._lastBlock;
+			this.acsrv_options._lastBlock = '';
+			this.acsrv_post(pContent, false);
+			this.acsrv_options._lastBlock = tmp;
+		};
+
+		pSocket.acsrv_set_state = function(pState) {
+			this.acsrv_state = pState;
+			if (this.acsrv_options._consoleInboundFlow || this.acsrv_options._consoleOutboundFlow)
+				server.acsrv_console(pSocket, 'State changed to "'+this.acsrv_state+'"');
+		};
+
 		//-- Welcome screen
-		pSocket.write(
+		pSocket.acsrv_post(
 			"\r\n" +
 			"      ______________________________________________\r\n" +
 			"    < AntiCrux " + pSocket.acsrv_ai.options.ai.version + " will win unless you are good... >\r\n" +
@@ -79,7 +150,7 @@ var server = net.createServer(function(pSocket) {
 			"                     ||     ||\r\n" +
 			"\r\n" +
 			"\r\n" +
-			"  Get it for free at http://github.com/ecrucru/anticrux/\r\n" +
+			"  Get it for free at https://github.com/ecrucru/anticrux/\r\n" +
 			"\r\n" +
 			"  To be compatible with any existing chess program, the server\r\n" +
 			"  mimics FICS, but it is not a FICS server. Don't be confused !\r\n" +
@@ -89,10 +160,9 @@ var server = net.createServer(function(pSocket) {
 			"\r\n" +
 			"\r\n" +
 			"========================================================================\r\n" +
-			"\r\n" +
-			"\r\n");
+			"\r\n", false);
 		pSocket.write('login: ');
-		pSocket.acsrv_state = 'login';
+		pSocket.acsrv_set_state('login');
 
 		//-- Events for the socket
 		pSocket.on('data', function(data) {
@@ -123,7 +193,7 @@ var server = net.createServer(function(pSocket) {
 		// Verboses
 		console.log('');
 		console.log('AntiCrux Server '+(new AntiCrux().options.ai.version)+' is now listening to new connections on port '+server.address().port+'...');
-		console.log('http://github.com/ecrucru/anticrux/');
+		console.log('https://github.com/ecrucru/anticrux/');
 		console.log('License: GNU Affero General Public License version 3');
 		console.log('');
 		console.log('Press Ctrl+C to kill the server.');
@@ -167,7 +237,7 @@ server.acsrv_uptime = function(pSeconds) {
 
 //======== Processing
 
-server.acsrv_countSockets = function() {
+server.acsrv_count_sockets = function() {
 	var session, counter;
 
 	//-- Identifies the valid connections
@@ -185,7 +255,7 @@ server.acsrv_countSockets = function() {
 };
 
 server.acsrv_process = function(pSocket) {
-	var pos, line, tab, i, b, news, move, node, hist, buffer, white, black;
+	var pos, line, match, tab, i, b, news, move, node, hist, buffer, tmp, white, black;
 
 	while (true)
 	{
@@ -197,7 +267,15 @@ server.acsrv_process = function(pSocket) {
 		pSocket.acsrv_datastream = pSocket.acsrv_datastream.substring(pos+1);
 		line = line.split("\r").join('');
 		line = line.split('@').join('');
-		line = line.split('$').join('');
+		line = line.split('$').join('').trim();
+		match = line.match(/^([0-9])+\s(.*)$/);
+		if (match !== null)
+		{
+			pSocket.acsrv_options._lastBlock = match[1];
+			line = match[2].trim();
+		}
+		else
+			pSocket.acsrv_options._lastBlock = '';
 		if (pSocket.acsrv_options._consoleInboundFlow && (line.length !== 0))
 			server.acsrv_console(pSocket, '< '+line);
 		tab = line.toLowerCase().split(' ');
@@ -216,46 +294,71 @@ server.acsrv_process = function(pSocket) {
 				return;
 			}
 
+			//- Shutdown (unofficial)
+			if (tab[0] == 'shutdown')
+			{
+				line = line.substring(9, line.length);
+				if (pSocket.acsrv_options._shutdownPassword.length === 0)
+					pSocket.acsrv_post('This command is disabled.', true);
+				else
+					if (line == pSocket.acsrv_options._shutdownPassword)
+						server.acsrv_shutdown();
+					else
+					{
+						server.acsrv_console(pSocket, 'Failed attempt to shutdown the server');
+						pSocket.acsrv_post('Incorrect password to shut down the server.', true);
+					}
+				continue;
+			}
+
 			//- Best players
 			if (tab[0] == 'best')
 			{
-				pSocket.write(
+				pSocket.acsrv_post(
 					"         Suicide\r\n" +
 					"   1. AntiCrux     " + pSocket.acsrv_ai.options.ai.elo + "\r\n" +
-					"   2. " + server.acsrv_fixedString(pSocket.acsrv_login, 12) + " ++++\r\n" +
-					'fics% ');
+					"   2. " + server.acsrv_fixedString(pSocket.acsrv_login, 12) + " ++++",
+					true);
 				continue;
 			}
 			if (tab[0] == 'cbest')
 			{
-				pSocket.write("         Suicide\r\n   1. AntiCrux     " + pSocket.acsrv_ai.options.ai.elo + "\r\nfics% ");
+				pSocket.acsrv_post("         Suicide\r\n   1. AntiCrux     " + pSocket.acsrv_ai.options.ai.elo, true);
 				continue;
 			}
 			if (tab[0] == 'hbest')
 			{
-				pSocket.write("         Suicide\r\n   1. " + server.acsrv_fixedString(pSocket.acsrv_login, 12) + " ++++\r\nfics% ");
+				pSocket.acsrv_post("         Suicide\r\n   1. " + server.acsrv_fixedString(pSocket.acsrv_login, 12) + " ++++", true);
 				continue;
 			}
 
 			//- Date
 			if (tab[0] == 'date')
 			{
-				pSocket.write("Server time    - "+(new Date().toUTCString())+"\r\nfics% ");
+				pSocket.acsrv_post('Server time    - '+(new Date().toUTCString()), true);
+				continue;
+			}
+
+			//- Debug
+			if ((tab[0] == 'debug') && pSocket.acsrv_options._enableDebug)
+			{
+				pSocket.acsrv_post(line.substring(6, line.length), true);
 				continue;
 			}
 
 			//- Uptime
 			if (tab[0] == 'uptime')
 			{
-				pSocket.write(
+				pSocket.acsrv_post(
 					"AntiCrux Server " + pSocket.acsrv_ai.options.ai.version + "\r\n" +
 					"The server has been up since " + server.acsrv_upDate + ".\r\n" +
 					"(Up for " + server.acsrv_uptime(process.uptime()) + ")\r\n" +
 					"\r\n" +
-					"There are currently "+server.acsrv_countSockets()+" players.\r\n" +
+					"There are currently "+server.acsrv_count_sockets()+" players.\r\n" +
 					"\r\n" +
 					"Player limit: "+server.acsrv_maxConnections+" users (+ 0 admins)\r\n" +
-					"Unregistered user restriction at "+server.acsrv_maxConnections+" users.\r\nfics% "
+					"Unregistered user restriction at "+server.acsrv_maxConnections+" users.",
+					true
 				);
 				continue;
 			}
@@ -263,14 +366,20 @@ server.acsrv_process = function(pSocket) {
 			//- News
 			if (tab[0] == 'news')
 			{
-				news = [	'1 (Sat, Feb  4) AntiCrux Server is under development',
-							'2 (Sun, Feb  5) AntiCrux Server will be available on GitHub',
-							'3 (Sun, Feb 12) The first release of AntiCrux Server is ready',
-							'4 (Thu, Feb 16) AntiCrux Server now plays AntiChess960'
+				buffer = '';
+				news = [	'1 (Sat, Feb  4, 2017) AntiCrux Server is under development',
+							'2 (Sun, Feb  5, 2017) AntiCrux Server will be available on GitHub',
+							'3 (Sun, Feb 12, 2017) The first release of AntiCrux Server is ready',
+							'4 (Thu, Feb 16, 2017) AntiCrux Server now plays AntiChess960',
+							'5 (Sat, Feb 17, 2018) AntiCrux Server is improved',
 						];
 				for (i=0 ; i<news.length ; i++)
-					pSocket.write(news[i]+"\r\n");
-				pSocket.write('fics% ');
+				{
+					if (buffer.length > 0)
+						buffer += "\r\n";
+					buffer += news[i];
+				}
+				pSocket.acsrv_post(buffer, true);
 				continue;
 			}
 
@@ -278,7 +387,7 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'say')
 			{
 				server.acsrv_console(pSocket, line.substring(4));
-				pSocket.write('fics% ');
+				pSocket.acsrv_post('', true);
 				continue;
 			}
 
@@ -293,20 +402,19 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'showlist')
 			{
 				if (tab[1].length === 0)
-					pSocket.write("Lists:\r\n\r\ncomputer             is PUBLIC");
+					pSocket.acsrv_post("Lists:\r\n\r\ncomputer             is PUBLIC", true);
 				else
 					if (tab[1] == 'computer')
-						pSocket.write("-- computer list: 1 name --\r\nAntiCrux");
+						pSocket.acsrv_post("-- computer list: 1 name --\r\nAntiCrux", true);
 					else
-						pSocket.write("\""+tab[1]+"\" does not match any list name.");
-				pSocket.write("\r\nfics% ");
+						pSocket.acsrv_post('"'+tab[1]+'" does not match any list name.', true);
 				continue;
 			}
 
 			//- Limits
 			if (tab[0] == 'limits')
 			{
-				pSocket.write(
+				pSocket.acsrv_post(
 					"Current hardcoded limits (maximums unless specified otherwise):\r\n" +
 					"  Server:\r\n" +
 					"    Channels: 0\r\n" +
@@ -333,7 +441,8 @@ server.acsrv_process = function(pSocket) {
 					"    Aliases: 0\r\n" +
 					"    Messages: 0\r\n" +
 					"    Messages to a player in 24 hours: 0\r\n" +
-					"    Maximum communication size: 0 character.\r\nfics% "
+					"    Maximum communication size: 0 character.",
+					true
 				);
 				continue;
 			}
@@ -342,7 +451,6 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'games')
 			{
 				server.acsrv_games(pSocket);
-				pSocket.write('fics% ');
 				continue;
 			}
 
@@ -350,21 +458,21 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'handles')
 			{
 				server.acsrv_handles(pSocket, tab[1]);
-				pSocket.write('fics% ');
+				pSocket.acsrv_post('', true);
 				continue;
 			}
 
 			//- List of players for starting a game : AntiCrux only :-)
 			if (tab[0] == 'who')
 			{
-				pSocket.write(pSocket.acsrv_ai.options.ai.elo + " AntiCrux(C)\r\nfics% ");
+				pSocket.acsrv_post(pSocket.acsrv_ai.options.ai.elo + ' AntiCrux(C)', true);
 				continue;
 			}
 
 			//- Options and silenced commands
-			if ((tab[0] == 'alias') || (tab[0] == 'iset'))
+			if (tab[0] == 'alias')
 			{
-				pSocket.write('fics% ');
+				pSocket.acsrv_post('', true);
 				continue;
 			}
 			if (tab[0] == 'style')
@@ -372,26 +480,27 @@ server.acsrv_process = function(pSocket) {
 				tab = ['set', 'style', '12'];
 				//No continue
 			}
-			if (tab[0] == 'set')
+			if ((tab[0] == 'set') || (tab[0] == 'iset'))
 			{
 				if (tab[1] == 'interface')
 					server.acsrv_console(pSocket, 'Declared software: ' + line.substring(14));
 				else if ((tab[1] == 'style') && (tab[2].length > 0))
 				{
 					pSocket.acsrv_options.style = parseInt(tab[2]);
-					pSocket.write("Style "+pSocket.acsrv_options.style+" set.\r\nfics% ");
+					pSocket.acsrv_post('Style '+pSocket.acsrv_options.style+' set.', true);
 				}
 				else if (tab[1] == 'level')
 				{
 					if (!tab[2].match(/^[0-9]+$/))
-						pSocket.write("Unknown level "+tab[2]+".\r\nfics% ");
+						pSocket.acsrv_post('Unknown level '+tab[2]+'.', true);
 					else
 					{
 						i = Math.max(1, Math.min(parseInt(tab[2]), pSocket.acsrv_options._maxLevel, 20));
 						if (pSocket.acsrv_ai.setLevel(i))
 						{
 							pSocket.acsrv_options.level = i;
-							pSocket.write("Level "+i+" set.\r\nfics% ");
+							pSocket.acsrv_post('Level '+i+' set.', true);
+							pSocket.acsrv_send_seeks();
 						}
 						else
 							throw 'Internal error';
@@ -400,7 +509,7 @@ server.acsrv_process = function(pSocket) {
 				else
 				{
 					if (!tab[1].match(/^[a-zA-Z0-9]+$/) || !pSocket.acsrv_options.hasOwnProperty(tab[1]))
-						pSocket.write("No such variable \""+tab[1]+"\".\r\nfics% ");
+						pSocket.acsrv_post('No such variable "'+tab[1]+'".', true);
 					else
 					{
 						switch (typeof pSocket.acsrv_options[tab[1]])
@@ -409,13 +518,17 @@ server.acsrv_process = function(pSocket) {
 								pSocket.acsrv_options[tab[1]] = tab[2];
 								break;
 							case 'boolean':
-								pSocket.acsrv_options[tab[1]] = ((tab[2].toLowerCase() === 'true') || (tab[2].toLowerCase() === 'on') || (tab[2] === '1'));
+								pSocket.acsrv_options[tab[1]] = (['true', 'on', '1'].indexOf(tab[2].toLowerCase()) !== -1);
 								break;
 							case 'number':
 								pSocket.acsrv_options[tab[1]] = parseInt(tab[2]);
 								break;
+							default:
+								throw 'Internal error';
 						}
-						pSocket.write("Variable \""+tab[1]+"\" set.\r\nfics% ");
+						pSocket.acsrv_post('Variable "'+tab[1]+'" set.', true);
+						if (tab[1].indexOf('seek') !== -1)
+							pSocket.acsrv_send_seeks();
 					}
 				}
 				continue;
@@ -424,11 +537,11 @@ server.acsrv_process = function(pSocket) {
 			//- Variables
 			if (['var', 'variable', 'variables'].indexOf(tab[0]) !== -1)
 			{
-				pSocket.write("Variable settings of "+pSocket.acsrv_login+":\r\n\r\n");
-				for (buffer in pSocket.acsrv_options)
-					if (buffer.substring(0, 1) != '_')				//Private values
-						pSocket.write(buffer + '=' + pSocket.acsrv_options[buffer] + "\r\n");
-				pSocket.write('fics% ');
+				buffer = "Variable settings of "+pSocket.acsrv_login+":\r\n";
+				for (tmp in pSocket.acsrv_options)
+					if (tmp.substring(0, 1) != '_')			//Private values
+						buffer += "\r\n" + tmp + '=' + pSocket.acsrv_options[tmp];
+				pSocket.acsrv_post(buffer, true);
 				continue;
 			}
 
@@ -437,7 +550,7 @@ server.acsrv_process = function(pSocket) {
 			{
 				if (pSocket.acsrv_state != 'playing')
 				{
-					pSocket.write("You are neither playing, observing nor examining a game.\r\nfics% ");
+					pSocket.acsrv_post('You are neither playing, observing nor examining a game.', true);
 					continue;
 				}
 			}
@@ -446,11 +559,20 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'finger')
 			{
 				if (tab[1].length === 0)
-					pSocket.write("You are "+pSocket.acsrv_login+".\r\nfics% ");
-				else if (tab[1] != 'anticrux')
-					pSocket.write("There is no player matching the name "+tab[1]+".\r\nfics% ");
-				else
-					pSocket.write(
+					pSocket.acsrv_post('You are '+pSocket.acsrv_login+'.', true);
+				else if (tab[1] == pSocket.acsrv_login.toLowerCase())
+					pSocket.acsrv_post(
+						"Finger of "+pSocket.acsrv_login+":\r\n" +
+						"\r\n" +
+						"Session: "+pSocket.acsrv_session+"\r\n" +
+						"\r\n" +
+						" 1: Your account cannot be registered.\r\n" +
+						" 2: You only have one opponent, aka AntiCrux "+pSocket.acsrv_ai.options.ai.version+" rated at "+pSocket.acsrv_ai.options.ai.elo+".\r\n" +
+						" 3: Do you enjoy classical chess ? It is the wrong place to be here, unless you also like suicide chess.\r\n",
+						true
+					);
+				else if (tab[1] == 'anticrux')
+					pSocket.acsrv_post(
 						"Finger of AntiCrux(C):\r\n" +
 						"\r\n" +
 						"On for: "+server.acsrv_uptime(process.uptime())+"\r\n" +
@@ -462,25 +584,28 @@ server.acsrv_process = function(pSocket) {
 						"\r\n" +
 						" 1: This computer plays AntiChess only, a.k.a. suicide chess.\r\n" +
 						" 2: The engine born in 2016 is AntiCrux "+pSocket.acsrv_ai.options.ai.version+" available on GitHub.\r\n" +
-						" 3: I use neither database, opening book, nor time control.\r\n" +
+						" 3: I use neither database, nor time control. Using the opening book depends on the selected strength.\r\n" +
 						" 4: I use classical techniques to play, unless you change my level.\r\n" +
 						" 5: I play unrated games, so I will accept most of your commands.\r\n" +
-						" 6: I will certainly never play other variants than AntiChess.\r\n" +
-						'fics% '
+						" 6: I will certainly never play other variants than AntiChess.",
+						true
 					);
+				else
+					pSocket.acsrv_post('There is no player matching the name '+tab[1]+'.', true);
 				continue;
 			}
 
 			//- Help based on the online documentation (http://www.freechess.org/Help/HelpFiles/[COMMAND].html)
 			if ((tab[0] == 'info') || (tab[0] == 'help'))
 			{
-				pSocket.write(
+				pSocket.acsrv_post(
 					"\r\n" +
 					"Supported commands:\r\n" +
-					"  abort                   Abort a game to cancel it\r\n" +
+					"  abort                   Cancel the current game\r\n" +
 					"  accept                  Accept a match proposed by AntiCrux\r\n" +
 					"  best/cbest/hbest        Show the best rated players\r\n" +
 					"  date                    Show the date\r\n" +
+					"  debug [command]         Ask the server to send a given command (debug)\r\n" +
 					"  decline                 Refuse a match proposed by AntiCrux\r\n" +
 					"  draw                    Offer a draw\r\n" +
 					"  finger [player]         Show some information about a player\r\n" +
@@ -489,12 +614,14 @@ server.acsrv_process = function(pSocket) {
 					"  getgame                 Invoke 'match AntiCrux suicide'\r\n" +
 					"  handles [mask]          Show the list of players\r\n" +
 					"  help/info               Show the list of available commands\r\n" +
+					"  history                 View the history games (unmanaged)\r\n" +
+					"  journal                 View the journal (unmanaged)\r\n" +
 					"  limits                  Display the limits of the server\r\n" +
 					"  match AntiCrux suicide  Start an unrated game against AntiCrux\r\n" +
 					"  moves                   Show the history of the moves\r\n" +
 					"  news                    Show the news of the server\r\n" +
 					"  nickname [name]         Change your name\r\n" +
-					"  play [id]               Play the game which ID is given by 'sought'\r\n" +
+					"  play [id]               Play the game which ID is given by 'sought' or seek\r\n" +
 					"  promote                 Predefine the piece for the promotions\r\n" +
 					"  quit                    Leave the program\r\n" +
 					"  refresh                 Display the board\r\n" +
@@ -504,7 +631,9 @@ server.acsrv_process = function(pSocket) {
 					"  seek unrated suicide    Find a partner\r\n" +
 					"  showlist                Display the list of users\r\n" +
 					"  shout [message]         Send a message to all the players\r\n" +
+					"  shutdown [password]     Remote shutdown of the server\r\n" +
 					"  sought                  List the available games\r\n" +
+					"  stored                  View the adjourned games (unmanaged)\r\n" +
 					"  switch                  Exchange the players\r\n" +
 					"  takeback                Undo your last move\r\n" +
 					"  uptime                  Give some details about the server\r\n" +
@@ -515,17 +644,16 @@ server.acsrv_process = function(pSocket) {
 					"  addlist, adjourn, alias, allobservers, assess, backward, bell,\r\n" +
 					"  boards, bsetup, bugwho, clearmessages, convert_bcf, convert_elo,\r\n" +
 					"  convert_uscf, copygame, crank, cshout, examine, flag, fmessage,\r\n" +
-					"  follow, forward, gnotify, goboard, history, hrank, inchannel, it,\r\n" +
-					"  jkill, jsave, kibitz, llogons, logons, mailhelp, mailmess, mailmoves,\r\n" +
+					"  follow, forward, gnotify, goboard, hrank, inchannel, it, jkill,\r\n" +
+					"  jsave, kibitz, llogons, logons, mailhelp, mailmess, mailmoves,\r\n" +
 					"  mailoldmoves, mailsource, mailstored, messages, mexamine, moretime,\r\n" +
 					"  next, observe, oldmoves, password, pause, pending, pfollow, play,\r\n" +
 					"  pobserve, pstat, qtell, rank, resume, revert, set, simabort,\r\n" +
 					"  simadjourn, simallabort, simalladjourn, simgames, simmatch, simnext,\r\n" +
 					"  simobserve, simopen, simpass, simprev, smoves, smposition, sposition,\r\n" +
-					"  statistics, stored, style, sublist, tell, time, unalias, unexamine,\r\n" +
-					"  unobserve, unpause, unseek, swhisper, withdraw, xkibitz, xtell,\r\n" +
-					"  xwhisper, znotify\r\n" +
-					"\r\nfics% "
+					"  statistics, style, sublist, tell, time, unalias, unexamine, unobserve,\r\n" +
+					"  unpause, unseek, swhisper, withdraw, xkibitz, xtell, xwhisper, znotify\r\n",
+					true
 				);
 				continue;
 			}
@@ -542,8 +670,8 @@ server.acsrv_process = function(pSocket) {
 				return;
 			}
 
-			pSocket.write("Press return to enter the server as \"" + pSocket.acsrv_login + "\":\r\n");
-			pSocket.acsrv_state = 'confirm_login';
+			pSocket.acsrv_post('Press return to enter the server as "' + pSocket.acsrv_login + '":', false);
+			pSocket.acsrv_set_state('confirm_login');
 			continue;
 		}
 
@@ -551,38 +679,20 @@ server.acsrv_process = function(pSocket) {
 		if ((pSocket.acsrv_state == 'confirm_login') && (line.length === 0))
 		{
 			//- Accepts the player
-			pSocket.write("**** Starting FICS session as " + pSocket.acsrv_login + "(U) ****\r\n\r\n");
+			pSocket.acsrv_post("**** Starting FICS session as " + pSocket.acsrv_login + "(U) ****\r\nfics% ", false);	//Important syntax to recognize the type of server
 			server.acsrv_console(pSocket, 'New connected player');
 
 			//- Transmits the notification
-			pSocket.acsrv_state = 'home';
-			pSocket.write("You will not hear channel tells.\r\n");
-			pSocket.write("You will not see seek ads.\r\n");
-			pSocket.write('fics% ');
+			pSocket.acsrv_set_state('home');
 			if (pSocket.acsrv_options._playOnConnect)
 			{
-				pSocket.acsrv_state = 'match_proposal';
 				pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.none;		//The color is always random, but the player can force it by proposing another match
-				pSocket.write("Challenge: AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") "+pSocket.acsrv_login+" (++++) unrated suicide 180 180.\r\n");
-				pSocket.write("You can \"accept\" or \"decline\", or propose different parameters.\r\nfics% ");
+				pSocket.acsrv_options._pendingChallenge = true;
+				buffer = "Challenge: AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") "+pSocket.acsrv_login+" (++++) unrated suicide 180 180.\r\n" +
+						'You can "accept" or "decline", or propose different parameters.';
+				pSocket.acsrv_post(buffer, true);
 			}
 			continue;
-		}
-
-		//-- Confirms the match
-		if (pSocket.acsrv_state == 'match_proposal')
-		{
-			if (line == 'decline')
-			{
-				pSocket.acsrv_state = 'home';
-				pSocket.write('fics% ');
-				return;
-			}
-			if (line == 'accept')
-			{
-				server.acsrv_startGame(pSocket);
-				continue;
-			}
 		}
 
 		//-- Command during the game
@@ -595,33 +705,33 @@ server.acsrv_process = function(pSocket) {
 				case 'exit':
 				case 'quit':
 				case 'adjourn':
-					pSocket.write("You must first abort the game.\r\nfics% ");
+					pSocket.acsrv_post('You must first abort the game.', true);
 					break;
 
 				//- Aborts the current game (automatically accepted)
 				case 'abort':
 					if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
-						pSocket.write("{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Game aborted by mutual agreement} *");
+						pSocket.acsrv_post('{Game '+pSocket.acsrv_session+' (AntiCrux vs. '+pSocket.acsrv_login+') Game aborted by mutual agreement} *', true);
 					else
-						pSocket.write("{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) Game aborted by mutual agreement} *");
-					pSocket.write("\r\nfics% ");
-					pSocket.acsrv_state = 'home';
+						pSocket.acsrv_post('{Game '+pSocket.acsrv_session+' ('+pSocket.acsrv_login+' vs. AntiCrux) Game aborted by mutual agreement} *', true);
+					pSocket.acsrv_set_state('home');
+					pSocket.acsrv_send_seeks();
 					break;
 
 				//- Resigns the current game (automatically accepted)
 				case 'resign':
 					server.acsrv_stats.win++;
 					if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
-						pSocket.write("{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") "+pSocket.acsrv_login+" resigns} 1-0");
+						pSocket.acsrv_post('{Game '+pSocket.acsrv_session+' (AntiCrux vs. '+pSocket.acsrv_login+') '+pSocket.acsrv_login+' resigns} 1-0', true);
 					else
-						pSocket.write("{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) "+pSocket.acsrv_login+" resigns} 0-1");
-					pSocket.write("\r\nfics% ");
-					pSocket.acsrv_state = 'home';
+						pSocket.acsrv_post('{Game '+pSocket.acsrv_session+' ('+pSocket.acsrv_login+' vs. AntiCrux) '+pSocket.acsrv_login+' resigns} 0-1', true);
+					pSocket.acsrv_set_state('home');
+					pSocket.acsrv_send_seeks();
 					break;
 
 				//- Accepts a new game
 				case 'play':
-					pSocket.write("You cannot accept seeks while you are playing a game.\r\nfics% ");
+					pSocket.acsrv_post('You cannot accept seeks while you are playing a game.', true);
 					break;
 
 				//- Rotates the board
@@ -632,27 +742,29 @@ server.acsrv_process = function(pSocket) {
 
 				//- Switches the board
 				case 'switch':
-					pSocket.write("AntiCrux accepts the switch request.\r\n");
+					pSocket.acsrv_post('AntiCrux accepts the switch request.', false);
 					pSocket.acsrv_aicolor = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.black ? pSocket.acsrv_ai.constants.player.white : pSocket.acsrv_ai.constants.player.black);
-					server.acsrv_playAI(pSocket);
+					server.acsrv_play_ai(pSocket);
 					server.acsrv_board(pSocket);
-					server.acsrv_endGame(pSocket);
+					server.acsrv_end_game(pSocket);
 					break;
 
 				//- Receives a draw offer
 				case 'draw':
 					if (!pSocket.acsrv_ai.isDraw() && !pSocket.acsrv_ai.isPossibleDraw())
-						pSocket.write("AntiCrux declines the draw request.\r\nfics% ");
+						pSocket.acsrv_post('AntiCrux declines the draw request.', true);
 					else
 					{
 						server.acsrv_stats.draw++;
-						pSocket.write("AntiCrux accepts the draw request.\r\n");
+						buffer = "AntiCrux accepts the draw request.\r\n";
 						if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
-							pSocket.write("{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Game drawn by mutual agreement} 1/2-1/2\r\n");
+							buffer += "{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Game drawn by mutual agreement} 1/2-1/2\r\n";
 						else
-							pSocket.write("{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) Game drawn by mutual agreement} 1/2-1/2\r\n");
-						pSocket.write("No ratings adjustment done.\r\nfics% ");
-						pSocket.acsrv_state = 'home';
+							buffer += "{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) Game drawn by mutual agreement} 1/2-1/2\r\n";
+						buffer += 'No ratings adjustment done.';
+						pSocket.acsrv_post(buffer, true);
+						pSocket.acsrv_set_state('home');
+						pSocket.acsrv_send_seeks();
 					}
 					break;
 
@@ -660,12 +772,12 @@ server.acsrv_process = function(pSocket) {
 				case 'takeback':
 					if (pSocket.acsrv_ai.getHistory().length >= 2)
 					{
-						pSocket.write("AntiCrux accepts the takeback request.\r\nfics% ");
+						pSocket.acsrv_post('AntiCrux accepts the takeback request.', true);
 						pSocket.acsrv_ai.undoMove();
 						pSocket.acsrv_ai.undoMove();
 					}
 					else
-						pSocket.write("AntiCrux declines the takeback request.\r\nfics% ");
+						pSocket.acsrv_post('AntiCrux declines the takeback request.', true);
 					server.acsrv_board(pSocket);
 					break;
 
@@ -699,15 +811,12 @@ server.acsrv_process = function(pSocket) {
 							tab[1] = '';
 							break;
 					}
-					if (buffer.length > 0)
-						pSocket.write("Promotion piece set to "+buffer+".\r\n");
+					buffer = (buffer.length > 0 ? 'Promotion piece set to '+buffer+'.' : '');
 					if (tab[1].length === 0)
-					{
-						pSocket.write("Purpose:  set the piece a pawn will be promoted to at the back rank\r\n");
-						pSocket.write("Usage:    promote {q,r,b,[kn], ki}\r\n");
-						pSocket.write("Examples: promote q; promote b\r\n");
-					}
-					pSocket.write('fics% ');
+						buffer +=	"Purpose:  set the piece a pawn will be promoted to at the back rank\r\n" +
+									"Usage:    promote {q,r,b,[kn],ki}\r\n" +
+									"Examples: promote q; promote b";
+					pSocket.acsrv_post(buffer, true);
 					break;
 
 				//- Refreshes the board
@@ -720,7 +829,7 @@ server.acsrv_process = function(pSocket) {
 					// Checks
 					if ((tab[1].length > 0) && (parseInt(tab[1]) != pSocket.acsrv_session))
 					{
-						pSocket.write("There is no such game.\r\nfics% ");
+						pSocket.acsrv_post('There is no such game.', true);
 						continue;
 					}
 
@@ -734,8 +843,8 @@ server.acsrv_process = function(pSocket) {
 								white+" ("+(pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.player.white ? pSocket.acsrv_ai.options.ai.elo : '++++')+") vs. "+black+" ("+(pSocket.acsrv_aicolor==pSocket.acsrv_ai.constants.player.black ? pSocket.acsrv_ai.options.ai.elo : '++++')+") --- "+(new Date().toUTCString())+"\r\n" +
 								"Unrated suicide match, initial time: 180 minutes, increment: 180 seconds.\r\n" +
 								"\r\n" +
-								"Move  " + server.acsrv_fixedString(white, 18) + " " + server.acsrv_fixedString(black, 18) + "\r\n";
-					buffer += "----  ----------------   ----------------\r\n";
+								"Move  " + server.acsrv_fixedString(white, 18) + " " + server.acsrv_fixedString(black, 18) + "\r\n" +
+								"----  ----------------   ----------------\r\n";
 
 					// History
 					pSocket._trace = pSocket._trace || new AntiCrux();
@@ -763,7 +872,7 @@ server.acsrv_process = function(pSocket) {
 					// Status
 					if (!pSocket.acsrv_ai.isEndGame())
 						buffer += "	  {Still in progress} *\r\n";
-					pSocket.write(buffer + 'fics% ');
+					pSocket.acsrv_post(buffer, true);
 					break;
 
 				//- Move a piece
@@ -772,7 +881,7 @@ server.acsrv_process = function(pSocket) {
 					if (!pSocket.acsrv_ai.isMove(line))
 					{
 						if (tab[0].length > 0)
-							pSocket.write("Unknown command: "+tab[0]+"\r\nfics% ");
+							pSocket.acsrv_post('Unknown command: '+tab[0], true);
 					}
 					else
 					{
@@ -783,7 +892,7 @@ server.acsrv_process = function(pSocket) {
 						move = pSocket.acsrv_ai.movePiece(line, true, pSocket.acsrv_ai.getPlayer());
 						if (move == pSocket.acsrv_ai.constants.noMove)
 						{
-							pSocket.write("Invalid move\r\nfics% ");
+							pSocket.acsrv_post('Invalid move', true);
 							server.acsrv_board(pSocket);
 						}
 						else
@@ -798,11 +907,11 @@ server.acsrv_process = function(pSocket) {
 							// Next player
 							pSocket.acsrv_ai.switchPlayer();
 							server.acsrv_board(pSocket);
-							if (!server.acsrv_endGame(pSocket))
+							if (!server.acsrv_end_game(pSocket))
 							{
-								server.acsrv_playAI(pSocket);
+								server.acsrv_play_ai(pSocket);
 								server.acsrv_board(pSocket);
-								server.acsrv_endGame(pSocket);
+								server.acsrv_end_game(pSocket);
 							}
 						}
 					}
@@ -817,9 +926,32 @@ server.acsrv_process = function(pSocket) {
 			//- Views the available games
 			if (tab[0] == 'sought')
 			{
-				pSocket.write(
+				pSocket.acsrv_post(
 					server.acsrv_fixedString(pSocket.acsrv_session, 3)+" "+pSocket.acsrv_ai.options.ai.elo+" AntiCrux(C)       180 180 unrated suicide                0-9999 m\r\n" +
-					"1 ads displayed.\r\nfics% ");
+					'1 ads displayed.', true);
+				continue;
+			}
+
+			//- Rejects the proposal of a match
+			if (tab[0] == 'decline')
+			{
+				if (pSocket.acsrv_options._pendingChallenge)
+				{
+					pSocket.acsrv_options._pendingChallenge = false;
+					pSocket.acsrv_send_seeks();
+				}
+				else
+					pSocket.acsrv_post('There is no pending challenge that you may decline.', true);
+				continue;
+			}
+
+			//- Accepts the proposed game
+			if (tab[0] == 'accept')
+			{
+				if (pSocket.acsrv_options._pendingChallenge)
+					server.acsrv_start_game(pSocket);
+				else
+					pSocket.acsrv_post('There is no pending challenge that you may accept.', true);
 				continue;
 			}
 
@@ -827,11 +959,11 @@ server.acsrv_process = function(pSocket) {
 			if (tab[0] == 'play')
 			{
 				if (parseInt(tab[1]) != pSocket.acsrv_session)
-					pSocket.write("That seek is not available.\r\nfics% ");
+					pSocket.acsrv_post('That seek is not available.', true);
 				else
 				{
 					pSocket.acsrv_aicolor = pSocket.acsrv_ai.constants.player.none;
-					server.acsrv_startGame(pSocket);
+					server.acsrv_start_game(pSocket);
 				}
 				continue;
 			}
@@ -855,9 +987,9 @@ server.acsrv_process = function(pSocket) {
 				else
 				// Starts a new match from the opposite side
 				{
-					pSocket.write("AntiCrux accepts the match offer.\r\n\r\n");
+					pSocket.acsrv_post("AntiCrux accepts the match offer.\r\n", false);
 					pSocket.acsrv_aicolor = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white ? pSocket.acsrv_ai.constants.player.black : pSocket.acsrv_ai.constants.player.white);
-					server.acsrv_startGame(pSocket);
+					server.acsrv_start_game(pSocket);
 					continue;
 				}
 			}
@@ -868,7 +1000,7 @@ server.acsrv_process = function(pSocket) {
 				// Checks that only the server is targetted
 				if ((tab[0] == 'match') && (tab[1] != 'anticrux'))
 				{
-					pSocket.write(tab[1] + " declines the match offer.\r\nfics% ");
+					pSocket.acsrv_post(tab[1] + ' declines the match offer.', true);
 					continue;
 				}
 
@@ -886,7 +1018,7 @@ server.acsrv_process = function(pSocket) {
 				}
 				if (!b)
 				{
-					pSocket.write("AntiCrux declines the match offer.\r\nfics% ");
+					pSocket.acsrv_post('AntiCrux declines the match offer.', true);
 					continue;
 				}
 
@@ -901,8 +1033,8 @@ server.acsrv_process = function(pSocket) {
 				}
 
 				// Accepts the match
-				pSocket.write("AntiCrux accepts the match offer.\r\n\r\n");
-				server.acsrv_startGame(pSocket);
+				pSocket.acsrv_post("AntiCrux accepts the match offer.\r\n", false);
+				server.acsrv_start_game(pSocket);
 				continue;
 			}
 
@@ -912,21 +1044,42 @@ server.acsrv_process = function(pSocket) {
 				if (tab[1].match(/^[a-zA-Z0-9]+$/) && !tab[1].match(/anticrux/i))
 				{
 					pSocket.acsrv_login = tab[1];
-					pSocket.write("Login changed to \""+pSocket.acsrv_login+"\".\r\nfics% ");
+					pSocket.acsrv_post('Login changed to "'+pSocket.acsrv_login+'".', true);
 				}
 				else
-					pSocket.write("Invalid login name.\r\nfics% ");
+					pSocket.acsrv_post('Invalid login name.', true);
+				continue;
+			}
+
+			//- Adjourned games
+			if (tab[0] == 'stored')
+			{
+				pSocket.acsrv_post(pSocket.acsrv_login + ' has no adjourned games.', true);
+				continue;
+			}
+
+			//- History games
+			if (tab[0] == 'history')
+			{
+				pSocket.acsrv_post(pSocket.acsrv_login + ' has no history games.', true);
+				continue;
+			}
+
+			//- Journal
+			if (tab[0] == 'journal')
+			{
+				pSocket.acsrv_post('Only registered players may keep a journal.', true);
 				continue;
 			}
 
 			//- Unknown command
 			if (tab[0].length > 0)
-				pSocket.write(tab[0] + ": Command not found.\r\n");
+				pSocket.acsrv_post(tab[0] + ': Command not found.', false);
 		}
 
 		//-- Default output
 		server.acsrv_console(pSocket, 'Unknown command: ' + line);
-		pSocket.write('fics% ');
+		pSocket.acsrv_post('', true);
 	}
 };
 
@@ -935,6 +1088,7 @@ server.acsrv_games = function(pSocket) {
 
 	//-- Identifies the valid connections
 	counter = 0;
+	buffer = '';
 	for (session in server.acsrv_sockets)
 	{
 		socket = server.acsrv_sockets[session];
@@ -950,7 +1104,7 @@ server.acsrv_games = function(pSocket) {
 		ai = socket.acsrv_ai;
 
 		//- Output
-		buffer = server.acsrv_fixedString(session.toString(), 2) + ' ';
+		buffer += server.acsrv_fixedString(session.toString(), 2) + ' ';
 		if (socket.acsrv_aicolor == ai.constants.player.white)
 			buffer += ai.options.ai.elo + ' AntiCrux    ++++ ' + server.acsrv_fixedString(socket.acsrv_login, 12);
 		else
@@ -961,11 +1115,12 @@ server.acsrv_games = function(pSocket) {
 					server.acsrv_fixedString(ai._ai_countPiece(ai.constants.player.black).toString(), 2) +
 					') ' +
 					(ai.getPlayer() == ai.constants.player.white ? 'W' : 'B') + ':' +
-					server.acsrv_fixedString(Math.ceil(ai.getHistory().length/2).toString(), 2);
-		pSocket.write(buffer+"\r\n");
+					server.acsrv_fixedString(Math.ceil(ai.getHistory().length/2).toString(), 2) +
+					"\r\n";
 		counter++;
 	}
-	pSocket.write("\r\n  " + counter + " games displayed\r\n");
+	buffer += counter + ' games displayed';
+	pSocket.acsrv_post(buffer, true);
 };
 
 server.acsrv_handles = function(pSocket, pMask) {
@@ -1001,18 +1156,19 @@ server.acsrv_handles = function(pSocket, pMask) {
 		if (((i+1)%4 === 0) && (i!=names.length-1))
 			buffer += "\r\n";
 	}
-	pSocket.write("-- Matches: "+names.length+" player(s) --\r\n");
-	pSocket.write(buffer + "\r\n");
+	pSocket.acsrv_post("-- Matches: "+names.length+" player(s) --\r\n" + buffer, false);
 };
 
-server.acsrv_startGame = function(pSocket) {
-	var b;
+server.acsrv_start_game = function(pSocket) {
+	var b, buffer;
 
 	//-- New game
+	buffer = '';
+	pSocket.acsrv_options._pendingChallenge = false;
 	if (pSocket.acsrv_options.mode960)
 	{
 		pSocket.acsrv_ai.defaultBoard(pSocket.acsrv_ai.getNewFischerId());
-		pSocket.write("You are playing AntiChess"+pSocket.acsrv_ai.fischer+".\r\n\r\n");
+		buffer += "You are playing AntiChess"+pSocket.acsrv_ai.fischer+".\r\n";
 	}
 	else
 		pSocket.acsrv_ai.defaultBoard();
@@ -1032,29 +1188,27 @@ server.acsrv_startGame = function(pSocket) {
 		pSocket.acsrv_ai.options.board.rotated = (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white);
 
 	//-- Creates the game
+	pSocket.acsrv_remove_seeks();
+	pSocket.acsrv_set_state('playing');
 	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
-		pSocket.write(
-			"Creating: AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") "+pSocket.acsrv_login+" (++++) unrated suicide 180 180\r\n\r\n" +
-			"{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Creating unrated suicide match.}\r\n"
-		);
+		buffer = "Creating: AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") "+pSocket.acsrv_login+" (++++) unrated suicide 180 180\r\n" +
+				"{Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+") Creating unrated suicide match.}\r\n\r\n";
 	else
-		pSocket.write(
-			"Creating: "+pSocket.acsrv_login+" (++++) AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") unrated suicide 180 180\r\n\r\n" +
-			"{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) Creating unrated suicide match.}\r\n"
-		);
+		buffer = "Creating: "+pSocket.acsrv_login+" (++++) AntiCrux ("+pSocket.acsrv_ai.options.ai.elo+") unrated suicide 180 180\r\n" +
+				"{Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux) Creating unrated suicide match.}\r\n\r\n";
+	pSocket.acsrv_post(buffer, true);
 
 	//-- Plays the first round
-	pSocket.acsrv_state = 'playing';
 	if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.getPlayer())
 	{
 		server.acsrv_board(pSocket);
-		server.acsrv_playAI(pSocket);
-		server.acsrv_endGame(pSocket);		//Not expected
+		server.acsrv_play_ai(pSocket);
+		server.acsrv_end_game(pSocket);		//Not expected
 	}
 	server.acsrv_board(pSocket);
 };
 
-server.acsrv_playAI = function(pSocket) {
+server.acsrv_play_ai = function(pSocket) {
 	var move, score;
 
 	//-- Checks the current player
@@ -1074,7 +1228,7 @@ server.acsrv_playAI = function(pSocket) {
 	if (score.value == pSocket.acsrv_ai.constants.player.mapping_rev[pSocket.acsrv_aicolor] * -pSocket.acsrv_ai.constants.bitmask.valuationValue)
 	{
 		if (!pSocket.acsrv_aikills)
-			pSocket.write("AntiCrux(C)("+pSocket.acsrv_ai.options.ai.elo+")["+pSocket.acsrv_session+"] kibitzes: I will get you !\r\n");
+			pSocket.acsrv_post('AntiCrux(C)('+pSocket.acsrv_ai.options.ai.elo+')['+pSocket.acsrv_session+'] kibitzes: I will get you !', false);
 		pSocket.acsrv_aikills = true;
 	}
 	else
@@ -1084,7 +1238,7 @@ server.acsrv_playAI = function(pSocket) {
 		if (score.value == pSocket.acsrv_ai.constants.player.mapping_rev[pSocket.acsrv_aicolor] * pSocket.acsrv_ai.constants.bitmask.valuationValue)
 		{
 			if (!pSocket.acsrv_playerkills)
-				pSocket.write("AntiCrux(C)("+pSocket.acsrv_ai.options.ai.elo+")["+pSocket.acsrv_session+"] kibitzes: I am feeling bad...\r\n");
+				pSocket.acsrv_post('AntiCrux(C)('+pSocket.acsrv_ai.options.ai.elo+')['+pSocket.acsrv_session+'] kibitzes: I am feeling bad...', false);
 			pSocket.acsrv_playerkills = true;
 		}
 		else
@@ -1109,9 +1263,9 @@ server.acsrv_board = function(pSocket) {
 	if (hist.length === 0)
 	{
 		if (pSocket.acsrv_aicolor == pSocket.acsrv_ai.constants.player.white)
-			pSocket.write("Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+")\r\n\r\n");
+			pSocket.acsrv_post("Game "+pSocket.acsrv_session+" (AntiCrux vs. "+pSocket.acsrv_login+")\r\n", false);
 		else
-			pSocket.write("Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux)\r\n\r\n");
+			pSocket.acsrv_post("Game "+pSocket.acsrv_session+" ("+pSocket.acsrv_login+" vs. AntiCrux)\r\n", false);
 	}
 
 	//-- Style 12 (http://www.freechess.org/Help/HelpFiles/style12.html)
@@ -1301,13 +1455,10 @@ server.acsrv_board = function(pSocket) {
 		buffer = 'Unsupported style for the output.';		//Read http://www.freechess.org/Help/HelpFiles/style.html
 
 	//-- Result
-	pSocket.write(buffer);
-
-	//-- Prompt
-	pSocket.write('fics% ');
+	pSocket.acsrv_post(buffer, true);
 };
 
-server.acsrv_endGame = function(pSocket) {
+server.acsrv_end_game = function(pSocket) {
 	var winner, white, black, stalemate;
 
 	//-- Prepares the output
@@ -1318,9 +1469,9 @@ server.acsrv_endGame = function(pSocket) {
 	if (pSocket.acsrv_ai.isDraw())		//The possible draws are processed through an explicit request from the human player
 	{
 		server.acsrv_stats.draw++;
-		pSocket.write("\r\n{Game "+pSocket.acsrv_session+" ("+white+" vs. "+black+") is a draw} 1/2-1/2\r\n");
-		pSocket.write("No ratings adjustment done.\r\nfics% ");
-		pSocket.acsrv_state = 'home';
+		pSocket.acsrv_post("\r\n{Game "+pSocket.acsrv_session+" ("+white+" vs. "+black+") is a draw} 1/2-1/2\r\nNo ratings adjustment done.", true);
+		pSocket.acsrv_set_state('home');
+		pSocket.acsrv_send_seeks();
 		return true;	
 	}
 
@@ -1338,17 +1489,18 @@ server.acsrv_endGame = function(pSocket) {
 						(pSocket.acsrv_ai._ai_inventory(pSocket.acsrv_ai.constants.player.black, null, null) !== 0);
 
 			//- Output
-			pSocket.write(
+			pSocket.acsrv_post(
 					"\r\n{Game "+pSocket.acsrv_session+" ("+white+" vs. "+black+") "+(winner == pSocket.acsrv_aicolor ? 'AntiCrux' : pSocket.acsrv_login)+" wins by " +
 					(stalemate ? "having less material (stalemate)" : "losing all material") +
 					"} " +
 					(winner == pSocket.acsrv_ai.constants.player.white ? "1-0" : "0-1") +
-					"\r\n"
+					"\r\nNo ratings adjustment done.",
+					true
 				);
-			pSocket.write("No ratings adjustment done.\r\nfics% ");
 
 			//- Status
-			pSocket.acsrv_state = 'home';
+			pSocket.acsrv_set_state('home');
+			pSocket.acsrv_send_seeks();
 			return true;
 		}
 
@@ -1363,7 +1515,7 @@ server.acsrv_shout = function(pSocket, pMessage) {
 	//-- Checks
 	if (pMessage.length === 0)
 	{
-		pSocket.write('fics% ');
+		pSocket.acsrv_post('', true);
 		return;
 	}
 
@@ -1378,7 +1530,7 @@ server.acsrv_shout = function(pSocket, pMessage) {
 		}
 
 		//- Shouts to anyone without restriction
-		socket.write(pSocket.acsrv_login+" shouts: "+pMessage+"\r\nfics% ");
+		socket.acsrv_post(pSocket.acsrv_login+' shouts: '+pMessage, true);
 	}
 	server.acsrv_console(pSocket, "Shout: "+pMessage);
 };
@@ -1394,10 +1546,29 @@ server.acsrv_console = function(pSocket, pMessage) {
 };
 
 server.acsrv_quit = function(pSocket, pMessage) {
+	pSocket.acsrv_post_raw(pMessage);
+	pSocket.destroy();
 	if (pSocket.hasOwnProperty('acsrv_login'))
 		console.log('Disconnected player: ' + pSocket.acsrv_login);
-	pSocket.write(pMessage + "\r\n");
-	pSocket.destroy();
+};
+
+server.acsrv_shutdown = function() {
+	var session, socket;
+
+	//-- Closes all the connections
+	for (session in server.acsrv_sockets)
+	{
+		socket = server.acsrv_sockets[session];
+		if (socket.destroyed)
+			continue;
+		socket.acsrv_post_raw(
+			"Connection closed by the system administrator without any effect on the current ratings.\r\n" +
+			"Sorry for the inconvenience. Back to the game will be possible very shortly. Thank you.");
+		socket.destroy();
+	}
+
+	//-- Destroys the server
+	this.close();
 };
 
 
