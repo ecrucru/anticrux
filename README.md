@@ -245,7 +245,7 @@ go infinite
 
 #### Available options
 
-- `Debug` : this option is reserved for the developers to track all the issues that may arise during the use of the engine.
+- `Debug` : this option is reserved for the developers to track all the issues that may arise during the use of the engine. If the option is not activated by default, the log is not effective until the option is turned on with the relevant instruction `setoption`. In other words, you may miss the few first UCI messages.
 - `Precise Score` : if the move is forced, a deep analysis doesn't occur unless you activate this option. It slows down the engine but you get a better evaluation of the score.
 - `Skill Level` : the level is the difficulty of the game. The higher, the bigger the memory footprint.
 - `UCI_Variant` : it defines the chess variants supported by the engine.
@@ -587,7 +587,7 @@ The simplification consists in playing the forced moves all the time even if is 
 
 - **AntiCrux.options.ai.maxReply**
 
-The minimization of the liberty of your opponent doesn't necessarily pick the right move. Sometimes it is better to leave more than 1 opportunity of reply to be able to enlarge the strategy. This is very noticeable in the position "4k1nr/7Q/8/8/8/3P4/6PP/6rR b - -" :
+The minimization of the liberty of your opponent doesn't necessarily pick the right move. Sometimes it is better to leave more than 1 opportunity of reply to be able to enlarge the strategy. This is very noticeable in the position `4k1nr/7Q/8/8/8/3P4/6PP/6rR b - -` :
 
 - Rxh7 leaves 1 move in Rxg1 but you lose
 - Rxh1 leaves 2 moves in Qxg8 and Qxh8 but you don't lose immediately
@@ -608,7 +608,7 @@ This option weakens the AI because it relies on the systematic mistake of the op
 
 It is often used in coordination with the option AntiCrux.options.ai.worstCase.
 
-- **AntiCrux.options.ai.tolerance"
+- **AntiCrux.options.ai.tolerance**
 
 The best move is assigned a certain score. However, the second best move may be not so different. The tolerance makes additional moves eligible for the best move to play. The higher the tolerance, the less effective the strategy, the more interesting the gameplay.
 

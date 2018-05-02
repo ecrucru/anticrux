@@ -1,6 +1,6 @@
 /*
 	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
-	Copyright (C) 2016-2017, ecrucru
+	Copyright (C) 2016-2018, ecrucru
 
 		https://github.com/ecrucru/anticrux/
 		http://ecrucru.free.fr/?page=anticrux
@@ -100,7 +100,7 @@ var acengine = {
 						obj.forEach(function(pElement, pIndex, pArray) { pArray[pIndex] = 'var '+pElement; });
 						acengine.send('option name UCI_Variant type combo default '+s+' '+obj.join(' '));
 						acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
-						acengine.send('option name Debug type check default false');
+						acengine.send('option name Debug type check default '+(acengine.trace.debug?'true':'false'));
 						acengine.send('option name Precise Score type check default false');
 						acengine.send('uciok');
 						acengine.send('copyprotection ok');
