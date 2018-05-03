@@ -1,6 +1,6 @@
 # AntiCrux
 
-> Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
+> Suicide chess engine acting as desktop engine, web page, mobile application, Internet chess server and library
 
 **Test it online at http://ecrucru.free.fr/?page=anticrux !**
 
@@ -501,8 +501,8 @@ AntiCrux is released under the terms of the "GNU Affero General Public License v
 
 ```javascript
 /*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
-	Copyright (C) 2016-2017, ecrucru
+	AntiCrux - Suicide chess engine acting as desktop engine, web page, mobile application, Internet chess server and library
+	Copyright (C) 2016-2018, ecrucru
 
 		https://github.com/ecrucru/anticrux/
 		http://ecrucru.free.fr/?page=anticrux

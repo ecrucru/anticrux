@@ -1,5 +1,5 @@
 /*
-	AntiCrux - Artificial intelligence playing AntiChess and AntiChess960 with jQuery Mobile and Node.js
+	AntiCrux - Suicide chess engine acting as desktop engine, web page, mobile application, Internet chess server and library
 	Copyright (C) 2016-2018, ecrucru
 
 		https://github.com/ecrucru/anticrux/
