@@ -943,17 +943,14 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 	}
 
 	//-- Applies the opening book for the first upcoming move
-	if (!this.options.variant.superQueen)
+	book = this._ob_read_opening_book(false);
+	if (book.length > 0)
 	{
-		book = this._ob_read_opening_book();
-		if (book.length > 0)
-		{
-			for (i=pNode.moves.length-1 ; i>=0 ; i--)
-				if (book.indexOf(pNode.moves[i]) == -1)
-					pNode.moves.splice(i, 1);
-			if (pNode.moves.length === 0)
-				this._ai_moves(pNode);
-		}
+		for (i=pNode.moves.length-1 ; i>=0 ; i--)
+			if (book.indexOf(pNode.moves[i]) == -1)
+				pNode.moves.splice(i, 1);
+		if (pNode.moves.length === 0)
+			this._ai_moves(pNode);
 	}
 
 	//-- Builds the decision tree level by level
@@ -998,6 +995,54 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 		this._endTime = this._startTime;
 	pNode.magic = (pNode.magic & ~this.constants.bitmask.bestMove) | (bMove << this.constants.bitmask.bestMoveShift);
 	return bMove;
+};
+
+/**
+ * The method indicates if the opening book is usable with the current status of the board,
+ * and independently from the limit assigned to the AI.
+ *
+ * @method canUseOpeningBook
+ * @return {Boolean} *true* if usable, else *false*
+ */
+AntiCrux.prototype.canUseOpeningBook = function() {
+	return 	(this._openingBook.length > 0) &&
+			!this.hasSetUp() &&
+			 this.options.variant.enPassant &&
+			!this.options.variant.superQueen;
+};
+
+/**
+ * The method queries the internal opening book completely. A FEN position cannot be used because the history
+ * of the moves matters. It is also not possible to start from a setup position, or use special rules for the moves.
+ * Any attempt will result into an incorrect result.
+ *
+ * @method queryOpeningBook
+ * @param {Array} pMoves (Optional) Array of moves in all the supported formats.
+ * @return {Array} Possible moves if successful, else *null* for any error.
+ *                 An empty array means that the opening book is exhausted.
+ */
+AntiCrux.prototype.queryOpeningBook = function(pMoves) {
+	var i, move;
+
+	//-- Current situation
+	if (pMoves === undefined)
+		return this._ob_read_opening_book(true);
+
+	//-- Prepares the board to analyze
+	this._initHelper();
+	this._helper.defaultBoard();
+	for (i=0 ; i<pMoves.length ; i++)
+	{
+		move = this._helper.movePiece(pMoves[i], true);
+		if (move == this.constants.noMove)
+			return null;
+		this._helper.logMove(move, null);
+		this._helper.updateHalfMoveClock();
+		this._helper.switchPlayer();
+	}
+
+	//-- Result
+	return this._helper._ob_read_opening_book(true);
 };
 
 /**
@@ -4045,25 +4090,26 @@ AntiCrux.prototype._ob_move_decode = function(pMove) {
 
 /**
  * The method reads the possible moves from the opening book
- * based on the current history of the moves.
+ * based on the current history of the moves. The moves are not
+ * returned in a particular order.
  *
  * @private
  * @method _ob_read_opening_book
- * @return {Array} Array of moves.
+ * @param {Boolean} pUnlimitedDepth Avoid the limit assigned to the AI.
+ * @return {Array} Array of moves, eventually empty.
  */
-AntiCrux.prototype._ob_read_opening_book = function() {
+AntiCrux.prototype._ob_read_opening_book = function(pUnlimitedDepth) {
 	var result, i, j, level, path, pathStatus, buffer, move;
 
 	//-- Initializes
 	result = [];
-	if (	(this.options.ai.openingBook > 0) &&
-			!this.hasSetUp() &&
-			(this._openingBook.length > 0)
+	if (	this.canUseOpeningBook() &&
+			(pUnlimitedDepth || (this.options.ai.openingBook > 0))
 		)
 	{
 		//- Finds the path
 		path = this._history.slice(0);
-		if (path.length >= this.options.ai.openingBook)		//Limitation of the depth of the opening book
+		if (!pUnlimitedDepth && (path.length >= this.options.ai.openingBook))	//Limitation of the depth of the opening book
 			return result;
 		pathStatus = [];
 		for (i=path.length-1 ; i>=0 ; i--)

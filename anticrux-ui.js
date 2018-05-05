@@ -686,6 +686,44 @@ $(document).ready(function() {
 		return true;
 	});
 
+	$('#acui_hint_ob').click(function() {
+		var moves, buffer, i;
+
+		//-- Checks the current mode
+		if (ui_rewind)
+			return false;
+
+		//-- Retrieves the moves
+		moves = ai.queryOpeningBook();
+		if (moves === null)
+		{
+			acui_popup('The opening book cannot be used with inconsistent data.');
+			return true;
+		}
+		if (moves.length === 0)
+		{
+			acui_popup('The opening book cannot provide any move from the current position.');
+			return true;
+		}
+
+		//-- Formats the output text
+		buffer = '';
+		moves.sort();
+		for (i=0 ; i<moves.length ; i++)
+		{
+			if (buffer.length > 0)
+			{
+				if (i % 5 === 0)
+					buffer += '<br/>';
+				else
+					buffer += '&nbsp;&nbsp;&nbsp;&nbsp;';
+			}
+			buffer += ai.moveToStringHtml(moves[i]);
+		}
+		acui_popup('The possible moves of the opening book are :<br/>' + buffer);
+		return true;
+	});
+
 	$('#acui_undo').click(function() {
 		//-- Checks the current mode
 		if (acui_isRewind())

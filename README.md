@@ -491,6 +491,9 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Library: new option AntiCrux.options.ai.tolerance
 	- Server: enhanced communication and debugging features
 	- Server: new supported commands `debug`, `history`, `journal`, `shutdown` and `stored`
+	- Library: new method AntiCrux.prototype.canUseOpeningBook
+	- Library: new method AntiCrux.prototype.queryOpeningBook
+	- UI: query of the opening book
 
 
 ### License
@@ -820,6 +823,7 @@ The moves are identified by different notation systems :
 Any field or method beginning with an underscore is a private member which is not expected to be called directly by a third-party application, unless you know exactly what you are doing.
 
 - AntiCrux.callbackExploration(pStats)
+- AntiCrux.canUseOpeningBook()
 - AntiCrux.clearBoard()
 - AntiCrux.copyOptions(pObject)
 - AntiCrux.defaultBoard(pFischer)
@@ -865,6 +869,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.moveToUCI(pMove)
 - AntiCrux.predictMoves(pNode)
 - AntiCrux.promote(pPiece, pNode)
+- AntiCrux.queryOpeningBook(pMoves)
 - AntiCrux.resetStats()
 - AntiCrux.setLevel(pLevel)
 - AntiCrux.setPlayer(pPlayer, pNode)
