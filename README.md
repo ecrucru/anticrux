@@ -247,6 +247,7 @@ go infinite
 
 - `Debug` : this option is reserved for the developers to track all the issues that may arise during the use of the engine. If the option is not activated by default, the log is not effective until the option is turned on with the relevant instruction `setoption`. In other words, you may miss the few first UCI messages.
 - `Precise Score` : if the move is forced, a deep analysis doesn't occur unless you activate this option. It slows down the engine but you get a better evaluation of the score.
+- `Same Value` : the pieces are assigned the same value so that only their count matters on the board.
 - `Skill Level` : the level is the difficulty of the game. The higher, the bigger the memory footprint.
 - `UCI_Variant` : it defines the chess variants supported by the engine.
 
@@ -466,7 +467,7 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Library: new option AntiCrux.options.ai.distance
 	- Library: new tactical strategy based on the distance between the pieces
 	- Engine: the supported technical variant names are `suicide`, `giveaway` and `antichess`
-	- Engine: new UCI option "Precise Score"
+	- Engine: new UCI option `Precise Score`
 	- Library: removed method AntiCrux.prototype.startUI
 - **In progress - Version 0.3.1**
 	- Library: new method AntiCrux.prototype.getMaterialDifference
@@ -494,6 +495,10 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Library: new method AntiCrux.prototype.canUseOpeningBook
 	- Library: new method AntiCrux.prototype.queryOpeningBook
 	- UI: query of the opening book
+	- Library: new method AntiCrux.prototype.getValuationTable
+	- Library: new option AntiCrux.options.variant.noValue
+	- Engine: new UCI option `Same Value`
+	- UI: new variant to ignore the values of the pieces
 
 
 ### License
@@ -693,6 +698,10 @@ This option is used for debugging purposes in the process of developing AntiCrux
 
 #### For the gameplay
 
+- **AntiCrux.options.variant.noValue**
+
+This option assigns the same value to all the pieces. The engine will then only count the pieces on the board and will not try to sacrifice the queen as soon as possible for example.
+
 - **AntiCrux.options.variant.enPassant**
 
 Some engines don't accept the rule "[en passant](https://en.wikipedia.org/wiki/En_passant)". So to comply with this restriction, you can (de)activate this chess rule.
@@ -848,6 +857,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getScore(pNode)
 - AntiCrux.getScoreHistory()
 - AntiCrux.getStatsAI ()
+- AntiCrux.getValuationTable()
 - AntiCrux.getVariants()
 - AntiCrux.getWinner(pNode)
 - AntiCrux.hasPendingPromotion(pNode)

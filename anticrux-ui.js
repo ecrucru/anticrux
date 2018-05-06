@@ -71,6 +71,7 @@ function acui_options_load() {
 		$('#acui_option_debug').prop('checked', ai.options.board.debug);
 
 		//- Variant
+		$('#acui_option_samevalue').prop('checked', ai.options.variant.sameValue);
 		$('#acui_option_enpassant').prop('checked', ai.options.variant.enPassant);
 		$('#acui_option_promotequeen').prop('checked', ai.options.variant.promoteQueen);
 		$('#acui_option_superqueen').prop('checked', ai.options.variant.superQueen);
@@ -174,7 +175,7 @@ function acui_refresh_board() {
 }
 
 function acui_refresh_matdiff() {
-	var piece, diff, cp, buffer, pro;
+	var piece, diff, cp, refvaltable, buffer, pro;
 
 	//-- Prepares the buffer
 	buffer = '';
@@ -183,10 +184,11 @@ function acui_refresh_matdiff() {
 	{
 		diff = ai.getMaterialDifference(ui_rewind ? ai_rewind.getMainNode() : ai.getMainNode());
 		cp = 0;
+		refvaltable = ai.getValuationTable();
 		for (piece=ai.constants.piece.none ; piece<=ai.constants.piece.king ; piece++)
 			if (diff[piece] != 0)
 			{
-				cp += diff[piece] * ai.options.ai.valuation[piece];
+				cp += diff[piece] * refvaltable[piece];
 				if (buffer.length === 0)
 					buffer += ' ';
 				buffer +=	'<span class="AntiCrux-big" title="'+Math.abs(diff[piece])+' more">' +
@@ -196,7 +198,7 @@ function acui_refresh_matdiff() {
 											) +
 							'</span>';
 			}
-		cp = Math.round(100 * cp / ai.options.ai.valuation[ai.constants.piece.pawn]);
+		cp = Math.round(100 * cp / refvaltable[ai.constants.piece.pawn]);
 	}
 
 	//-- Layout
@@ -1016,6 +1018,7 @@ $(document).ready(function() {
 			ai.options.board.debug					= $('#acui_option_debug').prop('checked');
 
 			//- Variant
+			ai.options.variant.sameValue			= $('#acui_option_samevalue').prop('checked');
 			ai.options.variant.enPassant			= $('#acui_option_enpassant').prop('checked');
 			ai.options.variant.promoteQueen			= $('#acui_option_promotequeen').prop('checked');
 			ai.options.variant.superQueen			= $('#acui_option_superqueen').prop('checked');

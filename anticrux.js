@@ -164,6 +164,17 @@ AntiCrux.prototype.getMainNode = function() {
 };
 
 /**
+ * The method returns the internal table used for the valuation of the pieces.
+ * It is not a copied table, so it is not expected to be modified.
+ *
+ * @method getValuationTable
+ * @return {Array} Each position of the table is given by the identifier of the piece (AntiCrux.constants.piece).
+ */
+AntiCrux.prototype.getValuationTable = function() {
+	return (this.options.variant.sameValue ? this.options.ai.valuationNeutral : this.options.ai.valuation);
+};
+
+/**
  * The method completely resets all the data related to the current game.
  *
  * @method clearBoard
@@ -578,7 +589,7 @@ AntiCrux.prototype.setLevel = function(pLevel) {
 		return false;
 
 	//-- Applies the new settings
-	this.options.ai.elo					= (pLevel == 1 ? 320 : Math.round(150 * Math.log(pLevel-1) + 1324));
+	this.options.ai.elo					= (pLevel == 1 ? 320 : Math.round(150 * Math.log(pLevel-1) + 1324));		//Fits with the normal rules only
 	this.options.ai.maxDepth			= [3, 8, 6, 5, 4, 5, 6, 6, 6, 6, 8, 8, 8, 10, 10, 20, 99, 99, 99, 99][pLevel-1];
 	this.options.ai.maxNodes			= [100, 50000, 40000, 30000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 200000, 300000, 400000, 500000, 600000, 700000, 850000, 1000000][pLevel-1];
 	this.options.ai.minimizeLiberty		= (pLevel >= 8);
@@ -1941,7 +1952,7 @@ AntiCrux.prototype.getScoreHistory = function() {
 AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 	var	i, j,
 		tmp, score, score2, cp, tMin, tMax,
-		output;
+		refvaltable, output;
 
 	//-- Self
 	if (pNode === undefined)
@@ -1986,6 +1997,7 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 
 	//-- Output
 	output = '';
+	refvaltable = this.getValuationTable();
 	for (i=0 ; i<pNode.moves.length ; i++)
 	{
 		score = this.getScore(pNode.nodes[i]);
@@ -2019,7 +2031,7 @@ AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
 		output += '</td>';
 
 		//- Centipawns
-		cp = (score.mate ? '-' : Math.round(100 * score.value / this.options.ai.valuation[this.constants.piece.pawn]));
+		cp = (score.mate ? '-' : Math.round(100 * score.value / refvaltable[this.constants.piece.pawn]));
 		output += '<td title="'+(score.type==this.constants.bitmask.valuationStatic?'Static':'Deep')+'">'+cp+'</td>';
 
 		//- Hidden opportunity
@@ -2645,6 +2657,7 @@ AntiCrux.prototype._init = function() {
 			version : '0.3.0',							//Version of AntiCrux
 			elo : 0,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
+			valuationNeutral : [],						//Neutral valuation of each piece
 			maxDepth : 0,								//Maximal depth for the search dependant on the simplification of the tree
 			maxNodes : 0,								//Maximal number of nodes before the game exhausts your memory (0=Dangerously infinite)
 			minimizeLiberty : false,					//TRUE allows a deeper inspection by forcing the moves, FALSE does a complete evaluation
@@ -2659,6 +2672,7 @@ AntiCrux.prototype._init = function() {
 			oyster : false								//TRUE is a full random play
 		},
 		variant : {
+			sameValue : false,							//TRUE assigns the same value to all the pieces so that only their count matters
 			enPassant : true,							//TRUE activates the move "en passant" (some AI doesn't manage IT)
 			promoteQueen : false,						//TRUE only promotes pawns as queen
 			superQueen : false,							//TRUE allows the queen for horse riding
@@ -2684,12 +2698,19 @@ AntiCrux.prototype._init = function() {
 	//-- Valuations (maximal value = 2047)
 	//Documentation : http://www.ke.tu-darmstadt.de/publications/papers/ICGA-ChessVariants.pdf
 	this.options.ai.valuation[this.constants.piece.none  ] =   0;
-	this.options.ai.valuation[this.constants.piece.pawn  ] = 240;		//Never equal to zero
+	this.options.ai.valuation[this.constants.piece.pawn  ] = 240;			//Never equal to zero
 	this.options.ai.valuation[this.constants.piece.rook  ] = 500;
 	this.options.ai.valuation[this.constants.piece.knight] = 320;
 	this.options.ai.valuation[this.constants.piece.bishop] = 440;
 	this.options.ai.valuation[this.constants.piece.queen ] = 480;
 	this.options.ai.valuation[this.constants.piece.king  ] = 300;
+	this.options.ai.valuationNeutral[this.constants.piece.none  ] =   0;
+	this.options.ai.valuationNeutral[this.constants.piece.pawn  ] = 100;	//Never equal to zero
+	this.options.ai.valuationNeutral[this.constants.piece.rook  ] = 100;
+	this.options.ai.valuationNeutral[this.constants.piece.knight] = 100;
+	this.options.ai.valuationNeutral[this.constants.piece.bishop] = 100;
+	this.options.ai.valuationNeutral[this.constants.piece.queen ] = 100;
+	this.options.ai.valuationNeutral[this.constants.piece.king  ] = 100;
 
 	//-- General variables
 	this._helper = null;								//You can't refer to that variable without calling first _initHelper()
@@ -3426,7 +3447,7 @@ AntiCrux.prototype._ai_recurseTree = function(pPlayer, pDepth, pNode) {
  * @return {Object} Result of the valuation.
  */
 AntiCrux.prototype._ai_valuate = function(pNode) {
-	var	i, values,
+	var	i, refvaltable, values,
 		deep, valuation, scale,
 		result;
 
@@ -3468,8 +3489,9 @@ AntiCrux.prototype._ai_valuate = function(pNode) {
 	values[this.constants.player.none ] = 0;
 	values[this.constants.player.black] = 0;
 	values[this.constants.player.white] = 0;
+	refvaltable = this.getValuationTable();
 	for (i=0 ; i<64 ; i++)
-		values[pNode.board[i] & this.constants.bitmask.player] += this.options.ai.valuation[pNode.board[i] & this.constants.bitmask.piece];
+		values[pNode.board[i] & this.constants.bitmask.player] += refvaltable[pNode.board[i] & this.constants.bitmask.piece];
 
 	//-- Valuates the position
 	if (values[this.constants.player.black] === 0)

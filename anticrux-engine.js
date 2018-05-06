@@ -45,7 +45,7 @@ var acengine = {
 		process : function(pInput) {
 			var	i, j, b, s,
 				input, line, tab, obj, objKey,
-				move, fen, score, stats, movePonder;
+				move, fen, refvaltable, score, stats, movePonder;
 
 			//-- Simplifies the input
 			input = pInput.split("\r").join('');
@@ -95,13 +95,14 @@ var acengine = {
 					{
 						acengine.send('id name AntiCrux '+acengine.instance.options.ai.version);
 						acengine.send('id author https://github.com/ecrucru/anticrux/');
+						acengine.send('option name Debug type check default '+(acengine.trace.debug?'true':'false'));
+						acengine.send('option name Precise Score type check default '+(acengine.instance.options.board.noStatOnForcedMove?'false':'true'));
+						acengine.send('option name Same Value type check default '+(acengine.instance.options.variant.sameValue?'true':'false'));
+						acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
 						obj = acengine.instance.getVariants();
 						s = obj[0];
 						obj.forEach(function(pElement, pIndex, pArray) { pArray[pIndex] = 'var '+pElement; });
 						acengine.send('option name UCI_Variant type combo default '+s+' '+obj.join(' '));
-						acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
-						acengine.send('option name Debug type check default '+(acengine.trace.debug?'true':'false'));
-						acengine.send('option name Precise Score type check default false');
 						acengine.send('uciok');
 						acengine.send('copyprotection ok');
 						acengine.connected = true;
@@ -134,14 +135,18 @@ var acengine = {
 
 						// Applies the option
 						if (obj.name == 'UCI_Variant')
+						{
 							if (!acengine.instance.setVariant(obj.value))
 								acengine.send('info string Unsupported variant name "'+obj.value+'"');
-						if (obj.name == 'Skill Level')
+						}
+						else if (obj.name == 'Skill Level')
 							acengine.instance.setLevel(parseInt(obj.value));
-						if (obj.name == 'Debug')
+						else if (obj.name == 'Debug')
 							acengine.trace.debug = (obj.value.toLowerCase() == 'true');
-						if (obj.name == 'Precise Score')
+						else if (obj.name == 'Precise Score')
 							acengine.instance.options.board.noStatOnForcedMove = (obj.value.toLowerCase() != 'true');
+						else if (obj.name == 'Same Value')
+							acengine.instance.options.variant.sameValue = (obj.value.toLowerCase() == 'true');
 					}
 
 					else if (tab[0] == 'ucinewgame')
@@ -232,11 +237,12 @@ var acengine = {
 						movePonder = acengine.instance.getAssistance(false, true);
 
 						// Transmits the score
+						refvaltable = acengine.instance.getValuationTable();
 						score = acengine.instance.getScore();
 						if (score.mate)
 							score = 'mate ' + score.mateMoves;
 						else
-							score = 'cp ' + Math.round(100 * score.value / acengine.instance.options.ai.valuation[acengine.instance.constants.piece.pawn]);
+							score = 'cp ' + Math.round(100 * score.value / refvaltable[acengine.instance.constants.piece.pawn]);
 						stats = acengine.instance.getStatsAI();
 						acengine.send('info depth '+stats.depth+' score '+score+' time '+stats.time+' nodes '+stats.nodes+' nps '+stats.nps+' pv '+acengine.instance.moveToUCI(move));
 
