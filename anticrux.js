@@ -1533,10 +1533,10 @@ AntiCrux.prototype.getScore = function(pNode) {
 	{
 		result.mateWinner = (result.value == this.constants.player.mapping_rev[this.constants.player.black] * this.constants.bitmask.valuationValue ? this.constants.player.white : this.constants.player.black);
 		result.matePlies = ((pNode.magic & this.constants.bitmask.sequence) >> this.constants.bitmask.sequenceShift);
-		result.mateMoves = Math.ceil(result.matePlies / 2.0);
 		if (result.matePlies > 0)
 			result.matePlies--;
-		if ((pNode.score & this.constants.bitmask.valuationSign) == this.constants.bitmask.valuationSign)
+		result.mateMoves = Math.ceil(result.matePlies / 2.0);
+		if (result.matePlies % 2 == 1)
 			result.mateMoves = -result.mateMoves;
 	}
 	else
