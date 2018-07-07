@@ -3466,7 +3466,7 @@ AntiCrux.prototype._ai_valuate = function(pNode) {
 		result.value = this._ai_scoreDecode(pNode.score);
 		if ((pNode.score & this.constants.bitmask.valuationValue) == this.constants.bitmask.valuationValue)
 		{
-			result.valuePercent = 100 * Math.sign(result.value);
+			result.valuePercent = (result.value >= 0 ? 100 : -100);
 			result.score = pNode.score;
 			return result;
 		}
