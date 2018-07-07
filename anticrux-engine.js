@@ -203,7 +203,8 @@ var acengine = {
 							}
 							if (b)
 							{
-								if (acengine.instance.movePiece(tab[j], true) == acengine.instance.constants.noMove)
+								move = acengine.instance.movePiece(tab[j], true);
+								if (move == acengine.instance.constants.noMove)
 								{
 									acengine.send('info string Invalid move history');
 									acengine.positionOK = false;
@@ -212,6 +213,7 @@ var acengine = {
 								else
 								{
 									acengine.instance.updateHalfMoveClock();
+									acengine.instance.logMove(move, null);
 									acengine.instance.switchPlayer();
 								}
 							}
