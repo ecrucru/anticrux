@@ -92,7 +92,7 @@ var acengine = {
 						tab[j] = '';
 
 				//- Debug
-				acengine.writeLog("\r\n< " + line + "\r\n");
+				acengine.writeLog('< ' + line, true);
 
 				//- Quits
 				if (tab[0] == 'quit')
@@ -282,7 +282,7 @@ var acengine = {
 		},
 
 		send : function(pText) {
-			acengine.writeLog('> ' + pText + "\r\n");
+			acengine.writeLog('> ' + pText, false);
 			switch (acengine.mode)
 			{
 				case 'jsUCI':
@@ -297,7 +297,7 @@ var acengine = {
 			}
 		},
 
-		writeLog : function(pLog) {
+		writeLog : function(pText, pBlankLine) {
 			var d;
 
 			//-- Checks
@@ -309,11 +309,11 @@ var acengine = {
 			{
 				acengine.trace.hasWritten = true;
 				d = acengine.instance.getDateElements();
-				acengine.writeLog("\r\n" + '=== AntiCrux Engine UCI - Log started at '+d.year+'-'+d.month+'-'+d.day+' '+d.hours+':'+d.minutes+':'+d.seconds+'' + "\r\n");
+				acengine.writeLog('=== AntiCrux Engine UCI - Log started at '+d.year+'-'+d.month+'-'+d.day+' '+d.hours+':'+d.minutes+':'+d.seconds, true);
 			}
 
 			//-- Output
-			fs.appendFileSync(acengine.trace.logFile, pLog);
+			fs.appendFileSync(acengine.trace.logFile, (pBlankLine ? "\r\n" : '') + pText + "\r\n");
 		}
 	};
 
