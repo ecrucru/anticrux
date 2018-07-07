@@ -23,6 +23,7 @@
 		- [Available options](#available-options)
 		- [Procedure for WinBoard](#procedure-for-winboard)
 		- [Procedure for pyChess](#procedure-for-pychess)
+		- [Advanced debugging](#advanced-debugging)
 	- [AntiCrux hELO world](#anticrux-helo-world)
 - [Information](#information)
 	- [Change log](#change-log)
@@ -291,6 +292,32 @@ The working directory is the one where the engine is stored.
 
 To start a new game, you must use the menu "File > New game" or click on the big weather icon of the welcome screen. You may not find the engine in the drop-down list of the welcome screen because it doesn't play the classical chess. From the dialog of the new game, do select the variant called "Suicide" or "Giveaway", then select the engine and the applicable level with the slider.
 
+#### Advanced debugging
+
+The following HTML template helps you to debug the UCI engine from a web-browser. First, the commands should be listed in an array. Then you read the output in your browser.
+
+```html
+<html>
+<head>
+	<script src="anticrux.js"></script>
+	<script src="anticrux-engine.js"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		var i, cmds = [
+			'uci',
+			'isready',
+			'ucinewgame'
+		];
+		if (acengine)
+			for (i=0 ; i<cmds.length ; i++)
+				acengine.process(cmds[i]);
+	</script>
+</body>
+</html>
+```
+
+
 
 ## AntiCrux hELO world
 
@@ -499,6 +526,7 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Library: new option AntiCrux.options.variant.noValue
 	- Engine: new UCI option `Same Value`
 	- UI: new variant to ignore the values of the pieces
+	- Engine: possible debug in a web-browser
 
 
 ### License
@@ -546,6 +574,7 @@ The beautiful chess pieces made by Colin Burnett on Wikipedia are released under
 
 - https://creativecommons.org/licenses/by-sa/3.0/
 - https://en.wikipedia.org/wiki/Chess_piece
+
 
 
 ## Corner for developers

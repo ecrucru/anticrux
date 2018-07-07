@@ -34,7 +34,7 @@ var acengine = {
 		connected  : false,
 		positionOK : false,
 		instance   : null,
-		jsUCI      : ((typeof importScripts !== 'undefined') && (typeof postMessage !== 'undefined')),
+		mode       : null,
 		trace      : {										//Only for NodeJS
 			hasWritten	: false,
 			debug		: false,							//Editable option
@@ -42,6 +42,23 @@ var acengine = {
 		},
 
 		//=== Methods
+		detectMode : function() {
+			//-- jsUCI
+			if ((typeof importScripts !== 'undefined') && (typeof postMessage !== 'undefined'))
+				return 'jsUCI';
+
+			//-- Web-browser
+			if (typeof document !== 'undefined')
+				return 'browser';
+
+			//-- NodeJS
+			if (typeof module !== 'undefined' && module.exports)
+				return 'node';
+
+			//-- Other unsupported environments
+			return null;
+		},
+
 		process : function(pInput) {
 			var	i, j, b, s,
 				input, line, tab, obj, objKey,
@@ -142,7 +159,10 @@ var acengine = {
 						else if (obj.name == 'Skill Level')
 							acengine.instance.setLevel(parseInt(obj.value));
 						else if (obj.name == 'Debug')
+						{
 							acengine.trace.debug = (obj.value.toLowerCase() == 'true');
+							acengine.instance.options.board.debug = acengine.trace.debug;
+						}
 						else if (obj.name == 'Precise Score')
 							acengine.instance.options.board.noStatOnForcedMove = (obj.value.toLowerCase() != 'true');
 						else if (obj.name == 'Same Value')
@@ -263,24 +283,37 @@ var acengine = {
 
 		send : function(pText) {
 			acengine.writeLog('> ' + pText + "\r\n");
-			if (acengine.jsUCI)
-				postMessage(pText);
-			else
-				fs.writeSync(1, pText + "\r\n");
+			switch (acengine.mode)
+			{
+				case 'jsUCI':
+					postMessage(pText);
+					break;
+				case 'node':
+					fs.writeSync(1, pText + "\r\n");
+					break;
+				case 'browser':
+					document.write(pText + '<br/>');
+					break;
+			}
 		},
 
 		writeLog : function(pLog) {
 			var d;
-			if (acengine.trace.debug && !acengine.jsUCI)
+
+			//-- Checks
+			if (!acengine.trace.debug || (acengine.mode != 'node'))
+				return;
+
+			//-- Header
+			if (!acengine.trace.hasWritten)
 			{
-				if (!acengine.trace.hasWritten)
-				{
-					acengine.trace.hasWritten = true;
-					d = acengine.instance.getDateElements();
-					acengine.writeLog("\r\n" + '=== AntiCrux Engine UCI - Log started at '+d.year+'-'+d.month+'-'+d.day+' '+d.hours+':'+d.minutes+':'+d.seconds+'' + "\r\n");
-				}
-				fs.appendFileSync(acengine.trace.logFile, pLog);
+				acengine.trace.hasWritten = true;
+				d = acengine.instance.getDateElements();
+				acengine.writeLog("\r\n" + '=== AntiCrux Engine UCI - Log started at '+d.year+'-'+d.month+'-'+d.day+' '+d.hours+':'+d.minutes+':'+d.seconds+'' + "\r\n");
 			}
+
+			//-- Output
+			fs.appendFileSync(acengine.trace.logFile, pLog);
 		}
 	};
 
@@ -288,38 +321,51 @@ var acengine = {
 //======== Entry point
 
 //-- Loader
-if (acengine.jsUCI)
-	importScripts('anticrux.js');
-else
+acengine.mode = acengine.detectMode();
+switch (acengine.mode)
 {
-	var AntiCrux = require('anticrux');
-	var fs = require('fs');									//https://nodejs.org/api/fs.html
+	case 'jsUCI':
+		importScripts('anticrux.js');
+		break;
+
+	case 'node':
+		var AntiCrux = require('anticrux');
+		var fs = require('fs');								// https://nodejs.org/api/fs.html
+		break;
+
+	case null:
+		acengine = null;
+		throw 'AntiCrux Engine cannot be loaded';
 }
 
 //-- Settings for the engine
 acengine.instance = new AntiCrux();
-acengine.instance.options.board.noStatOnForcedMove = true;	//Faster
-acengine.instance.options.board.assistance = true;			//Ponder
+acengine.instance.options.board.noStatOnForcedMove = true;	// Faster
+acengine.instance.options.board.assistance = true;			// Ponder
 acengine.instance.callbackExploration = function(pStats) {
 		acengine.send('info depth '+pStats.depth+' score cp 0 time '+pStats.time+' nodes '+pStats.nodes+' nps '+pStats.nps+' pv 0000');
 	};
 
 //-- Main loop
-if (acengine.jsUCI)
-	var onmessage = function(pObject) {
-		acengine.process(pObject.data);
-	};
-else
+switch (acengine.mode)
 {
-	process.title = 'AntiCrux Engine UCI';
-	process.on('SIGINT', function() {
-		process.exit(0);
-	});
-	process.stdin.on('readable', function() {
-		// https://nodejs.org/api/process.html#process_process_stdin
-		var obj = process.stdin.read();
-		if (obj === null)
-			return;
-		acengine.process(obj.toString());
-	});
+	case 'jsUCI':
+		var onmessage = function(pObject) {
+			acengine.process(pObject.data);
+		};
+		break;
+
+	case 'node':
+		process.title = 'AntiCrux Engine UCI';
+		process.on('SIGINT', function() {
+			process.exit(0);
+		});
+		process.stdin.on('readable', function() {
+			// https://nodejs.org/api/process.html#process_process_stdin
+			var obj = process.stdin.read();
+			if (obj === null)
+				return;
+			acengine.process(obj.toString());
+		});
+		break;
 }
