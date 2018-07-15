@@ -75,7 +75,9 @@ positions = [
 	['Promotion',										'8/5P2/8/8/4k1p1/8/8/8 w - -',									'f7f8r'],
 	['En passant',										'8/8/8/2pP4/8/8/8/8 w - c6',									'd5c6'],
 	['Deep move',										'8/8/1P2P1K1/8/3k4/8/8/8 b - -',								'd4c5'],
-	['Draw by position',								'8/8/8/8/5B2/8/1p6/8 b - -',									'b2b1b']
+	['Draw by position',								'8/8/8/8/5B2/8/1p6/8 b - -',									'b2b1b'],
+	['Draw or continue the game',						'3B4/p6b/8/P7/8/8/8/8 b - -',									'h7e4'],
+	['No log with book + Sorted eval. in MultiPV',		'rnbqkb2/2pppp2/p7/7p/P7/4PPP1/1PPP4/RNB1K1N1 w - -',			'a4a5,g3g4']
 ];
 
 

@@ -211,7 +211,7 @@ function acui_refresh_matdiff() {
 
 function acui_refresh_moves() {
 	//Method to be called before the move is done else we can't display the moves with a nice format
-	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistical data with the professional mode.</div>' : ai.moveToStringHtml(ai.getMovesHtml(parseInt($('#acui_player').val()))));
+	$('#acui_moves').html($('#acui_option_pro').prop('checked') ? '<div>No statistical data with the professional mode.</div>' : ai.moveToStringHtml(ai.getMovesHtml()));
 }
 
 function acui_refresh_score() {

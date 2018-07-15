@@ -1009,6 +1009,80 @@ AntiCrux.prototype.getMoveAI = function(pPlayer, pNode) {
 };
 
 /**
+ * The method sorts the internal moves by order of importance for the current player.
+ * The alternate moves are then shuffled when they have the same score.
+ * This is important for use in Worse Chess for example.
+ *
+ * @method sortMoves
+ * @param {Object} pNode (Optional) Reference node.
+ * @return {Boolean} *true* if successful, else *false*.
+ */
+AntiCrux.prototype.sortMoves = function(pNode) {
+	var i, j, k, player, scorei, scorej;
+
+	//-- Library
+	var lf_exchange = function(node, i, j) {
+		var tmp;
+		//- Check
+		if (i == j)
+			return;
+		//- Nodes
+		tmp = node.nodes[j];
+		node.nodes[j] = node.nodes[i];
+		node.nodes[i] = tmp;
+		//- Moves
+		tmp = node.moves[j];
+		node.moves[j] = node.moves[i];
+		node.moves[i] = tmp;
+	};
+
+	//-- Self
+	if (pNode === undefined)
+		pNode = this._root_node;
+
+	//-- Checks
+	if (!this._has(pNode, 'nodes', true) || !this._has(pNode, 'moves', true))
+		return false;
+
+	//-- Sorts the moves
+	// White will minimize the valuation
+	// Black will maximize the valuation
+	player = pNode.magic & this.constants.bitmask.player;
+	for (i=pNode.nodes.length-1 ; i>0 ; i--)
+		for (j=0 ; j<i ; j++)
+		{
+			scorei = this._ai_scoreDecode(pNode.nodes[i].score);
+			scorej = this._ai_scoreDecode(pNode.nodes[j].score);
+			if (	((player == this.constants.player.white) && (scorei < scorej)) ||
+					((player == this.constants.player.black) && (scorei > scorej))
+			)
+				lf_exchange(pNode, i, j);
+		}
+
+	//-- Shuffles the alternate moves having the same score
+	i = 0;
+	while (i < pNode.nodes.length)
+	{
+		scorei = this._ai_scoreDecode(pNode.nodes[i].score);
+		for (j=i+1 ; j<pNode.nodes.length ; j++)
+		{
+			scorej = this._ai_scoreDecode(pNode.nodes[j].score);
+			if (scorei != scorej)
+				break;
+		}
+		for (k=i ; k<j ; k++)
+			lf_exchange(	pNode,
+							Math.floor(Math.random() * (j - i)) + i,		// Number between i and j-1
+							Math.floor(Math.random() * (j - i)) + i
+						);
+		i = j;
+	}
+
+	//-- Final result
+	return true;
+};
+
+/**
  * The method indicates if the opening book is usable with the current status of the board,
  * and independently from the limit assigned to the AI.
  *
@@ -1945,45 +2019,21 @@ AntiCrux.prototype.getScoreHistory = function() {
  * The method returns the possible moves and their valuation in HTML format.
  *
  * @method getMovesHtml
- * @param {AntiCrux.constants.player} pPlayer The player.
  * @param {Object} pNode (Optional) Reference node.
  * @return {String} HTML content.
  */
-AntiCrux.prototype.getMovesHtml = function(pPlayer, pNode) {
-	var	i, j,
-		tmp, score, score2, cp, tMin, tMax,
-		refvaltable, output;
+AntiCrux.prototype.getMovesHtml = function(pNode) {
+	var	i, tmp, tMin, tMax,
+		score, cp, refvaltable,
+		output;
 
 	//-- Self
 	if (pNode === undefined)
 		pNode = this._root_node;
 
-	//-- Checks
-	if (!this._has(pNode, 'nodes', true) || !this._has(pNode, 'moves', true))
-		return '';
-
 	//-- Sorts the moves
-	// White will minimize the valuation
-	// Black will maximize the valuation
-	for (i=pNode.nodes.length-1 ; i>0 ; i--)
-		for (j=0 ; j<i ; j++)
-		{
-			score = this._ai_scoreDecode(pNode.nodes[i].score);
-			score2 = this._ai_scoreDecode(pNode.nodes[j].score);
-			if (	((pPlayer == this.constants.player.white) && (score < score2)) ||
-					((pPlayer == this.constants.player.black) && (score > score2))
-				)
-			{
-				//- Nodes
-				tmp = pNode.nodes[j];
-				pNode.nodes[j] = pNode.nodes[i];
-				pNode.nodes[i] = tmp;
-				//- Moves
-				tmp = pNode.moves[j];
-				pNode.moves[j] = pNode.moves[i];
-				pNode.moves[i] = tmp;
-			}
-		}
+	if (!this.sortMoves(pNode))
+		return '';
 
 	//-- Determines the limit of pickability
 	if (pNode.moves.length < 2)
@@ -3574,7 +3624,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 		counter, score,
 		plus, plusMin, plusMax,
 		minus, minusMin, minusMax,
-		worst, total;
+		best, worst, total;
 
 	//-- Self
 	if (pNode === undefined)
@@ -3780,6 +3830,7 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 	{
 		//- Initializes
 		worst = this.constants.player.mapping_rev[pPlayer] * -this.constants.bitmask.valuationValue;
+		best = this.constants.player.mapping_rev[pPlayer] * this.constants.bitmask.valuationValue;
 		total = counter = 0;
 		for (i=0 ; i<pNode.nodes.length ; i++)
 		{
@@ -3791,8 +3842,14 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 				)
 				worst = val;
 
+			//- By using the best valuation
+			if ( ((pPlayer == this.constants.player.white) && (val < best)) ||
+				 ((pPlayer == this.constants.player.black) && (val > best))
+				)
+				best = val;
+
 			//- By using an average (default calculation)
-			if (!this.options.ai.worstCase && (Math.abs(val) != this.constants.bitmask.valuationValue))
+			if (Math.abs(val) != this.constants.bitmask.valuationValue)
 			{
 				total += val;
 				counter++;
@@ -3800,10 +3857,13 @@ AntiCrux.prototype._ai_solve = function(pPlayer, pDepth, pNode) {
 		}
 
 		//- Picks the score
-		if (counter === 0)
-			score = worst;
+		if ((pNode.magic & this.constants.bitmask.player) == pPlayer)
+			score = best;
 		else
-			score = Math.round(total/counter);	//Always integer !
+			if (this.options.ai.worstCase || (counter === 0))
+				score = worst;
+			else
+				score = Math.round(total / counter);	//Always integer !
 	}
 
 	//-- Applies the valuation

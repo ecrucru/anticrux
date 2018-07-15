@@ -35,6 +35,7 @@ var acengine = {
 		positionOK : false,
 		instance   : null,
 		mode       : null,
+		multipv    : 1,
 		trace      : {										//Only for NodeJS
 			hasWritten	: false,
 			debug		: false,							//Editable option
@@ -60,8 +61,8 @@ var acengine = {
 		},
 
 		process : function(pInput) {
-			var	i, j, b, s,
-				input, line, tab, obj, objKey,
+			var	i, j, m, b, s,
+				input, line, tab, obj, objKey, node,
 				move, fen, refvaltable, score, stats, movePonder;
 
 			//-- Simplifies the input
@@ -114,6 +115,7 @@ var acengine = {
 						acengine.send('id author https://github.com/ecrucru/anticrux/');
 						acengine.send('option name Debug type check default '+(acengine.trace.debug?'true':'false'));
 						acengine.send('option name Precise Score type check default '+(acengine.instance.options.board.noStatOnForcedMove?'false':'true'));
+						acengine.send('option name MultiPV type spin default 1 min 1 max 4096');
 						acengine.send('option name Same Value type check default '+(acengine.instance.options.variant.sameValue?'true':'false'));
 						acengine.send('option name Skill Level type spin default '+acengine.instance.getLevel()+' min 1 max 20');
 						obj = acengine.instance.getVariants();
@@ -151,22 +153,30 @@ var acengine = {
 						}
 
 						// Applies the option
-						if (obj.name == 'UCI_Variant')
+						switch (obj.name)
 						{
-							if (!acengine.instance.setVariant(obj.value))
-								acengine.send('info string Unsupported variant name "'+obj.value+'"');
+							case 'Debug':
+								acengine.trace.debug = (obj.value.toLowerCase() == 'true');
+								acengine.instance.options.board.debug = acengine.trace.debug;
+								break;
+							case 'MultiPV':
+								j = parseInt(obj.value);
+								if (j >= 1)
+									acengine.multipv = j;
+							case 'Precise Score':
+								acengine.instance.options.board.noStatOnForcedMove = (obj.value.toLowerCase() != 'true');
+								break;
+							case 'Same Value':
+								acengine.instance.options.variant.sameValue = (obj.value.toLowerCase() == 'true');
+								break;
+							case 'Skill Level':
+								acengine.instance.setLevel(parseInt(obj.value));
+								break;
+							case 'UCI_Variant':
+								if (!acengine.instance.setVariant(obj.value))
+									acengine.send('info string Unsupported variant name "'+obj.value+'"');
+								break;
 						}
-						else if (obj.name == 'Skill Level')
-							acengine.instance.setLevel(parseInt(obj.value));
-						else if (obj.name == 'Debug')
-						{
-							acengine.trace.debug = (obj.value.toLowerCase() == 'true');
-							acengine.instance.options.board.debug = acengine.trace.debug;
-						}
-						else if (obj.name == 'Precise Score')
-							acengine.instance.options.board.noStatOnForcedMove = (obj.value.toLowerCase() != 'true');
-						else if (obj.name == 'Same Value')
-							acengine.instance.options.variant.sameValue = (obj.value.toLowerCase() == 'true');
 					}
 
 					else if (tab[0] == 'ucinewgame')
@@ -254,21 +264,41 @@ var acengine = {
 						if (tab[1] == 'depth')
 							acengine.send("info string 'go depth N' is ignored");
 
-						// Gets the right move to play and extra information
+						// Gets the right move to play and some extra information
 						move = acengine.instance.getMoveAI();
 						movePonder = acengine.instance.getAssistance(false, true);
-
-						// Transmits the score
 						refvaltable = acengine.instance.getValuationTable();
+						node = acengine.instance.getMainNode();
+
+						// Transmits the best score as a complete MultiPV=1
 						score = acengine.instance.getScore();
 						if (score.mate)
 							score = 'mate ' + score.mateMoves;
 						else
 							score = 'cp ' + Math.round(100 * score.value / refvaltable[acengine.instance.constants.piece.pawn]);
 						stats = acengine.instance.getStatsAI();
-						acengine.send('info depth '+stats.depth+' score '+score+' time '+stats.time+' nodes '+stats.nodes+' nps '+stats.nps+' pv '+acengine.instance.moveToUCI(move));
+						acengine.send('info depth '+stats.depth+' multipv 1 score '+score+' time '+stats.time+' nodes '+stats.nodes+' nps '+stats.nps+' pv '+acengine.instance.moveToUCI(move));
 
-						// Transmits the moves
+						// Alternate lines as MultiPV>1
+						if ((acengine.multipv > 1) & acengine.instance.sortMoves())	// Don't use "&&"
+						{
+							m = 1;
+							for (j=0 ; (j<node.moves.length) && (j<acengine.multipv) ; j++)
+							{
+								if (node.moves[j] == move)
+									continue;					// The move of the AI is not necessarily the first one
+								else
+									m++;
+								score = acengine.instance.getScore(node.nodes[j]);
+								if (score.mate)
+									score = 'mate ' + score.mateMoves;
+								else
+									score = 'cp ' + Math.round(100 * score.value / refvaltable[acengine.instance.constants.piece.pawn]);
+								acengine.send('info multipv '+m+' score '+score+' pv '+acengine.instance.moveToUCI(node.moves[j]));
+							}
+						}
+
+						// Transmits the best move as last command
 						if (movePonder.length === 0)
 							acengine.send('bestmove '+acengine.instance.moveToUCI(move));
 						else

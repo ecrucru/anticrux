@@ -247,6 +247,7 @@ go infinite
 #### Available options
 
 - `Debug` : this option is reserved for the developers to track all the issues that may arise during the use of the engine. If the option is not activated by default, the log is not effective until the option is turned on with the relevant instruction `setoption`. In other words, you may miss the few first UCI messages.
+- `MultiPV` : it is the ability to show N alternate moves by decreasing order of importance along with the final move.
 - `Precise Score` : if the move is forced, a deep analysis doesn't occur unless you activate this option. It slows down the engine but you get a better evaluation of the score.
 - `Same Value` : the pieces are assigned the same value so that only their count matters on the board.
 - `Skill Level` : the level is the difficulty of the game. The higher, the bigger the memory footprint.
@@ -496,7 +497,7 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Engine: the supported technical variant names are `suicide`, `giveaway` and `antichess`
 	- Engine: new UCI option `Precise Score`
 	- Library: removed method AntiCrux.prototype.startUI
-- **In progress - Version 0.3.1**
+- **In progress - Version 0.3.1** *[no backwards compatibility]*
 	- Library: new method AntiCrux.prototype.getMaterialDifference
 	- UI: display of the material difference and centipawns
 	- Engine: removed UCI option UCI_Chess960
@@ -527,6 +528,9 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Engine: new UCI option `Same Value`
 	- UI: new variant to ignore the values of the pieces
 	- Engine: possible debug in a web-browser
+	- Library: new method AntiCrux.prototype.sortMoves
+	- Library: new parameter for AntiCrux.prototype.getMovesHtml
+	- Engine: new UCI option `MultiPV`
 
 
 ### License
@@ -877,7 +881,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.getMainNode()
 - AntiCrux.getMaterialDifference(pNode)
 - AntiCrux.getMoveAI(pPlayer, pNode)
-- AntiCrux.getMovesHtml(pPlayer, pNode)
+- AntiCrux.getMovesHtml(pNode)
 - AntiCrux.getNewFischerId()
 - AntiCrux.getOppositePlayer(pNode)
 - AntiCrux.getPieceByCoordinate(pCoordinate, pNode)
@@ -913,6 +917,7 @@ Any field or method beginning with an underscore is a private member which is no
 - AntiCrux.setLevel(pLevel)
 - AntiCrux.setPlayer(pPlayer, pNode)
 - AntiCrux.setVariant(pVariant)
+- AntiCrux.sortMoves(pNode)
 - AntiCrux.switchPlayer(pNode)
 - AntiCrux.toChessText(pNode)
 - AntiCrux.toConsole(pBorder, pNode)
