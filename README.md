@@ -497,7 +497,7 @@ Finally, in the library, the ELO is given by a formula based on the natural loga
 	- Engine: the supported technical variant names are `suicide`, `giveaway` and `antichess`
 	- Engine: new UCI option `Precise Score`
 	- Library: removed method AntiCrux.prototype.startUI
-- **In progress - Version 0.3.1** *[no backwards compatibility]*
+- **July 15th 2018 - Version 0.3.1** *[no backwards compatibility]*
 	- Library: new method AntiCrux.prototype.getMaterialDifference
 	- UI: display of the material difference and centipawns
 	- Engine: removed UCI option UCI_Chess960

@@ -2704,7 +2704,7 @@ AntiCrux.prototype._init = function() {
 	//-- Options
 	this.options = {
 		ai : {
-			version : '0.3.0',							//Version of AntiCrux
+			version : '0.3.1',							//Version of AntiCrux
 			elo : 0,									//Approximative strength of the algorithm
 			valuation : [],								//Valuation of each piece
 			valuationNeutral : [],						//Neutral valuation of each piece

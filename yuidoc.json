@@ -1,6 +1,6 @@
 {
     "name": "AntiCrux",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "Suicide chess engine acting as desktop engine, web page, mobile application, Internet chess server and library",
     "url": "https://github.com/ecrucru/anticrux/",
     "options": {
