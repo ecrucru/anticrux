@@ -824,13 +824,6 @@ $(document).ready(function() {
 		return true;
 	});
 
-	$('#acui_fischer_new').click(function() {
-		$('#acui_option_fischer').dblclick();
-		$('#acui_fischer_current').click();
-		acui_popup('You are playing AntiChess ' + ai.fischer + '.');
-		return true;
-	});
-
 	$('#acui_fischer_current').click(function() {
 		ai.defaultBoard(ai.options.board.fischer);
 		ui_move = '';
@@ -838,6 +831,16 @@ $(document).ready(function() {
 		acui_reset_ui(true);
 		acui_refresh_board();
 		acui_autostart();
+		return true;
+	});
+
+	$('#acui_fischer_new').click(function() {
+		if (ui_mobile)
+			ai.options.board.fischer = ai.getNewFischerId();
+		else
+			$('#acui_option_fischer').dblclick();
+		$('#acui_fischer_current').click();
+		acui_popup('You are playing AntiChess ' + ai.fischer + '.');
 		return true;
 	});
 
