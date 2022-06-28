@@ -10,10 +10,9 @@
 
 - [Presentation](#presentation)
 - [Installation](#installation)
-	- [Grab your copy](#grab-your-copy)
-		- [Stable](#stable)
-		- [Work in progress](#work-in-progress)
 	- [Compatibility matrix](#compatibility-matrix)
+	- [Github](#github)
+	- [NPM](#npm)
 	- [Web interface](#web-interface)
 	- [Mobile interface](#mobile-interface)
 	- [Mobile application](#mobile-application)
@@ -42,13 +41,13 @@
 
 ## Presentation
 
-AntiCrux is a library written in JavaScript which plays a single variant of chess named "AntiChess", "Suicide chess" or also "Loosing chess". You can play against the computer with :
+AntiCrux is a library written in JavaScript that plays a single variant of chess named "*AntiChess*", "*Suicide chess*" or also "*Loosing chess*". You can play against the computer with :
 
 - a mobile web-interface for tablets, desktops and phones
 - a remote server by using the same commands than the Free Internet Chess Server (FICS)
 - a chess engine to connect with your UCI-compatible desktop application
 
-For technical reasons inherited from JavaScript and its design, AntiCrux will never reach the highest and unbeatable ELO ratings. Its level is rather *[normal](#anticrux-helo-world)* and the 20 available levels implement various techniques and rules to act like a human as much as possible. It is then a good tool to increase your skills with fun !
+For technical reasons inherited from JavaScript and its (somehow particular) design, AntiCrux will never reach the highest and unbeatable ELO ratings. **Its level is rather [normal](#anticrux-helo-world)** and the 20 available levels implement various techniques and rules to **play like a human as much as possible**. It is then a good tool to increase your skills with fun !
 
 About the variant AntiChess, the objective consists in losing all your own pieces or reaching a stalemate. For that, you will probably have to force the moves. The rules are very simple and change a lot the dynamics of the game :
 
@@ -66,36 +65,6 @@ The logic of loosing all one's pieces leads to a really different way of thinkin
 
 ## Installation
 
-AntiCrux is delivered via [Github](https://github.com/ecrucru/anticrux/) and [NPM](https://www.npmjs.com/package/anticrux).
-
-
-### Grab your copy
-
-#### Stable
-
-The stable releases are displayed on Github :
-
-- https://github.com/ecrucru/anticrux/releases
-
-The NPM package "[anticrux](https://www.npmjs.com/package/anticrux)" is the latest stable release :
-
-```bash
-npm install anticrux
-```
-
-#### Work in progress
-
-You generally have 2 branches which can be downloaded as an archive :
-
-- Master : https://github.com/ecrucru/anticrux/archive/master.zip
-- Dev (if available) : https://github.com/ecrucru/anticrux/archive/dev.zip
-
-You can also replicate the repository if you own Git :
-
-```bash
-git clone https://github.com/ecrucru/anticrux.git
-```
-
 
 ### Compatibility matrix
 
@@ -111,6 +80,24 @@ git clone https://github.com/ecrucru/anticrux.git
 | Quality                     | Yes     | Yes   | Yes       | Yes    | No    | -       | -   | -                |
 
 Note : the symbol "-" denotes that a feature is not applicable.
+
+
+### Github
+
+AntiCrux is delivered as source code at [Github](https://github.com/ecrucru/anticrux/) :
+
+```bash
+git clone https://github.com/ecrucru/anticrux.git
+```
+
+
+### NPM
+
+The package on [NPM](https://www.npmjs.com/package/anticrux) has a correct version but it won't be updated anymore. Consider it as discontinued.
+
+```bash
+npm install anticrux
+```
 
 
 ### Web interface
@@ -137,11 +124,11 @@ The mobile version is a light-weighted version of the [web-interface](#web-inter
 
 ### Mobile application
 
-By using the technologies behind Adobe PhoneGap and Apache Cordova, it is possible to create a standalone, multi-platform and authorization-free application for your smartphone.
+By using the technologies behind Adobe PhoneGap and Apache Cordova, it is possible to create a standalone, multi-platform and authorization-free application for your smartphone. The application used to be compiled by Adobe PhoneGap Build until it stopped on 1st October 2020.
 
-The application is periodically compiled online by Adobe PhoneGap Build from the freshest code of the master branch hosted on Github :
+The downloadable and latest APK file for Android is attached to the release 0.3.1 on Github :
 
-- https://build.phonegap.com/apps/2597052/share
+- https://github.com/ecrucru/anticrux/releases/tag/0.3.1
 
 For **Android 4+**, follow these steps :
 
@@ -152,9 +139,7 @@ For **Android 4+**, follow these steps :
 - Go back to the settings to deactivate the unsafe sources
 - Run the application
 
-For **Windows Phone**, the application is made available from a technical perspective. It has not been tested with a real device.
-
-For **iOS**, you will not get any copy because the project team has no development key for that platform.
+The file for Windows Phone has not been rescued. The file for iOS never existed.
 
 
 ### Node.js
@@ -188,11 +173,11 @@ To access the engine remotely over a network, you can execute AntiCrux as a ches
 
 Start the server by double-clicking on the script `run_server.bat` (Windows) or `run_server.sh` (Linux). To change the default level of the server, follow the indications written on the home screen when you connect.
 
-Because it mimics the commands of the Free Internet Chess Server (FICS), AntiCrux Server is compatible with any ICS client not supporting timeseal.
+Because it mimics the commands of the Free Internet Chess Server (FICS), AntiCrux Server is compatible with any ICS client that doesn't support timeseal.
 
 - Telnet (text-mode, console) is supported. Type "help" to view the implemented commands.
 
-```
+```bash
 telnet localhost 5000
 ```
 
@@ -216,7 +201,7 @@ telnet localhost 5000
 
 You need first to install [Node.js](#nodejs).
 
-AntiCrux Engine acts like an UCI-compatible engine which can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches ! The played variants are `suicide`, `giveaway` and `antichess`. They all refer to the same gameplay.
+AntiCrux Engine acts like an UCI-compatible engine that can be connected to any modern desktop application. You will keep your habits and you will be able to create computer matches ! The played variants are `suicide`, `giveaway` and `antichess`. They all refer to the same gameplay.
 
 Some restrictions apply :
 
@@ -255,7 +240,7 @@ go infinite
 
 #### Procedure for WinBoard
 
-You need to use at least WinBoard 4.9 else you will be told that the variant `suicide` is not supported.
+You need to use at least [WinBoard 4.9](http://www.open-aurec.com/wbforum/viewtopic.php?t=53727) else you will be told that the variant `suicide` is not supported.
 
 In WinBoard, add a new engine and set the following options :
 
@@ -322,7 +307,7 @@ The following HTML template helps you to debug the UCI engine from a web-browser
 
 ## AntiCrux hELO world
 
-This tool generates a [PGN file](https://en.wikipedia.org/wiki/Portable_Game_Notation) to estimate the level of AntiCrux in regard of other UCI-compatible chess engines. For now, only AntiCrux and the special Stockfish-based engine developed by @ddugovic and compiled by @niklasf are considered because they are related to JavaScript.
+This tool generates a [PGN file](https://en.wikipedia.org/wiki/Portable_Game_Notation) to estimate the level of AntiCrux in regard of other UCI-compatible chess engines. For now, only AntiCrux and the special Stockfish-based engine developed by @ddugovic and compiled by @niklasf (the project does not exist anymore) are considered because they are related to JavaScript.
 
 To get reliable games, the processing will take hours (or days !). To accelerate the generation, you may launch in parallel with the scripts `run_elo.bat` (Windows) or `run_elo.sh` (Linux) as many processes as your computer has CPU.
 
@@ -348,9 +333,9 @@ The ratings for the engine "SF" are :
 ```
 
 These results are composed of :
-- the latest estimated rating of the engine
-- the initial rating of the engine determined during the ramp-up phase
-- the number of played games and their results
+- The latest estimated rating of the engine
+- The initial rating of the engine determined during the ramp-up phase
+- The number of played games and their results
 
 The estimations follow the rules edicted by the chess federation FIDE. The principles are :
 - The player is identified by its name : 2 different levels are 2 separate players even if the engine is the same
